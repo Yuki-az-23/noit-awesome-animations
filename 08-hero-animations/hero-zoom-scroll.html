@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ========================================================
+       Hero Zoom-Scroll Animation
+       Hero image that zooms out on scroll with parallax
+       depth, fading text overlays, and a cinematic feel.
+       ======================================================== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Zoom Scroll Animation</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --color-muted: #8892a4;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* === Hero Section === */
+    .hero {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hero background image — starts zoomed in */
+    .hero-bg {
+      position: absolute;
+      inset: -60px;
+      background:
+        linear-gradient(180deg,
+          rgba(15, 15, 26, 0.2) 0%,
+          rgba(15, 15, 26, 0.1) 40%,
+          rgba(15, 15, 26, 0.7) 100%
+        ),
+        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80') center/cover no-repeat;
+      transform: scale(1.5);
+      transition: transform 0.05s linear;
+      will-change: transform;
+    }
+
+    /* Parallax depth layers */
+    .hero-depth {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hero-depth .layer {
+      position: absolute;
+      border-radius: 4px;
+      opacity: 0.08;
+      transition: transform 0.05s linear;
+      will-change: transform;
+    }
+
+    .hero-depth .layer:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      top: 15%;
+      left: 8%;
+      background: radial-gradient(circle, rgba(233, 69, 96, 0.3) 0%, transparent 70%);
+    }
+
+    .hero-depth .layer:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      top: 60%;
+      right: 12%;
+      background: radial-gradient(circle, rgba(100, 180, 255, 0.2) 0%, transparent 70%);
+    }
+
+    .hero-depth .layer:nth-child(3) {
+      width: 150px;
+      height: 150px;
+      bottom: 20%;
+      left: 30%;
+      background: radial-gradient(circle, rgba(233, 69, 96, 0.15) 0%, transparent 70%);
+    }
+
+    /* Gradient overlay for text readability */
+    .hero-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(15, 15, 26, 0.3) 0%,
+        rgba(15, 15, 26, 0.1) 30%,
+        rgba(15, 15, 26, 0.6) 70%,
+        rgba(15, 15, 26, 0.95) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* Hero text content */
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 0 24px;
+      will-change: transform, opacity;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      background: rgba(233, 69, 96, 0.1);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      padding: 6px 20px;
+      border-radius: 30px;
+      margin-bottom: 24px;
+      will-change: opacity, transform;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 20px;
+      will-change: opacity, transform;
+    }
+
+    .hero-title .accent {
+      background: linear-gradient(135deg, var(--color-primary), #ff7b54);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--color-muted);
+      max-width: 500px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+      will-change: opacity, transform;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--color-primary);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 14px 32px;
+      border-radius: 40px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      will-change: opacity, transform;
+    }
+
+    .hero-cta:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
+    }
+
+    .hero-cta .arrow {
+      transition: transform 0.3s;
+    }
+
+    .hero-cta:hover .arrow {
+      transform: translateX(4px);
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.4;
+      will-change: opacity;
+    }
+
+    .scroll-indicator span {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--color-primary);
+      animation: scrollDown 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollDown {
+      0% { top: -100%; }
+      100% { top: 100%; }
+    }
+
+    /* === Content sections below hero === */
+    .content-section {
+      position: relative;
+      z-index: 20;
+      background: var(--color-bg);
+    }
+
+    .content-section .inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 32px;
+    }
+
+    .content-section h2 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .content-section p {
+      color: var(--color-muted);
+      line-height: 1.7;
+      font-size: 1rem;
+      max-width: 600px;
+    }
+
+    .content-section .card {
+      background: var(--color-surface);
+      border: 1px solid rgba(233, 69, 96, 0.1);
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 24px;
+    }
+
+    .content-section .card h3 {
+      font-size: 1.05rem;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+
+    .content-section .card p {
+      font-size: 0.9rem;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.3), transparent);
+      margin: 0 32px;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 24px 16px;
+      background: var(--color-surface);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .stat-item .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--color-primary);
+    }
+
+    .stat-item .stat-label {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-depth" id="heroDepth">
+      <div class="layer"></div>
+      <div class="layer"></div>
+      <div class="layer"></div>
+    </div>
+    <div class="hero-gradient"></div>
+
+    <div class="hero-content" id="heroContent">
+      <div class="hero-tag" id="heroTag">Explore the Cosmos</div>
+      <h1 class="hero-title" id="heroTitle">
+        Beyond the<br><span class="accent">Horizon</span>
+      </h1>
+      <p class="hero-subtitle" id="heroSubtitle">
+        Scroll to watch the cinematic zoom effect. The hero image pulls back revealing depth as text elegantly fades away.
+      </p>
+      <a href="#content" class="hero-cta" id="heroCta">
+        Begin Journey <span class="arrow">→</span>
+      </a>
+    </div>
+
+    <div class="scroll-indicator" id="scrollIndicator">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- Content Below -->
+  <section class="content-section" id="content">
+    <div class="inner">
+      <h2>Parallax Depth Effect</h2>
+      <p>The hero background started zoomed in at 1.5× scale and gradually pulls back to 1× as you scroll. Meanwhile, text and UI elements fade and shift upward at different rates, creating a layered parallax depth field.</p>
+
+      <div class="card">
+        <h3>How It Works</h3>
+        <p>JavaScript listens to scroll events and drives CSS transforms via requestAnimationFrame. The background scale, text opacity, and parallax layers all interpolate based on scroll progress (0–1). No external libraries — pure vanilla JS with CSS will-change hints.</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-value">1.5×</div>
+          <div class="stat-label">Initial Zoom</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Parallax Layers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">60fps</div>
+          <div class="stat-label">Smooth Framerate</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /* === Hero Zoom-Scroll Controller === */
+    const heroBg = document.getElementById('heroBg');
+    const heroDepth = document.getElementById('heroDepth');
+    const heroContent = document.getElementById('heroContent');
+    const heroTag = document.getElementById('heroTag');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    const heroCta = document.getElementById('heroCta');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    const layers = heroDepth.querySelectorAll('.layer');
+
+    let ticking = false;
+    let lastScrollY = 0;
+
+    function lerp(start, end, t) {
+      return start + (end - start) * Math.max(0, Math.min(1, t));
+    }
+
+    function updateHero() {
+      const scrollY = window.scrollY;
+      const heroHeight = window.innerHeight;
+      const progress = Math.min(scrollY / heroHeight, 1); /* 0 to 1 */
+
+      /* Zoom: 1.5 at progress=0 → 1.0 at progress=1 */
+      const scale = lerp(1.5, 1.0, progress);
+      heroBg.style.transform = `scale(${scale})`;
+
+      /* Content opacity and vertical shift */
+      const contentOpacity = lerp(1, 0, Math.min(progress * 2, 1));
+      const contentY = lerp(0, -80, progress);
+      heroContent.style.opacity = contentOpacity;
+      heroContent.style.transform = `translateY(${contentY}px)`;
+
+      /* Individual element stagger */
+      heroTag.style.opacity = lerp(1, 0, progress * 3);
+      heroTag.style.transform = `translateY(${lerp(0, -40, progress)}px)`;
+
+      heroTitle.style.opacity = lerp(1, 0, progress * 2.2);
+      heroTitle.style.transform = `translateY(${lerp(0, -60, progress)}px)`;
+
+      heroSubtitle.style.opacity = lerp(1, 0, progress * 2.5);
+      heroSubtitle.style.transform = `translateY(${lerp(0, -50, progress)}px)`;
+
+      heroCta.style.opacity = lerp(1, 0, progress * 3);
+      heroCta.style.transform = `translateY(${lerp(0, -30, progress)}px)`;
+
+      /* Scroll indicator fade */
+      scrollIndicator.style.opacity = lerp(0.4, 0, progress * 3);
+
+      /* Parallax depth layers — move at different rates */
+      const layerSpeeds = [0.3, 0.5, 0.2];
+      const layerDirections = [
+        { x: -30, y: -20 },
+        { x: 40, y: 30 },
+        { x: -20, y: 25 }
+      ];
+
+      layers.forEach((layer, i) => {
+        const tx = layerDirections[i].x * progress * layerSpeeds[i];
+        const ty = layerDirections[i].y * progress * layerSpeeds[i];
+        layer.style.transform = `translate(${tx}px, ${ty}px)`;
+        layer.style.opacity = lerp(0.08, 0.03, progress);
+      });
+
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(updateHero);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    /* Initialize */
+    updateHero();
+  </script>
+</body>
+</html>

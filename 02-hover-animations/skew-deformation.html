@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Skew Deformation in Content Display
+  Inspired by Awwwards "Skew Deformation"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skew Deformation</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .hero {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(233, 69, 96, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, rgba(83, 52, 131, 0.06) 0%, transparent 50%);
+    animation: heroSkew 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes heroSkew {
+    0% { transform: skew(0deg, 0deg) rotate(0deg); }
+    100% { transform: skew(2deg, -1deg) rotate(1deg); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    border: 1px solid rgba(233, 69, 96, 0.3);
+    padding: 0.4rem 1.2rem;
+    border-radius: 30px;
+    margin-bottom: 2rem;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title .skew-word {
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-origin: center center;
+  }
+
+  .hero-title .skew-word:hover {
+    transform: skewX(-8deg) skewY(2deg) scale(1.05);
+    color: var(--color-primary);
+  }
+
+  .hero-title .accent {
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a, #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--color-muted);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ── Skew Grid ── */
+  .skew-section {
+    padding: 4rem 2rem 8rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 800;
+    margin-bottom: 3rem;
+  }
+
+  .section-title span {
+    background: linear-gradient(90deg, var(--color-primary), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Skew Card ── */
+  .skew-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    perspective: 1000px;
+  }
+
+  .skew-card {
+    position: relative;
+    background: var(--color-surface);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+    cursor: pointer;
+  }
+
+  .skew-card:hover {
+    box-shadow:
+      0 25px 60px rgba(0, 0, 0, 0.3),
+      0 0 40px rgba(233, 69, 96, 0.08);
+    border-color: rgba(233, 69, 96, 0.15);
+  }
+
+  /* Skew card image area */
+  .skew-card .card-visual {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .skew-card:hover .card-visual {
+    transform: scale(1.05);
+  }
+
+  .card-visual .visual-bg {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .skew-card:hover .visual-bg {
+    transform: scale(1.1) skewX(-3deg);
+  }
+
+  .card-visual .visual-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(15, 15, 26, 0.8));
+    z-index: 1;
+  }
+
+  .card-visual .visual-number {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.08);
+    z-index: 2;
+    transition: transform 0.5s, color 0.5s;
+  }
+
+  .skew-card:hover .visual-number {
+    transform: skewX(-5deg) scale(1.2);
+    color: rgba(233, 69, 96, 0.15);
+  }
+
+  /* Card content */
+  .skew-card .card-body {
+    padding: 1.5rem;
+    position: relative;
+  }
+
+  .card-body .card-category {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+    transition: transform 0.4s;
+  }
+
+  .skew-card:hover .card-category {
+    transform: skewX(-3deg);
+  }
+
+  .card-body .card-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    transition: transform 0.4s;
+  }
+
+  .skew-card:hover .card-heading {
+    transform: skewX(-2deg) translateX(4px);
+  }
+
+  .card-body .card-text {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    transition: transform 0.4s;
+  }
+
+  .skew-card:hover .card-text {
+    transform: skewX(-1deg);
+  }
+
+  /* Skewed accent bar */
+  .skew-card .accent-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    height: 0;
+    background: var(--color-primary);
+    transition: height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.4s;
+    transform: skewY(0deg);
+  }
+
+  .skew-card:hover .accent-bar {
+    height: 60%;
+    transform: skewY(-2deg);
+  }
+
+  /* Background colors for card visuals */
+  .bg-gradient-1 { background: linear-gradient(135deg, #1a0a2e, #e94560); }
+  .bg-gradient-2 { background: linear-gradient(135deg, #0a1e2e, #00d2ff); }
+  .bg-gradient-3 { background: linear-gradient(135deg, #0a2e1a, #14b8a6); }
+  .bg-gradient-4 { background: linear-gradient(135deg, #2e1a0a, #f59e0b); }
+  .bg-gradient-5 { background: linear-gradient(135deg, #1a0a2e, #8b5cf6); }
+  .bg-gradient-6 { background: linear-gradient(135deg, #2e0a1a, #ec4899); }
+
+  /* ── Skewed Gallery ── */
+  .gallery-section {
+    padding: 4rem 2rem 8rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .skew-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    perspective: 800px;
+  }
+
+  .gallery-item {
+    position: relative;
+    height: 280px;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+  }
+
+  .gallery-item:hover {
+    z-index: 2;
+  }
+
+  .gallery-item .gallery-bg {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .gallery-item:hover .gallery-bg {
+    transform: scale(1.1);
+  }
+
+  .gallery-item .gallery-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    background: linear-gradient(180deg, transparent 40%, rgba(15, 15, 26, 0.9));
+    transition: transform 0.4s, skewX 0.4s;
+  }
+
+  .gallery-item:hover .gallery-content {
+    transform: skewX(-2deg) translateY(-5px);
+  }
+
+  .gallery-content .tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .gallery-content h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  /* ── Diagonal Section ── */
+  .diagonal-section {
+    position: relative;
+    padding: 8rem 2rem;
+    background: var(--color-surface);
+    clip-path: polygon(0 5%, 100% 0%, 100% 95%, 0% 100%);
+    margin: -4rem 0;
+  }
+
+  .diagonal-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .diagonal-inner h2 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 800;
+    margin-bottom: 1rem;
+  }
+
+  .diagonal-inner h2 .inline-skew {
+    display: inline-block;
+    transform: skewX(-6deg);
+    background: linear-gradient(90deg, var(--color-primary), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding: 0 8px;
+  }
+
+  .diagonal-inner p {
+    color: var(--color-muted);
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+  }
+
+  /* ── Skewed Rows ── */
+  .skew-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .skew-row {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: rgba(22, 33, 62, 0.6);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                background 0.3s;
+    cursor: pointer;
+  }
+
+  .skew-row:hover {
+    transform: skewX(-3deg) translateX(10px);
+    background: rgba(22, 33, 62, 0.9);
+  }
+
+  .skew-row .row-num {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: rgba(233, 69, 96, 0.2);
+    width: 60px;
+    transition: color 0.3s, transform 0.3s;
+  }
+
+  .skew-row:hover .row-num {
+    color: var(--color-primary);
+    transform: skewX(5deg);
+  }
+
+  .skew-row .row-title {
+    font-size: 1rem;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .skew-row .row-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-muted);
+    transition: color 0.3s;
+  }
+
+  .skew-row:hover .row-tag {
+    color: var(--color-primary);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .skew-grid { grid-template-columns: 1fr; }
+    .skew-gallery { grid-template-columns: 1fr; }
+    .diagonal-section { clip-path: polygon(0 2%, 100% 0%, 100% 98%, 0% 100%); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-content">
+      <span class="hero-tag">Skew Deformation</span>
+      <h1 class="hero-title">
+        <span class="skew-word">Skew</span>
+        <span class="skew-word accent">&</span>
+        <span class="skew-word">Deform</span>
+      </h1>
+      <p class="hero-sub">Content cards that tilt, skew, and deform in perspective space on hover. Each element responds with depth-aware 3D transforms.</p>
+    </div>
+  </header>
+
+  <!-- Skew Cards -->
+  <section class="skew-section">
+    <span class="section-label">Interactive Grid</span>
+    <h2 class="section-title">Skew <span>Cards</span></h2>
+
+    <div class="skew-grid">
+      <div class="skew-card" data-skew-card>
+        <div class="card-visual">
+          <div class="visual-bg bg-gradient-1"></div>
+          <div class="visual-overlay"></div>
+          <span class="visual-number">01</span>
+        </div>
+        <div class="card-body">
+          <div class="card-category">Architecture</div>
+          <div class="card-heading">Spatial Design</div>
+          <div class="card-text">Perspective transforms create the illusion of depth, making flat interfaces feel tangible and interactive.</div>
+        </div>
+        <div class="accent-bar"></div>
+      </div>
+
+      <div class="skew-card" data-skew-card>
+        <div class="card-visual">
+          <div class="visual-bg bg-gradient-2"></div>
+          <div class="visual-overlay"></div>
+          <span class="visual-number">02</span>
+        </div>
+        <div class="card-body">
+          <div class="card-category">Motion</div>
+          <div class="card-heading">Kinetic Response</div>
+          <div class="card-text">Every hover triggers a cascade of skew and scale transforms that communicate weight and physicality.</div>
+        </div>
+        <div class="accent-bar"></div>
+      </div>
+
+      <div class="skew-card" data-skew-card>
+        <div class="card-visual">
+          <div class="visual-bg bg-gradient-3"></div>
+          <div class="visual-overlay"></div>
+          <span class="visual-number">03</span>
+        </div>
+        <div class="card-body">
+          <div class="card-category">Interaction</div>
+          <div class="card-heading">Dynamic Tension</div>
+          <div class="card-text">Skew angles create visual tension that resolves on hover — engaging the viewer's sense of anticipation and release.</div>
+        </div>
+        <div class="accent-bar"></div>
+      </div>
+
+      <div class="skew-card" data-skew-card>
+        <div class="card-visual">
+          <div class="visual-bg bg-gradient-4"></div>
+          <div class="visual-overlay"></div>
+          <span class="visual-number">04</span>
+        </div>
+        <div class="card-body">
+          <div class="card-category">Typography</div>
+          <div class="card-heading">Warped Text</div>
+          <div class="card-text">Headings that skew independently from their containers create playful, energetic layouts that break from rigid grids.</div>
+        </div>
+        <div class="accent-bar"></div>
+      </div>
+
+      <div class="skew-card" data-skew-card>
+        <div class="card-visual">
+          <div class="visual-bg bg-gradient-5"></div>
+          <div class="visual-overlay"></div>
+          <span class="visual-number">05</span>
+        </div>
+        <div class="card-body">
+          <div class="card-category">Depth</div>
+          <div class="card-heading">3D Perspective</div>
+          <div class="card-text">Combined with CSS perspective, skew transforms place elements in true 3D space, adding believable physicality.</div>
+        </div>
+        <div class="accent-bar"></div>
+      </div>
+
+      <div class="skew-card" data-skew-card>
+        <div class="card-visual">
+          <div class="visual-bg bg-gradient-6"></div>
+          <div class="visual-overlay"></div>
+          <span class="visual-number">06</span>
+        </div>
+        <div class="card-body">
+          <div class="card-category">Flow</div>
+          <div class="card-heading">Organic Motion</div>
+          <div class="card-text">Easing curves modeled after natural motion give the skew animations an organic, physically convincing quality.</div>
+        </div>
+        <div class="accent-bar"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skewed Gallery -->
+  <section class="gallery-section">
+    <span class="section-label">Gallery</span>
+    <h2 class="section-title">Perspective <span>Gallery</span></h2>
+
+    <div class="skew-gallery">
+      <div class="gallery-item" data-skew-gallery>
+        <div class="gallery-bg" style="background: linear-gradient(135deg, #1a0a2e, #e94560);"></div>
+        <div class="gallery-content">
+          <span class="tag">Collection</span>
+          <h3>Neon Geometry</h3>
+        </div>
+      </div>
+      <div class="gallery-item" data-skew-gallery>
+        <div class="gallery-bg" style="background: linear-gradient(135deg, #0a1e2e, #00d2ff);"></div>
+        <div class="gallery-content">
+          <span class="tag">Series</span>
+          <h3>Deep Ocean</h3>
+        </div>
+      </div>
+      <div class="gallery-item" data-skew-gallery>
+        <div class="gallery-bg" style="background: linear-gradient(135deg, #0a2e1a, #14b8a6);"></div>
+        <div class="gallery-content">
+          <span class="tag">Archive</span>
+          <h3>Emerald Forest</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Diagonal Section -->
+  <section class="diagonal-section">
+    <div class="diagonal-inner">
+      <h2>Diagonal <span class="inline-skew">Impact</span></h2>
+      <p>Skew transforms aren't limited to hover states. Entire sections can be clipped and skewed to create dynamic, non-rectangular layouts that feel dynamic and modern.</p>
+
+      <div class="skew-rows">
+        <div class="skew-row">
+          <span class="row-num">01</span>
+          <span class="row-title">CSS Perspective Transform</span>
+          <span class="row-tag">Core</span>
+        </div>
+        <div class="skew-row">
+          <span class="row-num">02</span>
+          <span class="row-title">Mouse-Driven Rotation</span>
+          <span class="row-tag">Interactive</span>
+        </div>
+        <div class="skew-row">
+          <span class="row-num">03</span>
+          <span class="row-title">Cubic Bezier Easing</span>
+          <span class="row-tag">Motion</span>
+        </div>
+        <div class="skew-row">
+          <span class="row-num">04</span>
+          <span class="row-title">GPU-Accelerated Compositing</span>
+          <span class="row-tag">Perf</span>
+        </div>
+        <div class="skew-row">
+          <span class="row-num">05</span>
+          <span class="row-title">Preserve-3d Rendering</span>
+          <span class="row-tag">Depth</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Skew Card: Mouse-driven 3D tilt ──
+  const skewCards = document.querySelectorAll('[data-skew-card]');
+
+  skewCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = -((y - centerY) / centerY) * 8;
+      const rotateY = ((x - centerX) / centerX) * 8;
+      const skewX = ((x - centerX) / centerX) * 3;
+
+      card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) skewX(${skewX}deg)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) skewX(0deg)';
+    });
+  });
+
+  // ── Gallery: Mouse-driven skew ──
+  const galleryItems = document.querySelectorAll('[data-skew-gallery]');
+
+  galleryItems.forEach(item => {
+    item.addEventListener('mousemove', (e) => {
+      const rect = item.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+
+      const rx = -((y - cy) / cy) * 6;
+      const ry = ((x - cx) / cx) * 10;
+      const sk = ((x - cx) / cx) * 5;
+
+      item.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) skewX(${sk}deg) scale(1.03)`;
+    });
+
+    item.addEventListener('mouseleave', () => {
+      item.style.transform = 'perspective(600px) rotateX(0) rotateY(0) skewX(0) scale(1)';
+    });
+  });
+
+  // ── Hero words: Enhanced hover with scale ──
+  const skewWords = document.querySelectorAll('.skew-word');
+  skewWords.forEach(word => {
+    word.addEventListener('mouseenter', () => {
+      word.style.transform = 'skewX(-8deg) skewY(2deg) scale(1.08)';
+    });
+    word.addEventListener('mouseleave', () => {
+      word.style.transform = '';
+    });
+  });
+})();
+</script>
+</body>
+</html>

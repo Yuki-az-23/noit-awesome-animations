@@ -1,0 +1,375 @@
+<!--
+  image-reveal-hover.html
+  Image Reveal Hover Effects — Pure CSS + Vanilla JS
+  Images reveal with mask/clip-path on hover. Showcases circle expand,
+  diagonal wipe, horizontal slide, and more reveal types.
+  No external libraries.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Reveal Hover Animations</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    text-align: center;
+    padding: 60px 20px 20px;
+  }
+  .page-header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .page-header p {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .reveal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 44px;
+    max-width: 1100px;
+    margin: 50px auto 80px;
+    padding: 0 24px;
+  }
+
+  /* Shared card base */
+  .reveal-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .reveal-card .card-label {
+    position: absolute;
+    bottom: 16px;
+    left: 18px;
+    z-index: 10;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(15,15,26,0.75);
+    backdrop-filter: blur(8px);
+    padding: 5px 14px;
+    border-radius: 8px;
+  }
+
+  .reveal-card .card-overlay-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    text-align: center;
+  }
+  .reveal-card:hover .card-overlay-text {
+    opacity: 1;
+  }
+  .card-overlay-text h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .card-overlay-text span {
+    font-size: 0.88rem;
+    color: var(--color-muted);
+  }
+
+  /* Placeholder image using gradients */
+  .reveal-card .img-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .reveal-card .reveal-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    transition: all 0.65s cubic-bezier(.23,1,.32,1);
+  }
+
+  .reveal-card .reveal-mask {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    transition: all 0.65s cubic-bezier(.23,1,.32,1);
+  }
+
+  /* ============ EFFECT 1: Circle Expand ============ */
+  .reveal-circle .reveal-mask {
+    background: var(--color-surface);
+    clip-path: circle(100% at 50% 50%);
+    transition: clip-path 0.6s cubic-bezier(.23,1,.32,1), background 0.6s ease;
+  }
+  .reveal-circle:hover .reveal-mask {
+    clip-path: circle(0% at 50% 50%);
+  }
+  .reveal-circle .reveal-layer {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    clip-path: circle(100% at 50% 50%);
+    opacity: 0;
+  }
+  .reveal-circle:hover .reveal-layer {
+    clip-path: circle(0% at 50% 50%);
+    opacity: 0;
+  }
+
+  /* ============ EFFECT 2: Circle Expand from Cursor ============ */
+  .reveal-circle-cursor .reveal-mask {
+    background: var(--color-surface);
+    clip-path: circle(100%);
+    transition: clip-path 0.6s cubic-bezier(.23,1,.32,1);
+  }
+
+  /* ============ EFFECT 3: Diagonal Wipe ============ */
+  .reveal-diagonal .reveal-mask {
+    background: var(--color-surface);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transition: clip-path 0.65s cubic-bezier(.77,0,.18,1);
+  }
+  .reveal-diagonal:hover .reveal-mask {
+    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+  }
+
+  /* ============ EFFECT 4: Horizontal Slide ============ */
+  .reveal-horizontal .reveal-mask {
+    background: var(--color-surface);
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 0.6s cubic-bezier(.77,0,.18,1);
+  }
+  .reveal-horizontal:hover .reveal-mask {
+    clip-path: inset(0 0 0 100%);
+  }
+
+  /* ============ EFFECT 5: Vertical Blinds ============ */
+  .reveal-blinds .reveal-mask {
+    background: var(--color-surface);
+    clip-path: polygon(
+      0% 0, 16.6% 0, 16.6% 100%, 33.2% 100%, 33.2% 0, 49.8% 0,
+      49.8% 100%, 66.4% 100%, 66.4% 0, 83% 0, 83% 100%, 100% 100%,
+      100% 0, 83% 0, 83% 100%, 66.4% 100%, 66.4% 0, 49.8% 0,
+      49.8% 100%, 33.2% 100%, 33.2% 0, 16.6% 0, 16.6% 100%, 0% 100%
+    );
+  }
+
+  /* ============ EFFECT 6: Diamond Expand ============ */
+  .reveal-diamond .reveal-mask {
+    background: var(--color-surface);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    transition: clip-path 0.6s cubic-bezier(.23,1,.32,1);
+  }
+  .reveal-diamond:hover .reveal-mask {
+    clip-path: polygon(50% -50%, 150% 50%, 50% 150%, -50% 50%);
+  }
+
+  /* Placeholder backgrounds */
+  .img-bg1 { background: linear-gradient(135deg, #e94560 0%, #533483 50%, #0f3460 100%); }
+  .img-bg2 { background: linear-gradient(135deg, #00b4d8, #0077b6); }
+  .img-bg3 { background: linear-gradient(135deg, #f77f00, #e36414); }
+  .img-bg4 { background: linear-gradient(135deg, #2ec4b6, #1a936f); }
+  .img-bg5 { background: linear-gradient(135deg, #e94560, #ff6b6b); }
+  .img-bg6 { background: linear-gradient(135deg, #533483, #9b59b6); }
+
+  /* Decorative SVG shapes inside placeholders */
+  .img-placeholder svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Image Reveal Hover</h1>
+  <p>Hover over each card to see different clip-path mask reveal animations — circle expand, diagonal wipe, horizontal slide and more.</p>
+</header>
+
+<div class="reveal-grid">
+
+  <!-- 1 — Circle Expand -->
+  <div class="reveal-card reveal-circle">
+    <div class="img-placeholder img-bg1">
+      <svg viewBox="0 0 400 300"><circle cx="200" cy="150" r="80" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="200" cy="150" r="50" fill="none" stroke="#fff" stroke-width="1"/><line x1="120" y1="150" x2="280" y2="150" stroke="#fff" stroke-width=".7"/><line x1="200" y1="70" x2="200" y2="230" stroke="#fff" stroke-width=".7"/></svg>
+    </div>
+    <div class="reveal-mask"></div>
+    <div class="card-overlay-text"><h3>Circle Expand</h3><span>Symmetrical reveal from center</span></div>
+    <div class="card-label">Circle Expand</div>
+  </div>
+
+  <!-- 2 — Circle Expand from Cursor (JS-powered) -->
+  <div class="reveal-card reveal-circle-cursor" data-circle-cursor>
+    <div class="img-placeholder img-bg2">
+      <svg viewBox="0 0 400 300"><polygon points="200,40 350,250 50,250" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="200" cy="180" r="30" fill="none" stroke="#fff" stroke-width="1"/></svg>
+    </div>
+    <div class="reveal-mask"></div>
+    <div class="card-overlay-text"><h3>Circle Cursor</h3><span>Reveal follows your cursor</span></div>
+    <div class="card-label">Circle from Cursor</div>
+  </div>
+
+  <!-- 3 — Diagonal Wipe -->
+  <div class="reveal-card reveal-diagonal">
+    <div class="img-placeholder img-bg3">
+      <svg viewBox="0 0 400 300"><rect x="60" y="60" width="280" height="180" rx="12" fill="none" stroke="#fff" stroke-width="1.5"/><line x1="60" y1="60" x2="340" y2="240" stroke="#fff" stroke-width=".7"/><line x1="340" y1="60" x2="60" y2="240" stroke="#fff" stroke-width=".7"/></svg>
+    </div>
+    <div class="reveal-mask"></div>
+    <div class="card-overlay-text"><h3>Diagonal Wipe</h3><span>Corner-to-corner sliding reveal</span></div>
+    <div class="card-label">Diagonal Wipe</div>
+  </div>
+
+  <!-- 4 — Horizontal Slide -->
+  <div class="reveal-card reveal-horizontal">
+    <div class="img-placeholder img-bg4">
+      <svg viewBox="0 0 400 300"><circle cx="140" cy="100" r="40" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="260" cy="100" r="40" fill="none" stroke="#fff" stroke-width="1.5"/><rect x="100" y="170" width="200" height="8" rx="4" fill="rgba(255,255,255,0.4)"/></svg>
+    </div>
+    <div class="reveal-mask"></div>
+    <div class="card-overlay-text"><h3>Horizontal Slide</h3><span>Side wipe reveal effect</span></div>
+    <div class="card-label">Horizontal Slide</div>
+  </div>
+
+  <!-- 5 — Vertical Blinds -->
+  <div class="reveal-card reveal-blinds" data-blinds>
+    <div class="img-placeholder img-bg5">
+      <svg viewBox="0 0 400 300"><path d="M200 40 L350 150 L200 260 L50 150 Z" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="200" cy="150" r="30" fill="none" stroke="#fff" stroke-width="1"/></svg>
+    </div>
+    <div class="reveal-mask"></div>
+    <div class="card-overlay-text"><h3>Blinds Reveal</h3><span>Strip-by-strip unveil</span></div>
+    <div class="card-label">Vertical Blinds</div>
+  </div>
+
+  <!-- 6 — Diamond Expand -->
+  <div class="reveal-card reveal-diamond">
+    <div class="img-placeholder img-bg6">
+      <svg viewBox="0 0 400 300"><rect x="100" y="50" width="200" height="200" rx="20" fill="none" stroke="#fff" stroke-width="1.5" transform="rotate(45 200 150)"/></svg>
+    </div>
+    <div class="reveal-mask"></div>
+    <div class="card-overlay-text"><h3>Diamond Expand</h3><span>Rhombus-shaped growing mask</span></div>
+    <div class="card-label">Diamond Expand</div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---- Circle-from-cursor effect ---- */
+  document.querySelectorAll('[data-circle-cursor]').forEach(function (card) {
+    var mask = card.querySelector('.reveal-mask');
+    var maxSize = 0;
+
+    card.addEventListener('mouseenter', function () {
+      var r = card.getBoundingClientRect();
+      maxSize = Math.max(r.width, r.height) * 1.5;
+    });
+
+    card.addEventListener('mousemove', function (e) {
+      var r = card.getBoundingClientRect();
+      var x = e.clientX - r.left;
+      var y = e.clientY - r.top;
+      mask.style.clipPath =
+        'circle(' + maxSize + 'px at ' + x + 'px ' + y + 'px)';
+    });
+
+    card.addEventListener('mouseleave', function () {
+      var r = card.getBoundingClientRect();
+      mask.style.transition = 'clip-path 0.5s cubic-bezier(.23,1,.32,1)';
+      mask.style.clipPath = 'circle(100%)';
+      setTimeout(function () { mask.style.transition = ''; }, 500);
+    });
+  });
+
+  /* ---- Blinds stagger effect (CSS-driven with JS generating keyframes) ---- */
+  var blindsCards = document.querySelectorAll('[data-blinds]');
+  blindsCards.forEach(function (card) {
+    var mask = card.querySelector('.reveal-mask');
+    var blinds = 6;
+    var openPolygon = [];
+    var closedPolygon = [];
+
+    for (var i = 0; i < blinds; i++) {
+      var x1 = (i / blinds * 100).toFixed(2);
+      var x2 = ((i + 1) / blinds * 100).toFixed(2);
+      // open = visible (thin sliver)
+      openPolygon.push(
+        x1 + '% 0', x2 + '% 0', x2 + '% 100%', x1 + '% 100%'
+      );
+    }
+
+    mask.style.clipPath = 'polygon(' + openPolygon.join(', ') + ')';
+    mask.style.transition = 'clip-path 0.7s cubic-bezier(.77,0,.18,1)';
+  });
+
+  /* Animate blinds open on hover */
+  blindsCards.forEach(function (card) {
+    var mask = card.querySelector('.reveal-mask');
+    var blinds = 6;
+    card.addEventListener('mouseenter', function () {
+      // Each blind shrinks to a hairline then disappears
+      var parts = [];
+      for (var i = 0; i < blinds; i++) {
+        var cx = ((i + 0.5) / blinds * 100).toFixed(2);
+        parts.push(cx + '% 0', cx + '% 0', cx + '% 100%', cx + '% 100%');
+      }
+      mask.style.clipPath = 'polygon(' + parts.join(', ') + ')';
+    });
+    card.addEventListener('mouseleave', function () {
+      var parts = [];
+      for (var i = 0; i < blinds; i++) {
+        var x1 = (i / blinds * 100).toFixed(2);
+        var x2 = ((i + 1) / blinds * 100).toFixed(2);
+        parts.push(x1 + '% 0', x2 + '% 0', x2 + '% 100%', x1 + '% 100%');
+      }
+      mask.style.clipPath = 'polygon(' + parts.join(', ') + ')';
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

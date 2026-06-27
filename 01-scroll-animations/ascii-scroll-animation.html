@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    ASCII Scroll Animation
+    Inspired by Awwwards "ASCII scroll triggered animation"
+    ASCII art characters that animate and transform on scroll.
+    Large text/font made of ASCII that changes/morphs as you scroll.
+    Retro terminal aesthetic. Pure CSS + Vanilla JS. No external dependencies.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASCII Scroll Animation</title>
+  <style>
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --color-green: #4ecca3;
+      --color-amber: #f5c542;
+      --color-cyan: #00d4ff;
+      --color-magenta: #e94560;
+      --terminal-green: #33ff33;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+      overflow-x: hidden;
+      line-height: 1.4;
+    }
+
+    /* ── Scanline overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.08) 2px,
+        rgba(0, 0, 0, 0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── CRT vignette ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(15, 15, 26, 0.6) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: var(--terminal-green);
+      box-shadow: 0 0 10px var(--terminal-green), 0 0 20px var(--terminal-green);
+      z-index: 10000;
+      transition: width 0.05s;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .ascii-hero-title {
+      font-size: clamp(0.4rem, 1.2vw, 0.85rem);
+      line-height: 1.2;
+      white-space: pre;
+      color: var(--terminal-green);
+      text-shadow: 0 0 8px rgba(51, 255, 51, 0.5);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ascii-hero-title.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero-caption {
+      margin-top: 2rem;
+      font-size: 0.85rem;
+      color: #5a6a80;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 1s 0.5s;
+    }
+
+    .hero-caption.visible { opacity: 1; }
+
+    .blink-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.1em;
+      background: var(--terminal-green);
+      margin-left: 4px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── ASCII Section ── */
+    .ascii-section {
+      min-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ascii-section-label {
+      font-size: 0.65rem;
+      color: #3a4a5e;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.8s;
+    }
+
+    .ascii-section-label.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .ascii-art {
+      font-size: clamp(0.25rem, 0.9vw, 0.7rem);
+      line-height: 1.15;
+      white-space: pre;
+      text-align: center;
+      letter-spacing: 0.05em;
+      position: relative;
+    }
+
+    .ascii-char {
+      display: inline-block;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transform: translateY(10px) scale(0.5);
+    }
+
+    .ascii-char.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .ascii-char.highlight {
+      color: var(--terminal-green);
+      text-shadow: 0 0 6px rgba(51, 255, 51, 0.4);
+    }
+
+    .ascii-char.primary {
+      color: var(--color-primary);
+      text-shadow: 0 0 6px rgba(233, 69, 96, 0.4);
+    }
+
+    .ascii-char.cyan {
+      color: var(--color-cyan);
+      text-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
+    }
+
+    .ascii-char.amber {
+      color: var(--color-amber);
+      text-shadow: 0 0 6px rgba(245, 197, 66, 0.4);
+    }
+
+    .ascii-morph-container {
+      position: relative;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Matrix Rain Background ── */
+    .matrix-rain {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.06;
+    }
+
+    .matrix-column {
+      position: absolute;
+      top: 0;
+      font-size: 12px;
+      line-height: 1;
+      color: var(--terminal-green);
+      animation: matrix-fall linear infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes matrix-fall {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+
+    /* ── Glitch Effect ── */
+    .glitch-text {
+      position: relative;
+      display: inline-block;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+    }
+
+    .glitch-text.glitching::before {
+      color: var(--color-cyan);
+      animation: glitch-1 0.3s linear;
+      opacity: 0.8;
+    }
+
+    .glitch-text.glitching::after {
+      color: var(--color-primary);
+      animation: glitch-2 0.3s linear;
+      opacity: 0.8;
+    }
+
+    @keyframes glitch-1 {
+      0% { clip-path: inset(20% 0 60% 0); transform: translate(-3px, 0); }
+      25% { clip-path: inset(50% 0 10% 0); transform: translate(3px, 0); }
+      50% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 0); }
+      75% { clip-path: inset(80% 0 5% 0); transform: translate(2px, 0); }
+      100% { clip-path: inset(40% 0 30% 0); transform: translate(0); }
+    }
+
+    @keyframes glitch-2 {
+      0% { clip-path: inset(70% 0 10% 0); transform: translate(3px, 0); }
+      25% { clip-path: inset(20% 0 60% 0); transform: translate(-3px, 0); }
+      50% { clip-path: inset(80% 0 5% 0); transform: translate(2px, 0); }
+      75% { clip-path: inset(10% 0 50% 0); transform: translate(-2px, 0); }
+      100% { clip-path: inset(40% 0 30% 0); transform: translate(0); }
+    }
+
+    /* ── Scroll indicator ── */
+    .scroll-indicator {
+      position: fixed;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .scroll-dot {
+      width: 8px;
+      height: 8px;
+      border: 1px solid #3a4a5e;
+      border-radius: 50%;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .scroll-dot.active {
+      background: var(--terminal-green);
+      border-color: var(--terminal-green);
+      box-shadow: 0 0 8px rgba(51, 255, 51, 0.4);
+    }
+
+    /* ── ASCII Border ── */
+    .ascii-border {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      color: #2a3a4e;
+      font-size: 0.5rem;
+      line-height: 1;
+      white-space: pre;
+      overflow: hidden;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      font-size: 0.65rem;
+      color: #3a4a5e;
+      z-index: 100;
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .stats-bar span {
+      color: var(--terminal-green);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 4rem 2rem;
+      font-size: 0.75rem;
+      color: #3a4a5e;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- Matrix Rain Background -->
+  <div class="matrix-rain" id="matrixRain"></div>
+
+  <!-- Scroll indicator -->
+  <div class="scroll-indicator" id="scrollIndicator">
+    <div class="scroll-dot active" data-section="0"></div>
+    <div class="scroll-dot" data-section="1"></div>
+    <div class="scroll-dot" data-section="2"></div>
+    <div class="scroll-dot" data-section="3"></div>
+    <div class="scroll-dot" data-section="4"></div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div>SCROLL: <span id="scrollPct">0%</span></div>
+    <div>CHARS: <span id="charCount">0</span></div>
+    <div>FRAME: <span id="frameCount">0</span></div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero" data-section-idx="0">
+    <div class="ascii-hero-title" id="heroASCII"></div>
+    <p class="hero-caption" id="heroCaption">scroll to begin transmission<span class="blink-cursor"></span></p>
+  </section>
+
+  <!-- Section 1: ASCII Face -->
+  <section class="ascii-section" data-section-idx="1">
+    <div class="ascii-section-label" data-anim>// figure_01 :: visage</div>
+    <div class="ascii-art" id="face1"></div>
+  </section>
+
+  <!-- Section 2: Morphing Skull → Flower -->
+  <div class="ascii-border" data-anim>
+ ═══════════════════════════════════════════════════════════════════
+  </div>
+
+  <section class="ascii-section" data-section-idx="2">
+    <div class="ascii-section-label" data-anim>// figure_02 :: morphosis</div>
+    <div class="ascii-morph-container" id="morphContainer">
+      <div class="ascii-art" id="morph1"></div>
+    </div>
+  </section>
+
+  <!-- Section 3: ASCII Landscape -->
+  <div class="ascii-border" data-anim>
+ ═══════════════════════════════════════════════════════════════════
+  </div>
+
+  <section class="ascii-section" data-section-idx="3">
+    <div class="ascii-section-label" data-anim>// figure_03 :: terrain</div>
+    <div class="ascii-art" id="landscape1"></div>
+  </section>
+
+  <!-- Section 4: ASCII Dragon -->
+  <div class="ascii-border" data-anim>
+ ═══════════════════════════════════════════════════════════════════
+  </div>
+
+  <section class="ascii-section" data-section-idx="4">
+    <div class="ascii-section-label" data-anim>// figure_04 :: leviathan</div>
+    <div class="ascii-art" id="dragon1"></div>
+  </section>
+
+  <footer class="footer">
+    <pre>┌─────────────────────────────────────┐
+│  end transmission_                    │
+│  ascii scroll animation — css + js    │
+└─────────────────────────────────────┘</pre>
+  </footer>
+
+  <script>
+    // ── ASCII Art Data ──
+    const heroArt = [
+      '     ██████╗ ██╗███╗   ██╗███████╗██████╗ ███████╗███████╗ ██████╗ ██████╗ ██╗   ██╗██╗',
+      '    ██╔════╝ ██║████╗  ██║██╔════╝██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔══██╗██║   ██║██║',
+      '    ██║  ███╗██║██╔██╗ ██║█████╗  ██████╔╝█████╗  ███████╗██║   ██║██████╔╝██║   ██║██║',
+      '    ██║   ██║██║██║╚██╗██║██╔══╝  ██╔══██╗██╔══╝  ╚════██║██║   ██║██╔═══╝ ██║   ██║██║',
+      '    ╚██████╔╝██║██║ ╚████║███████╗██║  ██║███████╗███████║╚██████╔╝██║     ╚██████╔╝██║',
+      '     ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝      ╚═════╝ ╚═╝',
+    ];
+
+    const faceASCII = [
+      '              ┌──────────────┐',
+      '             ╱                ╲',
+      '            ╱   ╭──────────╮   ╲',
+      '           ╱   ╱  ●    ●   ╲   ╲',
+      '          │   │    ──┿──    │   │',
+      '          │   │   ╲_____╱  │   │',
+      '           ╲   ╲           ╱   ╱',
+      '            ╲   ╲_________╱   ╱',
+      '             ╲                ╱',
+      '              └──────────────┘',
+      '                  ╲   ╱',
+      '                ───╲─╱───',
+      '              ╱  ╱ ╲╱ ╲  ╲',
+      '             ╱  ╱   │   ╲  ╲',
+      '            ╱  ╱    │    ╲  ╲',
+      '           ╱  ╱     │     ╲  ╲',
+      '          ╱_╱_______│_______╲_╲',
+    ];
+
+    const skullASCII = [
+      '          ░░░░░░░░░░░░░░░░░',
+      '       ░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░',
+      '     ░░▒▒████████████████▒▒░░',
+      '    ░▒▒████░░░░░░░░░░████▒▒░',
+      '   ░▒▒████░░██░░░░██░░████▒▒░',
+      '   ░▒▒████░░██░░░░██░░████▒▒░',
+      '   ░▒▒████░░░░░██░░░░░░████▒▒░',
+      '    ░▒▒████░░░░░░░░░░████▒▒░',
+      '     ░░▒▒██████████████▒▒░░',
+      '       ░░▒▒██░░░░░░██▒▒░░',
+      '         ░░░▒▒░░░░▒▒░░░',
+      '           ░░░░░░░░░',
+    ];
+
+    const flowerASCII = [
+      '             *,',
+      '           ,(((,*',
+      '         ,((((((((,,,',
+      '      ,,,*,,,,,,,,,,,,,,,,',
+      '    ,(((((///*******,      *,
+      '  ,((((///**,,,,,***,       *,',
+      '  (((//**,((//***,***        *,',
+      '  ((//**,((///**,****         *',
+      '   (///*((//////****          *',
+      '    *(///((((///****           *',
+      '        *((////*              *',
+      '             *                *',
+      '              *  .,,,.        *',
+      '               * ,(((((,,,   *',
+      '                 *((//***,   *',
+      '                   *(//,    *',
+      '                     *,    *',
+    ];
+
+    const landscapeASCII = [
+      '                    ╱╲',
+      '                   ╱  ╲          ╱╲',
+      '              ╱╲  ╱    ╲        ╱  ╲',
+      '             ╱  ╲╱      ╲     ╱    ╲',
+      '        ╱╲  ╱            ╲   ╱      ╲     ╱╲',
+      '       ╱  ╲╱              ╲ ╱        ╲   ╱  ╲',
+      '  ────╱                   ╲╱          ╲─╱    ╲───',
+      '  ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈',
+      '  ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈',
+      '     ☁        ☁              ☁              ☁',
+      '       ★           ★               ★',
+    ];
+
+    const dragonASCII = [
+      '                    __                  ',
+      '                   /  \\                 ',
+      '                  /    \\               ',
+      '           __    / /\\  \\     ____      ',
+      '          /  \\  / /  \\  \\   /    \\     ',
+      '     ____/    \\/ /    \\  \\_/      \\    ',
+      '    /          \\/      \\__         \\    ',
+      '   /     ▓▓▓▓           \\  ▓▓      \\   ',
+      '  /  ▓▓       ▓▓        \\  ▓▓   ___\\  ',
+      '  │  ▓▓  ●    ▓▓    ____/       /    \\  ',
+      '  │   ▓▓      ▓▓__/              \\    \\ ',
+      '  /          ___/   \\___      ___/     \\',
+      ' /__________/           \\____/          \\',
+      '             \\                 /         ',
+      '              \\_______________/          ',
+    ];
+
+    const sections = [heroArt, faceASCII, skullASCII, landscapeASCII, dragonASCII];
+
+    // ── Matrix Rain ──
+    const matrixRain = document.getElementById('matrixRain');
+    const chars = '01アイウエオカキクケコ█▓▒░╔╗╚╝║═';
+
+    for (let i = 0; i < 30; i++) {
+      const col = document.createElement('div');
+      col.className = 'matrix-column';
+      col.style.left = (Math.random() * 100) + '%';
+      col.style.animationDuration = (5 + Math.random() * 15) + 's';
+      col.style.animationDelay = (Math.random() * 5) + 's';
+      col.style.fontSize = (10 + Math.random() * 6) + 'px';
+
+      let text = '';
+      const length = 15 + Math.floor(Math.random() * 20);
+      for (let j = 0; j < length; j++) {
+        text += chars[Math.floor(Math.random() * chars.length)] + '\n';
+      }
+      col.textContent = text;
+      matrixRain.appendChild(col);
+    }
+
+    // ── Render ASCII as animated chars ──
+    function renderASCII(lines, containerId, colorClass = '') {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+      let charIndex = 0;
+
+      lines.forEach(line => {
+        const lineDiv = document.createElement('div');
+        for (let i = 0; i < line.length; i++) {
+          const span = document.createElement('span');
+          span.className = 'ascii-char' + (colorClass ? ' ' + colorClass : '');
+          span.textContent = line[i] === ' ' ? '\u00A0' : line[i];
+          span.dataset.delay = String(charIndex * 8);
+          lineDiv.appendChild(span);
+          charIndex++;
+        }
+        container.appendChild(lineDiv);
+      });
+    }
+
+    // ── Render hero ──
+    renderASCII(heroArt, 'heroASCII', 'highlight');
+
+    // ── Set up Intersection Observer for sections ──
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const label = entry.target.querySelector('.ascii-section-label, .ascii-border');
+          if (label) label.classList.add('visible');
+
+          const artContainer = entry.target.querySelector('.ascii-art');
+          if (artContainer && !artContainer.dataset.animated) {
+            artContainer.dataset.animated = 'true';
+            const chars = artContainer.querySelectorAll('.ascii-char');
+            chars.forEach((ch, i) => {
+              const delay = parseInt(ch.dataset.delay || '0', 10) || i * 5;
+              setTimeout(() => ch.classList.add('visible'), delay);
+            });
+          }
+
+          // Update scroll indicator
+          const idx = entry.target.dataset.sectionIdx;
+          if (idx !== undefined) {
+            document.querySelectorAll('.scroll-dot').forEach((dot, i) => {
+              dot.classList.toggle('active', i === parseInt(idx));
+            });
+          }
+        }
+      });
+    }, { rootMargin: '0px 0px -100px 0px', threshold: 0.1 });
+
+    // ── Scroll-morphing effect ──
+    let morphState = 0; // 0 = skull, 1 = flower
+    const morphContainer = document.getElementById('morphContainer');
+
+    function renderMorph(scrollPct) {
+      const container = document.getElementById('morph1');
+      if (!container) return;
+
+      // Determine which ASCII to show based on scroll
+      const skullLines = skullASCII;
+      const flowerLines = flowerASCII;
+
+      // Blend between skull and flower based on scroll position
+      const maxLines = Math.max(skullLines.length, flowerLines.length);
+
+      if (scrollPct < 0.5) {
+        if (!container.dataset.shown || container.dataset.shape !== 'skull') {
+          container.innerHTML = '';
+          container.dataset.shape = 'skull';
+          container.dataset.animated = '';
+          let ci = 0;
+          skullLines.forEach(line => {
+            const lineDiv = document.createElement('div');
+            for (let i = 0; i < line.length; i++) {
+              const span = document.createElement('span');
+              span.className = 'ascii-char primary';
+              span.textContent = line[i] === ' ' ? '\u00A0' : line[i];
+              span.dataset.delay = String(ci * 6);
+              lineDiv.appendChild(span);
+              ci++;
+            }
+            container.appendChild(lineDiv);
+          });
+        }
+      } else {
+        if (container.dataset.shape !== 'flower') {
+          container.innerHTML = '';
+          container.dataset.shape = 'flower';
+          container.dataset.animated = '';
+          let ci = 0;
+          flowerLines.forEach(line => {
+            const lineDiv = document.createElement('div');
+            for (let i = 0; i < line.length; i++) {
+              const span = document.createElement('span');
+              span.className = 'ascii-char cyan';
+              span.textContent = line[i] === ' ' ? '\u00A0' : line[i];
+              span.dataset.delay = String(ci * 6);
+              lineDiv.appendChild(span);
+              lineDiv.appendChild(span);
+              ci++;
+            }
+            container.appendChild(lineDiv);
+          });
+        }
+      }
+
+      // Animate chars in if not yet done
+      if (!container.dataset.animated) {
+        container.dataset.animated = 'true';
+        const chars = container.querySelectorAll('.ascii-char');
+        chars.forEach((ch, i) => {
+          const delay = parseInt(ch.dataset.delay || '0', 10) || i * 5;
+          setTimeout(() => ch.classList.add('visible'), delay);
+        });
+      }
+    }
+
+    // ── Initialize section ASCII ──
+    renderASCII(faceASCII, 'face1', '');
+    renderASCII(landscapeASCII, 'landscape1', 'amber');
+    renderASCII(dragonASCII, 'dragon1', 'primary');
+
+    // ── Observe all sections ──
+    document.querySelectorAll('.ascii-section, .ascii-border').forEach(el => {
+      sectionObserver.observe(el);
+    });
+
+    // ── Hero animation ──
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const heroEl = document.getElementById('heroASCII');
+        heroEl.classList.add('visible');
+        const chars = heroEl.querySelectorAll('.ascii-char');
+        chars.forEach((ch, i) => {
+          setTimeout(() => ch.classList.add('visible'), i * 15);
+        });
+      }, 200);
+
+      setTimeout(() => {
+        document.getElementById('heroCaption').classList.add('visible');
+      }, 800);
+    });
+
+    // ── Progress bar & stats ──
+    let frameNum = 0;
+
+    function updateScroll() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? scrollTop / docHeight : 0;
+
+      document.getElementById('progressBar').style.width = (pct * 100) + '%';
+      document.getElementById('scrollPct').textContent = Math.round(pct * 100) + '%';
+
+      // Morph effect
+      renderMorph(pct);
+
+      // Glitch effect at 25%, 50%, 75%
+      const glitchPts = [0.25, 0.5, 0.75];
+      glitchPts.forEach(gp => {
+        if (Math.abs(pct - gp) < 0.01) {
+          document.body.style.filter = 'hue-rotate(90deg)';
+          setTimeout(() => {
+            document.body.style.filter = 'none';
+          }, 100);
+        }
+      });
+    }
+
+    // ── Animate stats ──
+    function animateStats() {
+      frameNum++;
+      document.getElementById('frameCount').textContent = frameNum;
+
+      const visibleChars = document.querySelectorAll('.ascii-char.visible');
+      document.getElementById('charCount').textContent = visibleChars.length;
+
+      requestAnimationFrame(animateStats);
+    }
+
+    window.addEventListener('scroll', updateScroll, { passive: true });
+
+    // ── Scroll dot navigation ──
+    document.querySelectorAll('.scroll-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const idx = parseInt(dot.dataset.section);
+        const sections = document.querySelectorAll('.hero, .ascii-section');
+        if (sections[idx]) {
+          sections[idx].scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // ── Start ──
+    animateStats();
+    updateScroll();
+  </script>
+</body>
+</html>

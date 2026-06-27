@@ -1,0 +1,308 @@
+<!--
+  ============================================================
+  Toggle Switches – 8 Creative Toggle Animations
+  Part of: CSS+JS Animations Library / 13-micro-interactions
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Toggle Switches</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --color-bg:#0f0f1a;
+    --color-surface:#16213e;
+    --color-primary:#e94560;
+    --color-primary-light:#ff6b81;
+    --color-accent:#0f3460;
+    --color-text:#eaeaea;
+    --color-text-muted:#7f8c9b;
+    --color-success:#10b981;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--color-bg);color:var(--color-text);
+    min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;padding:40px 20px;
+  }
+  h1{
+    font-size:2rem;font-weight:700;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:8px;text-align:center;
+  }
+  .subtitle{color:var(--color-text-muted);font-size:.95rem;margin-bottom:40px;text-align:center}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:20px;max-width:720px;width:100%;
+  }
+  .card{
+    background:var(--color-surface);
+    border-radius:16px;padding:28px 24px;
+    display:flex;flex-direction:column;align-items:center;gap:18px;
+    box-shadow:0 4px 20px rgba(0,0,0,.3);
+    transition:transform .25s ease;
+  }
+  .card:hover{transform:translateY(-3px)}
+  .card-label{
+    font-size:.72rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--color-primary);opacity:.85;
+  }
+  .card-state{
+    font-size:.82rem;color:var(--color-text-muted);
+    font-weight:500;min-height:20px;
+    transition:color .3s ease;
+  }
+  .card-state.on{color:var(--color-success)}
+
+  /* ── Shared Toggle Base ── */
+  .toggle{
+    width:56px;height:30px;border-radius:30px;
+    background:var(--color-accent);position:relative;
+    cursor:pointer;-webkit-user-select:none;user-select:none;
+    transition:background .35s ease;
+  }
+  .toggle.on{background:var(--color-primary)}
+  .toggle .handle{
+    position:absolute;top:3px;left:3px;
+    width:24px;height:24px;border-radius:50%;
+    background:#fff;
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 2px 6px rgba(0,0,0,.3);
+  }
+  .toggle.on .handle{transform:translateX(26px)}
+
+  /* ── 1. Elastic Bounce ── */
+  .toggle--elastic .handle{
+    transition:transform .45s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toggle--elastic.on .handle{transform:translateX(26px) scaleX(1.1)}
+
+  /* ── 2. Fill Sweep ── */
+  .toggle--sweep{overflow:hidden}
+  .toggle--sweep .fill-bar{
+    position:absolute;top:0;left:0;height:100%;width:0%;
+    background:var(--color-primary);border-radius:30px;
+    transition:width .3s ease;
+  }
+  .toggle--sweep.on .fill-bar{width:100%}
+
+  /* ── 3. Morphing Handle ── */
+  .toggle--morph .handle{
+    border-radius:50%;
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1),
+               border-radius .3s ease,
+               width .3s ease,
+               height .3s ease;
+  }
+  .toggle--morph.on .handle{
+    transform:translateX(26px);
+    border-radius:8px;
+    width:26px;height:22px;
+    top:4px;
+  }
+
+  /* ── 4. Glow Toggle ── */
+  .toggle--glow{overflow:visible}
+  .toggle--glow .glow{
+    position:absolute;inset:-6px;
+    border-radius:36px;
+    background:var(--color-primary);
+    opacity:0;
+    transition:opacity .3s ease;
+    filter:blur(8px);
+    z-index:-1;
+  }
+  .toggle--glow.on .glow{opacity:.5}
+  .toggle--glow.on{box-shadow:0 0 16px rgba(233,69,96,.4)}
+
+  /* ── 5. Rotate Flip ── */
+  .toggle--rotate .handle{
+    transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toggle--rotate.on .handle{
+    transform:translateX(26px) rotateY(180deg);
+  }
+  .toggle--rotate .handle-inner{
+    width:100%;height:100%;border-radius:50%;
+    background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:14px;line-height:1;
+    transition:background .3s ease;
+  }
+  .toggle--rotate.on .handle-inner{background:var(--color-primary);color:#fff}
+
+  /* ── 6. Liquid Fill ── */
+  .toggle--liquid{overflow:hidden}
+  .toggle--liquid .liquid-wave{
+    position:absolute;bottom:0;left:0;
+    width:200%;height:100%;
+    background:var(--color-primary);
+    transform:translateX(-100%);
+    transition:transform .45s cubic-bezier(.4,0,.2,1);
+    border-radius:30px;
+  }
+  .toggle--liquid .liquid-wave::before{
+    content:'';position:absolute;top:-6px;left:0;
+    width:100%;height:12px;
+    border-radius:50%;
+    background:var(--color-primary);
+    opacity:.6;
+    animation:liquidWave 1.5s ease-in-out infinite;
+  }
+  @keyframes liquidWave{
+    0%,100%{transform:translateX(0)}
+    50%{transform:translateX(10px)}
+  }
+  .toggle--liquid.on .liquid-wave{transform:translateX(0)}
+  .toggle--liquid .handle{z-index:2;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+
+  /* ── 7. Dot Travel ── */
+  .toggle--dot{overflow:hidden}
+  .toggle--dot .dot-track{
+    position:absolute;top:50%;left:4px;right:4px;
+    height:3px;border-radius:3px;
+    background:rgba(255,255,255,.15);
+    transform:translateY(-50%);
+  }
+  .toggle--dot .handle{
+    width:20px;height:20px;top:5px;left:5px;
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1),
+               background .3s ease;
+  }
+  .toggle--dot.on .handle{
+    transform:translateX(27px);
+    background:var(--color-primary-light);
+  }
+
+  /* ── 8. Stretch Snap ── */
+  .toggle--stretch .handle{
+    transition:transform .3s cubic-bezier(.4,0,.2,1),
+               width .2s ease;
+  }
+  .toggle--stretch .handle.snapping{
+    width:32px;
+    transition:transform .15s ease, width .15s ease;
+  }
+  .toggle--stretch.on .handle{transform:translateX(20px)}
+  .toggle--stretch.on .handle.snapping{transform:translateX(16px)}
+</style>
+</head>
+<body>
+
+<h1>Creative Toggle Switches</h1>
+<p class="subtitle">8 unique toggle animations · Click to toggle</p>
+
+<div class="grid">
+  <!-- 1. Elastic Bounce -->
+  <div class="card">
+    <span class="card-label">1 · Elastic Bounce</span>
+    <div class="toggle toggle--elastic" data-idx="0">
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state0">OFF</span>
+  </div>
+
+  <!-- 2. Fill Sweep -->
+  <div class="card">
+    <span class="card-label">2 · Fill Sweep</span>
+    <div class="toggle toggle--sweep" data-idx="1">
+      <div class="fill-bar"></div>
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state1">OFF</span>
+  </div>
+
+  <!-- 3. Morphing Handle -->
+  <div class="card">
+    <span class="card-label">3 · Morphing Handle</span>
+    <div class="toggle toggle--morph" data-idx="2">
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state2">OFF</span>
+  </div>
+
+  <!-- 4. Glow Toggle -->
+  <div class="card">
+    <span class="card-label">4 · Glow Toggle</span>
+    <div class="toggle toggle--glow" data-idx="3">
+      <div class="glow"></div>
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state3">OFF</span>
+  </div>
+
+  <!-- 5. Rotate Flip -->
+  <div class="card">
+    <span class="card-label">5 · Rotate Flip</span>
+    <div class="toggle toggle--rotate" data-idx="4">
+      <div class="handle"><div class="handle-inner">✕</div></div>
+    </div>
+    <span class="card-state" id="state4">OFF</span>
+  </div>
+
+  <!-- 6. Liquid Fill -->
+  <div class="card">
+    <span class="card-label">6 · Liquid Fill</span>
+    <div class="toggle toggle--liquid" data-idx="5">
+      <div class="liquid-wave"></div>
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state5">OFF</span>
+  </div>
+
+  <!-- 7. Dot Travel -->
+  <div class="card">
+    <span class="card-label">7 · Dot Travel</span>
+    <div class="toggle toggle--dot" data-idx="6">
+      <div class="dot-track"></div>
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state6">OFF</span>
+  </div>
+
+  <!-- 8. Stretch Snap -->
+  <div class="card">
+    <span class="card-label">8 · Stretch Snap</span>
+    <div class="toggle toggle--stretch" data-idx="7">
+      <div class="handle"></div>
+    </div>
+    <span class="card-state" id="state7">OFF</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const toggles = document.querySelectorAll('.toggle');
+
+  toggles.forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const isOn = toggle.classList.toggle('on');
+      const idx = toggle.dataset.idx;
+      const stateEl = document.getElementById('state' + idx);
+      stateEl.textContent = isOn ? 'ON' : 'OFF';
+      stateEl.classList.toggle('on', isOn);
+
+      // Special: Rotate Flip icon
+      if(toggle.classList.contains('toggle--rotate')){
+        const inner = toggle.querySelector('.handle-inner');
+        inner.textContent = isOn ? '✓' : '✕';
+      }
+
+      // Special: Stretch Snap
+      if(toggle.classList.contains('toggle--stretch')){
+        const handle = toggle.querySelector('.handle');
+        handle.classList.add('snapping');
+        setTimeout(() => handle.classList.remove('snapping'), 200);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

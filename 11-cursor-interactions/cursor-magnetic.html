@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  CSS + JS Animation Library
+  File: cursor-magnetic.html
+  Category: 11 - Cursor Interactions
+  Description: Magnetic cursor effect — interactive elements
+               subtly pull toward the cursor within a radius.
+               Cursor itself changes size on hover.
+               At least 6 magnetic elements.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursor Magnetic Effect</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-secondary: #0f3460;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892b0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Custom Cursor ── */
+  .cursor-ring {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border: 2px solid rgba(233, 69, 96, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s ease,
+                background 0.3s ease;
+  }
+
+  .cursor-ring.hovering {
+    width: 70px;
+    height: 70px;
+    border-color: var(--color-primary);
+    background: rgba(233, 69, 96, 0.08);
+  }
+
+  .cursor-ring.clicking {
+    width: 30px;
+    height: 30px;
+    border-color: #fff;
+    background: rgba(233, 69, 96, 0.3);
+  }
+
+  .cursor-dot {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10001;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, background 0.3s ease;
+  }
+
+  .cursor-dot.hovering {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 80px 40px 30px;
+    text-align: center;
+  }
+
+  header h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b81, #f9d56e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+    letter-spacing: -1px;
+  }
+
+  header p {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Magnetic Container ── */
+  .magnetic-area {
+    padding: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+    display: block;
+  }
+
+  /* ── Magnetic Row (Buttons) ── */
+  .magnetic-row {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    padding: 30px 0;
+    flex-wrap: wrap;
+  }
+
+  .magnetic-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 36px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid var(--color-secondary);
+    border-radius: 50px;
+    background: transparent;
+    color: var(--color-text);
+    cursor: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform;
+  }
+
+  .magnetic-btn:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 24px rgba(233, 69, 96, 0.3);
+  }
+
+  .magnetic-btn.filled {
+    background: linear-gradient(135deg, var(--color-primary), #ff6b81);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .magnetic-btn.filled:hover {
+    box-shadow: 0 6px 30px rgba(233, 69, 96, 0.5);
+  }
+
+  .magnetic-btn.outline-secondary {
+    border-color: var(--color-accent);
+  }
+
+  .magnetic-btn.outline-secondary:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 4px 24px rgba(139, 92, 246, 0.3);
+  }
+
+  /* ── Magnetic Cards ── */
+  .magnetic-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 28px;
+    margin: 30px 0 50px;
+  }
+
+  .mag-card {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid rgba(233, 69, 96, 0.12);
+    border-radius: 18px;
+    padding: 36px 28px;
+    text-align: center;
+    cursor: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform;
+  }
+
+  .mag-card:hover {
+    border-color: rgba(233, 69, 96, 0.4);
+    box-shadow: 0 10px 40px rgba(233, 69, 96, 0.15);
+  }
+
+  .mag-card .card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .mag-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .mag-card p {
+    color: var(--color-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  /* ── Magnetic Links ── */
+  .magnetic-links {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    padding: 40px 0;
+    flex-wrap: wrap;
+  }
+
+  .mag-link {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: none;
+    position: relative;
+    transition: color 0.3s ease;
+    will-change: transform;
+  }
+
+  .mag-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--color-primary);
+    transition: width 0.3s ease;
+  }
+
+  .mag-link:hover {
+    color: var(--color-text);
+  }
+
+  .mag-link:hover::after {
+    width: 100%;
+  }
+
+  /* ── Magnetic Icons ── */
+  .magnetic-icons {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 40px 0;
+  }
+
+  .mag-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--color-surface);
+    border: 1px solid rgba(233, 69, 96, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    will-change: transform;
+  }
+
+  .mag-icon:hover {
+    border-color: var(--color-primary);
+    background: rgba(233, 69, 96, 0.08);
+    box-shadow: 0 6px 24px rgba(233, 69, 96, 0.25);
+  }
+
+  /* ── Magnetic Image Card ── */
+  .magnetic-showcase {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+    padding: 40px 0;
+    flex-wrap: wrap;
+  }
+
+  .mag-showcase-item {
+    width: 240px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--color-surface);
+    border: 1px solid rgba(233, 69, 96, 0.12);
+    cursor: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform;
+  }
+
+  .mag-showcase-item:hover {
+    border-color: rgba(233, 69, 96, 0.4);
+    box-shadow: 0 12px 40px rgba(233, 69, 96, 0.2);
+  }
+
+  .mag-showcase-item .img-placeholder {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+  }
+
+  .mag-showcase-item .mag-showcase-content {
+    padding: 20px;
+  }
+
+  .mag-showcase-item .mag-showcase-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .mag-showcase-item .mag-showcase-content p {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    line-height: 1.4;
+  }
+
+  /* ── CTA Section ── */
+  .cta-section {
+    padding: 60px 40px;
+    text-align: center;
+  }
+
+  .cta-section h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .cta-section p {
+    color: var(--color-muted);
+    margin-bottom: 30px;
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 40px;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<header>
+  <h1>Magnetic Cursor</h1>
+  <p>Elements attract toward your cursor within a magnetic radius. Move your mouse near the interactive elements below to watch them pull towards you.</p>
+</header>
+
+<div class="magnetic-area">
+
+  <!-- 1: Buttons -->
+  <span class="section-label">Magnetic Buttons</span>
+  <div class="magnetic-row">
+    <button class="magnetic-btn filled" data-magnetic data-strength="0.4">Get Started</button>
+    <button class="magnetic-btn" data-magnetic data-strength="0.35">Learn More</button>
+    <button class="magnetic-btn outline-secondary" data-magnetic data-strength="0.3">Contact Us</button>
+  </div>
+
+  <!-- 2: Cards -->
+  <span class="section-label">Magnetic Cards</span>
+  <div class="magnetic-cards">
+    <div class="mag-card" data-magnetic data-strength="0.25">
+      <span class="card-icon">⚡</span>
+      <h3>Lightning Fast</h3>
+      <p>Sub-60fps magnetic effects with GPU-accelerated transforms</p>
+    </div>
+    <div class="mag-card" data-magnetic data-strength="0.25">
+      <span class="card-icon">🎯</span>
+      <h3>Precision Target</h3>
+      <p>Calculated attraction radius with smooth easing curves</p>
+    </div>
+    <div class="mag-card" data-magnetic data-strength="0.25">
+      <span class="card-icon">🌊</span>
+      <h3>Fluid Motion</h3>
+      <p>Spring-based physics for natural-feeling interactions</p>
+    </div>
+    <div class="mag-card" data-magnetic data-strength="0.25">
+      <span class="card-icon">✨</span>
+      <h3>Glow Effect</h3>
+      <p>Dynamic border glow responds to cursor proximity</p>
+    </div>
+  </div>
+
+  <!-- 3: Navigation Links -->
+  <span class="section-label">Magnetic Navigation</span>
+  <div class="magnetic-links">
+    <a href="#" class="mag-link" data-magnetic data-strength="0.5">Home</a>
+    <a href="#" class="mag-link" data-magnetic data-strength="0.5">About</a>
+    <a href="#" class="mag-link" data-magnetic data-strength="0.5">Services</a>
+    <a href="#" class="mag-link" data-magnetic data-strength="0.5">Portfolio</a>
+    <a href="#" class="mag-link" data-magnetic data-strength="0.5">Blog</a>
+    <a href="#" class="mag-link" data-magnetic data-strength="0.5">Contact</a>
+  </div>
+
+  <!-- 4: Icon Buttons -->
+  <span class="section-label">Magnetic Icons</span>
+  <div class="magnetic-icons">
+    <div class="mag-icon" data-magnetic data-strength="0.5">✦</div>
+    <div class="mag-icon" data-magnetic data-strength="0.5">◈</div>
+    <div class="mag-icon" data-magnetic data-strength="0.5">⬡</div>
+    <div class="mag-icon" data-magnetic data-strength="0.5">◎</div>
+    <div class="mag-icon" data-magnetic data-strength="0.5">❖</div>
+    <div class="mag-icon" data-magnetic data-strength="0.5">◆</div>
+  </div>
+
+  <!-- 5: Showcase Cards -->
+  <span class="section-label">Magnetic Showcase</span>
+  <div class="magnetic-showcase">
+    <div class="mag-showcase-item" data-magnetic data-strength="0.2">
+      <div class="img-placeholder">🎨</div>
+      <div class="mag-showcase-content">
+        <h3>Design System</h3>
+        <p>Unified components with magnetic micro-interactions</p>
+      </div>
+    </div>
+    <div class="mag-showcase-item" data-magnetic data-strength="0.2">
+      <div class="img-placeholder">📐</div>
+      <div class="mag-showcase-content">
+        <h3>Layout Engine</h3>
+        <p>Adaptive grid with proximity-aware spacing</p>
+      </div>
+    </div>
+    <div class="mag-showcase-item" data-magnetic data-strength="0.2">
+      <div class="img-placeholder">🖥️</div>
+      <div class="mag-showcase-content">
+        <h3>Dashboard</h3>
+        <p>Real-time data with interactive controls</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6: CTA -->
+  <div class="cta-section">
+    <h2>Ready to Attract?</h2>
+    <p>Watch how the magnetic effect draws your attention to each element</p>
+    <button class="magnetic-btn filled" data-magnetic data-strength="0.45" style="font-size:1.1rem; padding: 20px 52px;">
+      Start Building →
+    </button>
+  </div>
+
+</div>
+
+<footer>Cursor Magnetic Effect — Pure CSS + Vanilla JS Animation Library</footer>
+
+<script>
+/* ============================================
+   Magnetic Cursor Effect — Main Script
+   Elements pull toward cursor within a radius.
+   Cursor size changes on hover over interactives.
+   ============================================ */
+
+// ── State ──
+const cursorRing = document.getElementById('cursorRing');
+const cursorDot = document.getElementById('cursorDot');
+let mouseX = -100, mouseY = -100;
+let ringX = -100, ringY = -100;
+let dotX = -100, dotY = -100;
+let isHovering = false;
+let isClicking = false;
+
+// ── Mouse Tracking ──
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+document.addEventListener('mousedown', () => {
+  isClicking = true;
+  cursorRing.classList.add('clicking');
+});
+
+document.addEventListener('mouseup', () => {
+  isClicking = false;
+  cursorRing.classList.remove('clicking');
+});
+
+// ── Magnetic Effect on Elements ──
+const magneticElements = document.querySelectorAll('[data-magnetic]');
+
+magneticElements.forEach(el => {
+  const strength = parseFloat(el.dataset.strength) || 0.3;
+  const radius = 150; // Magnetic field radius in px
+
+  // Store original position for smooth return
+  el._magState = { currentX: 0, currentY: 0, targetX: 0, targetY: 0 };
+
+  el.addEventListener('mousemove', (e) => {
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Distance from mouse to element center
+    const dx = e.clientX - centerX;
+    const dy = e.clientY - centerY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < radius) {
+      // Pull toward mouse — closer means stronger pull
+      const pull = (1 - dist / radius) * strength;
+      el._magState.targetX = dx * pull;
+      el._magState.targetY = dy * pull;
+    } else {
+      el._magState.targetX = 0;
+      el._magState.targetY = 0;
+    }
+  });
+
+  el.addEventListener('mouseleave', () => {
+    el._magState.targetX = 0;
+    el._magState.targetY = 0;
+  });
+});
+
+// ── Hover Detection for cursor ──
+const allInteractives = document.querySelectorAll(
+  '.magnetic-btn, .mag-card, .mag-link, .mag-icon, .mag-showcase-item, a, button'
+);
+
+allInteractives.forEach(el => {
+  el.addEventListener('mouseenter', () => { isHovering = true; });
+  el.addEventListener('mouseleave', () => { isHovering = false; });
+});
+
+// ── Animation Loop ──
+function animate() {
+  // Ring follows with heavy easing
+  ringX += (mouseX - ringX) * 0.12;
+  ringY += (mouseY - ringY) * 0.12;
+  cursorRing.style.left = ringX + 'px';
+  cursorRing.style.top = ringY + 'px';
+
+  // Dot follows faster
+  dotX += (mouseX - dotX) * 0.5;
+  dotY += (mouseY - dotY) * 0.5;
+  cursorDot.style.left = dotX + 'px';
+  cursorDot.style.top = dotY + 'px';
+
+  // Cursor hover state
+  if (isHovering) {
+    cursorRing.classList.add('hovering');
+    cursorDot.classList.add('hovering');
+  } else {
+    cursorRing.classList.remove('hovering');
+    cursorDot.classList.remove('hovering');
+  }
+
+  // Animate all magnetic elements toward their targets
+  magneticElements.forEach(el => {
+    const state = el._magState;
+    const ease = isClicking ? 0.08 : 0.15;
+
+    state.currentX += (state.targetX - state.currentX) * ease;
+    state.currentY += (state.targetY - state.currentY) * ease;
+
+    // Apply transform with a slight Z rotation for organic feel
+    const tiltX = state.currentY * 0.05;
+    const tiltY = -state.currentX * 0.05;
+    el.style.transform = `translate3d(${state.currentX}px, ${state.currentY}px, 0) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

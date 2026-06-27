@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome Transition – Cinematic Splash Screen</title>
+  <style>
+    /* ============================================
+       WELCOME TRANSITION – CINEMATIC SPLASH SCREEN
+       Full-screen intro that animates away with
+       staggered elements revealing content beneath
+       Pure CSS + vanilla JS – no dependencies
+       ============================================ */
+
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-primary-light: #ff6b81;
+      --color-accent: #0f3460;
+      --color-text: #eaeaea;
+      --color-text-muted: #8892b0;
+      --color-gold: #f9a826;
+      --font-display: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-display);
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    /* ==========================================
+       WELCOME / SPLASH SCREEN
+       ========================================== */
+    .welcome-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-bg);
+      overflow: hidden;
+    }
+
+    /* Animated background gradient */
+    .welcome-bg {
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 30% 20%, rgba(233, 69, 96, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(15, 52, 96, 0.3) 0%, transparent 50%),
+        var(--color-bg);
+      z-index: 0;
+    }
+
+    .welcome-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, transparent 0%, var(--color-bg) 70%);
+      opacity: 0.6;
+    }
+
+    /* Grid pattern overlay */
+    .welcome-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(233, 69, 96, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(233, 69, 96, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 1;
+      opacity: 0;
+      animation: gridFadeIn 1.5s ease 0.3s forwards;
+    }
+
+    @keyframes gridFadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Logo container */
+    .welcome-logo-wrap {
+      position: relative;
+      z-index: 10;
+      opacity: 0;
+      transform: scale(0.4);
+      animation: logoIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes logoIn {
+      0% { opacity: 0; transform: scale(0.4); }
+      60% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .welcome-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 20px 60px rgba(233, 69, 96, 0.3),
+        0 0 0 1px rgba(233, 69, 96, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .welcome-logo svg {
+      width: 56px;
+      height: 56px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    /* Logo glow ring */
+    .welcome-logo::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 34px;
+      border: 2px solid rgba(233, 69, 96, 0.3);
+      opacity: 0;
+      animation: ringPulse 2s ease-in-out 1.2s infinite;
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { opacity: 0; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* Brand name */
+    .welcome-brand {
+      margin-top: 2.5rem;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: textRevealUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+    }
+
+    @keyframes textRevealUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome-brand h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--color-text) 0%, var(--color-text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-tagline {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: taglineFade 0.8s ease 1.6s forwards;
+    }
+
+    @keyframes taglineFade {
+      to { opacity: 0.7; }
+    }
+
+    /* Decorative lines */
+    .welcome-line {
+      position: absolute;
+      z-index: 5;
+      background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.4), transparent);
+      height: 1px;
+      opacity: 0;
+    }
+
+    .welcome-line.line-left {
+      left: 0;
+      top: 50%;
+      width: 30%;
+      animation: lineExtendH 1s cubic-bezier(0.16, 1, 0.3, 1) 1s forwards;
+    }
+
+    .welcome-line.line-right {
+      right: 0;
+      top: 50%;
+      width: 30%;
+      animation: lineExtendH 1s cubic-bezier(0.16, 1, 0.3, 1) 1s forwards;
+    }
+
+    @keyframes lineExtendH {
+      from { opacity: 0; transform: scaleX(0); }
+      to { opacity: 1; transform: scaleX(1); }
+    }
+
+    /* Loading bar */
+    .welcome-loader {
+      position: absolute;
+      bottom: 15%;
+      width: 200px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+      z-index: 10;
+      opacity: 0;
+      animation: loaderAppear 0.5s ease 2s forwards;
+    }
+
+    @keyframes loaderAppear {
+      to { opacity: 1; }
+    }
+
+    .welcome-loader-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+
+    /* "Enter" hint */
+    .welcome-hint {
+      position: absolute;
+      bottom: 8%;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--color-text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      z-index: 10;
+      opacity: 0;
+      animation: hintBlink 1.5s ease-in-out 3.5s infinite;
+    }
+
+    @keyframes hintBlink {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Floating shapes on welcome screen */
+    .welcome-shape {
+      position: absolute;
+      z-index: 2;
+      opacity: 0;
+    }
+
+    .welcome-shape-1 {
+      top: 15%;
+      right: 12%;
+      width: 80px;
+      height: 80px;
+      border: 1.5px solid rgba(233, 69, 96, 0.2);
+      border-radius: 50%;
+      animation: shapeFloat1 6s ease-in-out 0.8s infinite, shapeAppear 1s ease 0.8s forwards;
+    }
+
+    .welcome-shape-2 {
+      bottom: 20%;
+      left: 8%;
+      width: 60px;
+      height: 60px;
+      border: 1.5px solid rgba(15, 52, 96, 0.5);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      animation: shapeFloat2 7s ease-in-out 1s infinite, shapeAppear 1s ease 1s forwards;
+    }
+
+    .welcome-shape-3 {
+      top: 35%;
+      left: 15%;
+      width: 40px;
+      height: 40px;
+      background: rgba(233, 69, 96, 0.08);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      animation: shapeFloat3 8s ease-in-out 1.2s infinite, shapeAppear 1s ease 1.2s forwards;
+    }
+
+    @keyframes shapeAppear {
+      to { opacity: 1; }
+    }
+
+    @keyframes shapeFloat1 {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(10deg); }
+    }
+
+    @keyframes shapeFloat2 {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(12px) rotate(-8deg); }
+    }
+
+    @keyframes shapeFloat3 {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(15deg); }
+    }
+
+    /* ==========================================
+       WELCOME EXIT ANIMATIONS
+       ========================================== */
+
+    /* Staggered layer exit */
+    .welcome-screen.exit-logo {
+      animation: exitLogo 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+    }
+
+    @keyframes exitLogo {
+      to { opacity: 0; transform: scale(1.2); }
+    }
+
+    .welcome-screen.exit-brand {
+      animation: exitBrand 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+    }
+
+    @keyframes exitBrand {
+      to { opacity: 0; transform: translateY(-40px); }
+    }
+
+    .welcome-screen.exit-fade {
+      pointer-events: none;
+    }
+
+    /* Split exit modes */
+    .welcome-screen.exit-split-h .welcome-split-top,
+    .welcome-screen.exit-split-h .welcome-split-bottom {
+      display: block;
+    }
+
+    .welcome-split-top,
+    .welcome-split-bottom {
+      display: none;
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      background: var(--color-bg);
+      z-index: 20;
+    }
+
+    .welcome-split-top { top: 0; }
+    .welcome-split-bottom { bottom: 0; }
+
+    /* ==========================================
+       CONTENT (BEHIND SPLASH)
+       ========================================== */
+    .content-page {
+      width: 100%;
+      height: 100%;
+      background: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .content-page.visible {
+      opacity: 1;
+    }
+
+    /* ---- Top header ---- */
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 3rem;
+      border-bottom: 1px solid rgba(233, 69, 96, 0.08);
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .content-page.visible .content-header {
+      transform: translateY(0);
+      opacity: 1;
+      transition-delay: 0.3s;
+    }
+
+    .content-logo-small {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .content-logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content-logo-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .content-logo-text {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .content-nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .content-nav a {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.3s;
+      cursor: pointer;
+    }
+
+    .content-nav a:hover {
+      color: var(--color-primary);
+    }
+
+    /* ---- Hero section ---- */
+    .content-hero {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      position: relative;
+    }
+
+    .hero-content {
+      text-align: center;
+      max-width: 700px;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .content-page.visible .hero-content {
+      transform: translateY(0);
+      opacity: 1;
+      transition-delay: 0.5s;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--color-primary);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-heading {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-heading span {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-text {
+      font-size: 1.15rem;
+      color: var(--color-text-muted);
+      line-height: 1.75;
+      max-width: 520px;
+      margin: 0 auto 2rem;
+    }
+
+    /* ---- Feature cards ---- */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      padding: 0 3rem 3rem;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .content-page.visible .feature-grid {
+      transform: translateY(0);
+      opacity: 1;
+      transition-delay: 0.7s;
+    }
+
+    .feature-card {
+      background: var(--color-surface);
+      border: 1px solid rgba(233, 69, 96, 0.08);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: default;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(233, 69, 96, 0.25);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--color-primary), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(233, 69, 96, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      font-size: 1.25rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    /* ---- Replay button ---- */
+    .replay-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 100;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--color-surface);
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      color: var(--color-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      outline: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .replay-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .replay-btn:hover {
+      background: var(--color-primary);
+      color: #fff;
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+    }
+
+    .replay-btn:focus-visible {
+      box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.4);
+    }
+
+    /* ---- Background elements on content ---- */
+    .content-bg-glow {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(233, 69, 96, 0.06), transparent 70%);
+      pointer-events: none;
+    }
+
+    .content-bg-glow.glow-1 {
+      top: -100px;
+      right: -100px;
+    }
+
+    .content-bg-glow.glow-2 {
+      bottom: -150px;
+      left: -100px;
+      background: radial-gradient(circle, rgba(15, 52, 96, 0.2), transparent 70%);
+    }
+
+    /* ==========================================
+       RESPONSIVE
+       ========================================== */
+    @media (max-width: 768px) {
+      .welcome-brand h1 { font-size: 2rem; }
+      .welcome-logo { width: 90px; height: 90px; border-radius: 22px; }
+      .welcome-logo svg { width: 42px; height: 42px; }
+      .feature-grid { grid-template-columns: 1fr; padding: 0 1.5rem 2rem; }
+      .content-header { padding: 1rem 1.5rem; }
+      .content-nav { gap: 1rem; }
+      .hero-heading { font-size: 2.2rem; }
+      .hero-text { font-size: 1rem; }
+      .content-hero { padding: 2rem 1.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .content-nav { display: none; }
+      .hero-heading { font-size: 1.8rem; }
+      .welcome-tagline { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       WELCOME / SPLASH SCREEN
+       ========================================== -->
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-bg"></div>
+    <div class="welcome-grid"></div>
+
+    <div class="welcome-split-top"></div>
+    <div class="welcome-split-bottom"></div>
+
+    <!-- Decorative shapes -->
+    <div class="welcome-shape welcome-shape-1"></div>
+    <div class="welcome-shape welcome-shape-2"></div>
+    <div class="welcome-shape welcome-shape-3"></div>
+
+    <!-- Decorative lines -->
+    <div class="welcome-line line-left"></div>
+    <div class="welcome-line line-right"></div>
+
+    <!-- Logo -->
+    <div class="welcome-logo-wrap">
+      <div class="welcome-logo">
+        <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M28 4L48 16V40L28 52L8 40V16L28 4Z" stroke="white" stroke-width="2" fill="none" opacity="0.9"/>
+          <path d="M28 16L38 22V34L28 40L18 34V22L28 16Z" fill="white" opacity="0.15"/>
+          <circle cx="28" cy="28" r="6" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+
+      <!-- Brand text -->
+      <div class="welcome-brand">
+        <h1>Vertex Studio</h1>
+      </div>
+      <div class="welcome-tagline">Design · Develop · Deliver</div>
+    </div>
+
+    <!-- Loading bar -->
+    <div class="welcome-loader">
+      <div class="welcome-loader-fill" id="loaderFill"></div>
+    </div>
+
+    <!-- Enter hint -->
+    <div class="welcome-hint" id="welcomeHint">Click anywhere to enter</div>
+  </div>
+
+  <!-- ==========================================
+       MAIN CONTENT (REVEALED AFTER TRANSITION)
+       ========================================== -->
+  <div class="content-page" id="contentPage">
+    <div class="content-bg-glow glow-1"></div>
+    <div class="content-bg-glow glow-2"></div>
+
+    <!-- Header -->
+    <header class="content-header">
+      <div class="content-logo-small">
+        <div class="content-logo-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 1L18 5.5V14.5L10 19L2 14.5V5.5L10 1Z" stroke="white" stroke-width="1.5" fill="none"/>
+            <circle cx="10" cy="10" r="2" fill="white"/>
+          </svg>
+        </div>
+        <div class="content-logo-text">Vertex</div>
+      </div>
+      <nav class="content-nav">
+        <a href="#" onclick="return false">Work</a>
+        <a href="#" onclick="return false">About</a>
+        <a href="#" onclick="return false">Process</a>
+        <a href="#" onclick="return false">Contact</a>
+      </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="content-hero">
+      <div class="hero-content">
+        <div class="hero-eyebrow">Welcome to the future</div>
+        <h2 class="hero-heading">Build experiences that <span>move people</span></h2>
+        <p class="hero-text">We craft digital experiences through motion, interaction, and purposeful design. Every pixel tells a story — every transition creates an emotional connection.</p>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">✦</div>
+        <h3>Motion Design</h3>
+        <p>Fluid transitions and micro-interactions that bring interfaces to life with purposeful elegance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <h3>Visual Systems</h3>
+        <p>Cohesive design systems built for scale, consistency, and delightful user experiences across every touchpoint.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⬡</div>
+        <h3>Interaction Craft</h3>
+        <p>Hand-tuned CSS and vanilla JS animations — lightweight, performant, and completely dependency-free.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Replay button -->
+  <button class="replay-btn" id="replayBtn" title="Replay intro" aria-label="Replay intro animation">
+    ↻
+  </button>
+
+  <script>
+    /* ============================================
+       WELCOME TRANSITION – JS ENGINE
+       Manages the cinematic splash sequence,
+       loading bar, and multi-phase exit animation
+       ============================================ */
+
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const contentPage = document.getElementById('contentPage');
+    const loaderFill = document.getElementById('loaderFill');
+    const welcomeHint = document.getElementById('welcomeHint');
+    const replayBtn = document.getElementById('replayBtn');
+
+    let hasEntered = false;
+    let loadingProgress = 0;
+    let loadingComplete = false;
+
+    /* ---- Simulated loading progress ---- */
+    function simulateLoading() {
+      const totalTime = 3000;
+      const steps = [
+        { target: 30, delay: 200 },
+        { target: 55, delay: 400 },
+        { target: 78, delay: 600 },
+        { target: 92, delay: 800 },
+        { target: 100, delay: 600 }
+      ];
+
+      let elapsed = 0;
+      let currentTargetIndex = 0;
+
+      function tick() {
+        if (currentTargetIndex >= steps.length) {
+          loadingComplete = true;
+          return;
+        }
+
+        const target = steps[currentTargetIndex].target;
+        const speed = 0.8 + Math.random() * 0.5;
+
+        if (loadingProgress < target) {
+          loadingProgress = Math.min(loadingProgress + speed, target);
+          loaderFill.style.width = loadingProgress + '%';
+
+          if (loadingProgress >= target) {
+            currentTargetIndex++;
+          }
+          requestAnimationFrame(tick);
+        } else {
+          currentTargetIndex++;
+          setTimeout(tick, steps[currentTargetIndex] ? steps[currentTargetIndex].delay : 0);
+        }
+      }
+
+      setTimeout(tick, 400);
+    }
+
+    /* ---- Enter sequence ---- */
+    function enterSite() {
+      if (hasEntered) return;
+      hasEntered = true;
+
+      /* Phase 1: Logo scales up (0ms) */
+      const logoWrap = document.querySelector('.welcome-logo-wrap');
+      logoWrap.style.transition = 'all 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+      logoWrap.style.opacity = '0';
+      logoWrap.style.transform = 'scale(1.3)';
+
+      /* Phase 2: Brand text slides up (200ms) */
+      setTimeout(() => {
+        const brand = document.querySelector('.welcome-brand');
+        const tagline = document.querySelector('.welcome-tagline');
+        if (brand) {
+          brand.style.transition = 'all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+          brand.style.opacity = '0';
+          brand.style.transform = 'translateY(-30px)';
+        }
+        if (tagline) {
+          tagline.style.transition = 'all 0.3s ease';
+          tagline.style.opacity = '0';
+        }
+      }, 200);
+
+      /* Phase 3: Shapes and lines fade (300ms) */
+      setTimeout(() => {
+        document.querySelectorAll('.welcome-shape').forEach(s => {
+          s.style.transition = 'opacity 0.3s ease';
+          s.style.opacity = '0';
+        });
+        document.querySelectorAll('.welcome-line').forEach(l => {
+          l.style.transition = 'opacity 0.3s ease';
+          l.style.opacity = '0';
+        });
+        welcomeHint.style.opacity = '0';
+      }, 300);
+
+      /* Phase 4: BG hides, loader hides (400ms) */
+      setTimeout(() => {
+        const loader = document.querySelector('.welcome-loader');
+        if (loader) {
+          loader.style.transition = 'opacity 0.3s ease';
+          loader.style.opacity = '0';
+        }
+      }, 400);
+
+      /* Phase 5: Split screen reveal (600ms) */
+      setTimeout(() => {
+        welcomeScreen.style.transition = 'none';
+        /* Use clip-path to create horizontal split */
+        const topHalf = document.querySelector('.welcome-split-top');
+        const bottomHalf = document.querySelector('.welcome-split-bottom');
+
+        topHalf.style.display = 'block';
+        bottomHalf.style.display = 'block';
+
+        requestAnimationFrame(() => {
+          topHalf.style.transition = 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)';
+          bottomHalf.style.transition = 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)';
+
+          topHalf.style.transform = 'translateY(-105%)';
+          bottomHalf.style.transform = 'translateY(105%)';
+        });
+
+        /* Show content behind */
+        contentPage.style.opacity = '1';
+        contentPage.classList.add('visible');
+
+        /* Phase 6: Clean up welcome screen (1500ms) */
+        setTimeout(() => {
+          welcomeScreen.style.display = 'none';
+          replayBtn.classList.add('visible');
+        }, 900);
+
+      }, 600);
+    }
+
+    /* ---- Replay function ---- */
+    function replayIntro() {
+      /* Reset everything */
+      hasEntered = false;
+      loadingProgress = 0;
+      loadingComplete = false;
+
+      welcomeScreen.style.display = '';
+      welcomeScreen.style.transition = '';
+      contentPage.classList.remove('visible');
+      contentPage.style.opacity = '0';
+      replayBtn.classList.remove('visible');
+
+      /* Reset logo */
+      const logoWrap = document.querySelector('.welcome-logo-wrap');
+      logoWrap.style.transition = '';
+      logoWrap.style.opacity = '';
+      logoWrap.style.transform = '';
+
+      /* Reset brand */
+      const brand = document.querySelector('.welcome-brand');
+      if (brand) { brand.style.transition = ''; brand.style.opacity = ''; brand.style.transform = ''; }
+
+      const tagline = document.querySelector('.welcome-tagline');
+      if (tagline) { tagline.style.transition = ''; tagline.style.opacity = ''; }
+
+      /* Reset shapes */
+      document.querySelectorAll('.welcome-shape').forEach(s => {
+        s.style.transition = '';
+        s.style.opacity = '';
+      });
+      document.querySelectorAll('.welcome-line').forEach(l => {
+        l.style.transition = '';
+        l.style.opacity = '';
+      });
+
+      /* Reset loader */
+      loaderFill.style.width = '0%';
+      const loader = document.querySelector('.welcome-loader');
+      if (loader) { loader.style.transition = ''; loader.style.opacity = ''; }
+
+      welcomeHint.style.transition = '';
+      welcomeHint.style.opacity = '';
+
+      /* Reset split panels */
+      const topHalf = document.querySelector('.welcome-split-top');
+      const bottomHalf = document.querySelector('.welcome-split-bottom');
+      topHalf.style.transition = '';
+      topHalf.style.transform = '';
+      topHalf.style.display = 'none';
+      bottomHalf.style.transition = '';
+      bottomHalf.style.transform = '';
+      bottomHalf.style.display = 'none';
+
+      /* Reset bg */
+      document.querySelector('.welcome-bg').style.transition = '';
+      document.querySelector('.welcome-bg').style.opacity = '';
+      document.querySelector('.welcome-grid').style.transition = '';
+      document.querySelector('.welcome-grid').style.opacity = '';
+
+      /* Remove and re-add the welcome screen to reset CSS animations */
+      const parent = welcomeScreen.parentNode;
+      const nextSibling = welcomeScreen.nextSibling;
+      parent.removeChild(welcomeScreen);
+      parent.insertBefore(welcomeScreen, nextSibling);
+
+      /* Restart loading */
+      simulateLoading();
+    }
+
+    /* ---- Event listeners ---- */
+    welcomeScreen.addEventListener('click', () => {
+      if (loadingComplete) {
+        enterSite();
+      } else {
+        /* Fast-forward loading */
+        loadingProgress = 100;
+        loaderFill.style.width = '100%';
+        loadingComplete = true;
+        setTimeout(enterSite, 300);
+      }
+    });
+
+    /* Keyboard fallback */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        if (!hasEntered) {
+          if (!loadingComplete) {
+            loadingProgress = 100;
+            loaderFill.style.width = '100%';
+            loadingComplete = true;
+          }
+          setTimeout(enterSite, 300);
+        }
+      }
+    });
+
+    replayBtn.addEventListener('click', replayIntro);
+
+    /* ---- Auto-enter after loading completes (5s total) ---- */
+    simulateLoading();
+
+    /* Auto-enter after a maximum wait */
+    setTimeout(() => {
+      if (!hasEntered) {
+        loadingProgress = 100;
+        loaderFill.style.width = '100%';
+        loadingComplete = true;
+        welcomeHint.textContent = 'Click to enter';
+      }
+    }, 3500);
+
+    /* Also allow enter as soon as loading completes */
+    const checkLoading = setInterval(() => {
+      if (loadingComplete && !hasEntered) {
+        welcomeHint.style.animation = 'none';
+        welcomeHint.style.opacity = '0.5';
+        /* Auto-enter after a short delay once loaded */
+        setTimeout(() => {
+          if (!hasEntered) enterSite();
+        }, 1500);
+        clearInterval(checkLoading);
+      }
+    }, 200);
+  </script>
+</body>
+</html>

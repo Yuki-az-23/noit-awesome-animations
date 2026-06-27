@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Hero Cinematic Animation
+  Inspired by "Portfolio of Constance Souville" animation.
+  Cinematic hero with layered elements: background gradient,
+  overlay text that types in character by character, floating
+  elements with parallax, and a smooth scroll-to-content trigger.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero Cinematic</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+    --color-warm: #ff6b35;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow-x: hidden;
+  }
+
+  /* ============ HERO SECTION ============ */
+  .hero {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Gradient background */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 80%, rgba(233, 69, 96, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(15, 52, 96, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(83, 52, 131, 0.1) 0%, transparent 70%),
+      linear-gradient(180deg, var(--color-bg) 0%, #0a0a15 100%);
+  }
+
+  /* Grain overlay */
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Floating parallax elements */
+  .float-element {
+    position: absolute;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .float-circle {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    border: 1px solid rgba(233, 69, 96, 0.15);
+    animation: floatCircle 15s ease-in-out infinite;
+  }
+
+  .float-ring {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 2px solid rgba(15, 52, 96, 0.3);
+    animation: floatRing 20s ease-in-out infinite;
+  }
+
+  .float-line {
+    width: 150px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(233,69,96,0.3), transparent);
+    transform: rotate(-30deg);
+    animation: floatLine 10s ease-in-out infinite;
+  }
+
+  .float-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    opacity: 0.4;
+  }
+
+  @keyframes floatCircle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-30px) rotate(5deg); }
+  }
+  @keyframes floatRing {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(20px) scale(1.05); }
+  }
+  @keyframes floatLine {
+    0%, 100% { transform: rotate(-30deg) translateX(0); }
+    50% { transform: rotate(-30deg) translateX(20px); }
+  }
+
+  /* Hero text content */
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 2rem;
+  }
+
+  /* Eyebrow / category label */
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    padding: 0.4rem 1.2rem;
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s ease 0.5s forwards;
+  }
+
+  /* Main title — typewriter reveal */
+  .hero-title {
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    position: relative;
+    min-height: 1.2em;
+  }
+
+  .hero-title .line {
+    display: block;
+    overflow: hidden;
+  }
+
+  .hero-title .word-inner {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: wordSlide 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .hero-title .line:nth-child(1) .word-inner { animation-delay: 0.8s; }
+  .hero-title .line:nth-child(2) .word-inner { animation-delay: 1.0s; }
+  .hero-title .line:nth-child(3) .word-inner { animation-delay: 1.2s; }
+
+  @keyframes wordSlide {
+    to { transform: translateY(0); }
+  }
+
+  /* Typewriter subtitle */
+  .hero-subtitle {
+    margin-top: 2rem;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: var(--color-muted);
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 3em;
+  }
+
+  .typewriter-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: var(--color-primary);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CTA buttons */
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 3rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 2.5s forwards;
+  }
+
+  .btn-primary {
+    padding: 0.9rem 2.5rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-warm));
+    color: white;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-primary:hover::after { width: 300px; height: 300px; }
+
+  .btn-secondary {
+    padding: 0.9rem 2.5rem;
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s, transform 0.3s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+  }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 3s forwards;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .scroll-indicator span {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .scroll-indicator .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(180deg, var(--color-primary), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; height: 40px; }
+    50% { opacity: 1; height: 55px; }
+  }
+
+  /* Side info */
+  .side-info {
+    position: absolute;
+    left: 2rem;
+    bottom: 3rem;
+    z-index: 10;
+    writing-mode: vertical-rl;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 3s forwards;
+  }
+
+  .side-number {
+    position: absolute;
+    right: 2rem;
+    bottom: 3rem;
+    z-index: 10;
+    font-size: 5rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.03);
+    line-height: 1;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 3.2s forwards;
+  }
+
+  /* ============ CONTENT BELOW ============ */
+  .content {
+    position: relative;
+    z-index: 5;
+    background: var(--color-bg);
+  }
+
+  .content-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 8rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    .content-section { grid-template-columns: 1fr; }
+  }
+
+  .content-visual {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, var(--color-surface), var(--color-accent));
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .content-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 60%, rgba(233,69,96,0.2), transparent 60%);
+  }
+
+  .content-visual .shimmer {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -50%; }
+    100% { left: 150%; }
+  }
+
+  .content-text h2 {
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--color-text), var(--color-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .content-text p {
+    color: var(--color-muted);
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  .content-text .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+  }
+
+  /* Fade-in on scroll */
+  .fade-in-section {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .fade-in-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-grain"></div>
+
+  <!-- Floating parallax elements -->
+  <div class="float-element float-circle" data-parallax="0.03" style="top: 10%; left: 8%;"></div>
+  <div class="float-element float-ring" data-parallax="0.05" style="top: 60%; right: 10%;"></div>
+  <div class="float-element float-line" data-parallax="0.04" style="top: 30%; right: 25%;"></div>
+  <div class="float-element float-dot" data-parallax="0.02" style="top: 20%; right: 40%;"></div>
+  <div class="float-element float-dot" data-parallax="0.06" style="bottom: 30%; left: 35%;"></div>
+  <div class="float-element float-circle" data-parallax="0.02" style="bottom: 15%; left: 15%; width:150px; height:150px;"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Creative Direction</div>
+    <h1 class="hero-title">
+      <span class="line"><span class="word-inner">Crafting</span></span>
+      <span class="line"><span class="word-inner">Digital</span></span>
+      <span class="line"><span class="word-inner" style="color: var(--color-primary);">Stories</span></span>
+    </h1>
+    <div class="hero-subtitle" id="heroSubtitle">
+      <span id="typewriterText"></span><span class="typewriter-cursor"></span>
+    </div>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="document.getElementById('content').scrollIntoView({behavior:'smooth'})">Explore Work</button>
+      <button class="btn-secondary">Get in Touch</button>
+    </div>
+  </div>
+
+  <div class="scroll-indicator" onclick="document.getElementById('content').scrollIntoView({behavior:'smooth'})">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+
+  <div class="side-info">Portfolio 2025</div>
+  <div class="side-number">01</div>
+</section>
+
+<!-- ============ CONTENT ============ -->
+<div class="content" id="content">
+  <div class="content-section fade-in-section">
+    <div class="content-visual">
+      <div class="shimmer"></div>
+    </div>
+    <div class="content-text">
+      <span class="tag">Design & Code</span>
+      <h2>Where Vision Meets Execution</h2>
+      <p>Every project begins with a story — ours is about pushing the boundaries between design and technology, creating experiences that move people and spark conversation.</p>
+    </div>
+  </div>
+
+  <div class="content-section fade-in-section" style="direction: rtl;">
+    <div class="content-visual">
+      <div class="shimmer" style="animation-delay: -1s;"></div>
+    </div>
+    <div class="content-text" style="direction: ltr;">
+      <span class="tag">Motion & Flow</span>
+      <h2>Pixels in Motion</h2>
+      <p>Animation isn't decoration — it's communication. Carefully crafted motion guides the eye, establishes hierarchy, and brings interfaces to life with purpose and precision.</p>
+    </div>
+  </div>
+
+  <div class="content-section fade-in-section">
+    <div class="content-visual">
+      <div class="shimmer" style="animation-delay: -2s;"></div>
+    </div>
+    <div class="content-text">
+      <span class="tag">Strategy & Impact</span>
+      <h2>Beyond Aesthetics</h2>
+      <p>Beautiful things that work. We bridge creativity and strategy, ensuring every visual decision serves a purpose and every interaction earns its place.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ======== Typewriter effect ========
+  const subtitleText = "We design experiences that captivate, inspire, and endure — moving beyond screens into emotions.";
+  const typewriterEl = document.getElementById('typewriterText');
+  let charIndex = 0;
+  let typeTimeout;
+
+  function typeChar() {
+    if (charIndex < subtitleText.length) {
+      typewriterEl.textContent += subtitleText[charIndex];
+      charIndex++;
+      typeTimeout = setTimeout(typeChar, 35 + Math.random() * 40);
+    }
+  }
+
+  // Start typing after hero title animation completes
+  setTimeout(typeChar, 1800);
+
+  // ======== Parallax on mouse move ========
+  const hero = document.getElementById('hero');
+  const floatEls = document.querySelectorAll('.float-element');
+
+  hero.addEventListener('mousemove', (e) => {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const dx = (e.clientX - cx) / cx;
+    const dy = (e.clientY - cy) / cy;
+
+    floatEls.forEach(el => {
+      const depth = parseFloat(el.dataset.parallax) || 0.03;
+      const moveX = dx * depth * 800;
+      const moveY = dy * depth * 800;
+      el.style.transform = `translate(${moveX}px, ${moveY}px) ${el.style.transform.includes('rotate') ? el.style.transform : ''}`;
+    });
+
+    // Subtle gradient shift
+    const heroBg = document.getElementById('heroBg');
+    const bgX = 50 + dx * 10;
+    const bgY = 50 + dy * 10;
+    heroBg.style.background = `
+      radial-gradient(ellipse at ${20 + dx * 15}% ${80 + dy * 10}%, rgba(233, 69, 96, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at ${80 - dx * 10}% ${20 + dy * 15}%, rgba(15, 52, 96, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at ${bgX}% ${bgY}%, rgba(83, 52, 131, 0.1) 0%, transparent 70%),
+      linear-gradient(180deg, #0f0f1a 0%, #0a0a15 100%)
+    `;
+  });
+
+  // ======== Scroll-based fade-in sections ========
+  const fadeSections = document.querySelectorAll('.fade-in-section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.2 });
+
+  fadeSections.forEach(section => observer.observe(section));
+
+  // ======== Parallax on scroll for hero ========
+  let scrollTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const heroHeight = hero.offsetHeight;
+        if (scrollY < heroHeight) {
+          const progress = scrollY / heroHeight;
+          hero.querySelector('.hero-content').style.transform = `translateY(${progress * 80}px)`;
+          hero.querySelector('.hero-content').style.opacity = 1 - progress * 1.2;
+          hero.querySelector('.side-number').style.transform = `translateY(${-scrollY * 0.3}px)`;
+        }
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>

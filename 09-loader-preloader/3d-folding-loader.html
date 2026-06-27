@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  3D Folding Loader
+  Inspired by Awwwards "3D Combined with 2D Animation"
+  and "3D Folding Layout Technique".
+  A loader that folds/unfolds in 3D like a box opening,
+  revealing the page underneath.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Folding Loader</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ============ PAGE CONTENT (behind loader) ============ */
+  .page-content {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    padding: 2rem;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+
+  .page-content.revealed { opacity: 1; }
+
+  .page-content h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--color-text), var(--color-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+
+  .page-content p {
+    font-size: 1.1rem;
+    color: var(--color-muted);
+    max-width: 500px;
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .page-content .btn {
+    padding: 0.8rem 2.5rem;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b35);
+    color: white;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .page-content .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 800px;
+    margin-top: 3rem;
+  }
+
+  .content-card {
+    background: var(--color-surface);
+    border-radius: 8px;
+    padding: 1.5rem;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .content-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(233,69,96,0.1), transparent);
+    border-radius: 50%;
+  }
+
+  .content-card .card-num {
+    font-size: 2rem;
+    font-weight: 900;
+    color: rgba(233,69,96,0.2);
+    position: absolute;
+    top: 0.5rem;
+    left: 0.8rem;
+  }
+
+  .content-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .content-card span {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+  }
+
+  /* ============ FOLDING LOADER ============ */
+  .loader-container {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    perspective: 1200px;
+    pointer-events: none;
+  }
+
+  /* Four folding panels */
+  .fold-panel {
+    position: absolute;
+    backface-visibility: hidden;
+    transform-origin: center center;
+    transition: transform 1.2s cubic-bezier(0.76, 0, 0.24, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Top panel */
+  .fold-top {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50vh;
+    transform-origin: top center;
+    background: linear-gradient(180deg, #1a1a2e 0%, var(--color-surface) 100%);
+  }
+
+  /* Bottom panel */
+  .fold-bottom {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50vh;
+    transform-origin: bottom center;
+    background: linear-gradient(0deg, #1a1a2e 0%, var(--color-surface) 100%);
+  }
+
+  /* Left panel */
+  .fold-left {
+    top: 0;
+    left: 0;
+    width: 50vw;
+    height: 100%;
+    transform-origin: left center;
+    background: linear-gradient(90deg, #1a1a2e 0%, var(--color-surface) 100%);
+  }
+
+  /* Right panel */
+  .fold-right {
+    top: 0;
+    right: 0;
+    width: 50vw;
+    height: 100%;
+    transform-origin: right center;
+    background: linear-gradient(270deg, #1a1a2e 0%, var(--color-surface) 100%);
+  }
+
+  /* Inner pattern for panels */
+  .fold-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Diagonal stripe pattern inside panels */
+  .fold-inner::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(233, 69, 96, 0.03) 40px,
+      rgba(233, 69, 96, 0.03) 42px
+    );
+  }
+
+  /* Progress ring inside loader */
+  .loader-center {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    transition: opacity 0.5s ease;
+  }
+
+  .loader-center.hidden { opacity: 0; pointer-events: none; }
+
+  .progress-ring-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+  }
+
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 3;
+    stroke-dasharray: 282.7;
+    stroke-dashoffset: 282.7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s ease;
+  }
+
+  .progress-ring-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.05);
+    stroke-width: 3;
+  }
+
+  .progress-percent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .loader-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* FOLD STATES - controlled by JS */
+  .fold-top.unfolded { transform: rotateX(-90deg); }
+  .fold-bottom.unfolded { transform: rotateX(90deg); }
+  .fold-left.unfolded { transform: rotateY(90deg); }
+  .fold-right.unfolded { transform: rotateY(-90deg); }
+
+  /* Corner accents */
+  .corner-accent {
+    position: fixed;
+    z-index: 150;
+    width: 40px;
+    height: 40px;
+    transition: opacity 0.5s, transform 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .corner-accent.tl { top: 20px; left: 20px; border-top: 2px solid var(--color-primary); border-left: 2px solid var(--color-primary); }
+  .corner-accent.tr { top: 20px; right: 20px; border-top: 2px solid var(--color-primary); border-right: 2px solid var(--color-primary); }
+  .corner-accent.bl { bottom: 20px; left: 20px; border-bottom: 2px solid var(--color-primary); border-left: 2px solid var(--color-primary); }
+  .corner-accent.br { bottom: 20px; right: 20px; border-bottom: 2px solid var(--color-primary); border-right: 2px solid var(--color-primary); }
+
+  .corner-accent.fade-out { opacity: 0; transform: scale(0.5); }
+
+  /* Replay button */
+  .replay-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 300;
+    padding: 0.6rem 1.5rem;
+    background: var(--color-surface);
+    color: var(--color-muted);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.5s, color 0.3s, border-color 0.3s;
+  }
+
+  .replay-btn.visible { opacity: 1; }
+  .replay-btn:hover { color: var(--color-primary); border-color: var(--color-primary); }
+</style>
+</head>
+<body>
+
+<!-- Page content (hidden behind loader) -->
+<div class="page-content" id="pageContent">
+  <h1>Welcome</h1>
+  <p>The fold has opened. Every first impression is a door — this one unfolds in three dimensions.</p>
+  <button class="btn">Explore Now</button>
+
+  <div class="content-grid">
+    <div class="content-card">
+      <div class="card-num">01</div>
+      <h3>Design</h3>
+      <span>Visual craft</span>
+    </div>
+    <div class="content-card">
+      <div class="card-num">02</div>
+      <h3>Motion</h3>
+      <span>Living interfaces</span>
+    </div>
+    <div class="content-card">
+      <div class="card-num">03</div>
+      <h3>Strategy</h3>
+      <span>Purposeful impact</span>
+    </div>
+  </div>
+</div>
+
+<!-- Corner accents -->
+<div class="corner-accent tl" id="cornerTL"></div>
+<div class="corner-accent tr" id="cornerTR"></div>
+<div class="corner-accent bl" id="cornerBL"></div>
+<div class="corner-accent br" id="cornerBR"></div>
+
+<!-- Loader center -->
+<div class="loader-center" id="loaderCenter">
+  <div class="progress-ring-container">
+    <svg class="progress-ring" width="100" height="100">
+      <circle class="progress-ring-bg" cx="50" cy="50" r="45"/>
+      <circle class="progress-ring-circle" id="progressCircle" cx="50" cy="50" r="45"/>
+    </svg>
+    <div class="progress-percent" id="progressPercent">0</div>
+  </div>
+  <div class="loader-label">Loading</div>
+</div>
+
+<!-- Folding panels -->
+<div class="loader-container" id="loaderContainer">
+  <div class="fold-panel fold-top" id="foldTop">
+    <div class="fold-inner"></div>
+  </div>
+  <div class="fold-panel fold-bottom" id="foldBottom">
+    <div class="fold-inner"></div>
+  </div>
+  <div class="fold-panel fold-left" id="foldLeft">
+    <div class="fold-inner"></div>
+  </div>
+  <div class="fold-panel fold-right" id="foldRight">
+    <div class="fold-inner"></div>
+  </div>
+</div>
+
+<button class="replay-btn" id="replayBtn" onclick="replayLoader()">Replay Animation</button>
+
+<script>
+(function() {
+  const progressCircle = document.getElementById('progressCircle');
+  const progressPercent = document.getElementById('progressPercent');
+  const loaderCenter = document.getElementById('loaderCenter');
+  const pageContent = document.getElementById('pageContent');
+
+  const foldTop = document.getElementById('foldTop');
+  const foldBottom = document.getElementById('foldBottom');
+  const foldLeft = document.getElementById('foldLeft');
+  const foldRight = document.getElementById('foldRight');
+
+  const cornerTL = document.getElementById('cornerTL');
+  const cornerTR = document.getElementById('cornerTR');
+  const cornerBL = document.getElementById('cornerBL');
+  const cornerBR = document.getElementById('cornerBR');
+  const replayBtn = document.getElementById('replayBtn');
+
+  const circumference = 2 * Math.PI * 45; // ~282.7
+  let progress = 0;
+
+  function setProgress(val) {
+    const offset = circumference - (val / 100) * circumference;
+    progressCircle.style.strokeDashoffset = offset;
+    progressPercent.textContent = Math.round(val);
+  }
+
+  function simulateLoading() {
+    progress = 0;
+    const duration = 3000; // 3 seconds
+    const startTime = Date.now();
+
+    function tick() {
+      const elapsed = Date.now() - startTime;
+      progress = Math.min((elapsed / duration) * 100, 100);
+
+      // Non-linear easing for realistic feel
+      const displayProgress = progress < 70
+        ? progress * 0.8
+        : 56 + (progress - 70) * (44 / 30);
+
+      setProgress(displayProgress);
+
+      if (progress < 100) {
+        requestAnimationFrame(tick);
+      } else {
+        setProgress(100);
+        setTimeout(unfoldAnimation, 400);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function unfoldAnimation() {
+    // Hide center
+    loaderCenter.classList.add('hidden');
+
+    // Phase 1: Fold side panels (delay between each)
+    setTimeout(() => { foldLeft.classList.add('unfolded'); }, 200);
+    setTimeout(() => { foldRight.classList.add('unfolded'); }, 400);
+
+    // Phase 2: Fold top and bottom
+    setTimeout(() => { foldTop.classList.add('unfolded'); }, 700);
+    setTimeout(() => { foldBottom.classList.add('unfolded'); }, 850);
+
+    // Phase 3: Corner accents fade
+    setTimeout(() => {
+      cornerTL.classList.add('fade-out');
+      cornerTR.classList.add('fade-out');
+      cornerBL.classList.add('fade-out');
+      cornerBR.classList.add('fade-out');
+    }, 900);
+
+    // Phase 4: Reveal content
+    setTimeout(() => {
+      pageContent.classList.add('revealed');
+      loaderCenter.style.display = 'none';
+      document.getElementById('loaderContainer').style.display = 'none';
+    }, 1800);
+
+    // Show replay
+    setTimeout(() => {
+      replayBtn.classList.add('visible');
+    }, 2200);
+  }
+
+  window.replayLoader = function() {
+    // Reset everything
+    progress = 0;
+    pageContent.classList.remove('revealed');
+    loaderCenter.classList.remove('hidden');
+    loaderCenter.style.display = '';
+    progressCircle.style.strokeDashoffset = circumference;
+    progressPercent.textContent = '0';
+
+    const container = document.getElementById('loaderContainer');
+    container.style.display = '';
+
+    foldTop.classList.remove('unfolded');
+    foldBottom.classList.remove('unfolded');
+    foldLeft.classList.remove('unfolded');
+    foldRight.classList.remove('unfolded');
+
+    cornerTL.classList.remove('fade-out');
+    cornerTR.classList.remove('fade-out');
+    cornerBL.classList.remove('fade-out');
+    cornerBR.classList.remove('fade-out');
+
+    replayBtn.classList.remove('visible');
+
+    // Force reflow
+    void container.offsetWidth;
+
+    setTimeout(simulateLoading, 300);
+  };
+
+  // Start
+  simulateLoading();
+})();
+</script>
+</body>
+</html>

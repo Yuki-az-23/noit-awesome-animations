@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    Marquee Scrolling Text
+    Inspired by "Scrolling Marquee Text" & "Background Animation, Cool Gradients and Scrolling Marquee Text"
+    Infinite scrolling marquee text bands with different speeds, directions, and gradient fills.
+    At least 4 rows of marquee with varied styles. Pure CSS + Vanilla JS. No external dependencies.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marquee Scrolling Text</title>
+  <style>
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ── Background gradient blobs ── */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+      z-index: -1;
+      animation: blob-drift 15s ease-in-out infinite alternate;
+    }
+
+    .bg-blob-1 {
+      width: 600px; height: 600px;
+      background: #e94560;
+      top: -10%; left: -10%;
+    }
+
+    .bg-blob-2 {
+      width: 500px; height: 500px;
+      background: #00d4ff;
+      bottom: -10%; right: -10%;
+      animation-delay: -5s;
+    }
+
+    .bg-blob-3 {
+      width: 400px; height: 400px;
+      background: #b829dd;
+      top: 40%; left: 50%;
+      animation-delay: -10s;
+    }
+
+    @keyframes blob-drift {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -20px) scale(1.1); }
+      66% { transform: translate(-20px, 30px) scale(0.9); }
+      100% { transform: translate(10px, -10px) scale(1.05); }
+    }
+
+    /* ── Hero Section ── */
+    .hero {
+      min-height: 40vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem 2rem;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: #4a5568;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 10vw, 8rem);
+      font-weight: 900;
+      line-height: 0.95;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+    }
+
+    .hero h1 .line-1 {
+      display: block;
+      background: linear-gradient(135deg, #e94560, #ff6b35, #ffe600);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero h1 .line-2 {
+      display: block;
+      background: linear-gradient(135deg, #00d4ff, #b829dd, #e94560);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      color: #5a6a80;
+      max-width: 500px;
+      line-height: 1.6;
+    }
+
+    /* ── Marquee Container ── */
+    .marquee-section {
+      padding: 1rem 0;
+      position: relative;
+    }
+
+    .marquee-section.hero-spacing {
+      margin-top: 2rem;
+    }
+
+    /* ── Single Marquee Row ── */
+    .marquee-row {
+      display: flex;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      py: 0.5rem;
+    }
+
+    .marquee-row::before,
+    .marquee-row::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .marquee-row::before {
+      left: 0;
+      background: linear-gradient(90deg, var(--color-bg), transparent);
+    }
+
+    .marquee-row::after {
+      right: 0;
+      background: linear-gradient(-90deg, var(--color-bg), transparent);
+    }
+
+    .marquee-track {
+      display: flex;
+      animation: marquee-scroll var(--duration, 30s) linear infinite;
+      animation-direction: var(--direction, normal);
+      will-change: transform;
+    }
+
+    .marquee-row:hover .marquee-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .marquee-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0 1.5rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Marquee Variants ── */
+    .marquee-lg .marquee-item {
+      font-size: clamp(2rem, 6vw, 5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    .marquee-md .marquee-item {
+      font-size: clamp(1.2rem, 3vw, 2.5rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .marquee-sm .marquee-item {
+      font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+
+    .marquee-xs .marquee-item {
+      font-size: clamp(0.75rem, 1.2vw, 1rem);
+      font-weight: 400;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Gradient Text Styles ── */
+    .text-fire {
+      background: linear-gradient(135deg, #e94560, #ff6b35, #ffe600);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .text-ocean {
+      background: linear-gradient(135deg, #00d4ff, #3a86ff, #b829dd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .text-aurora {
+      background: linear-gradient(135deg, #4ecca3, #00d4ff, #b829dd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .text-sunset {
+      background: linear-gradient(135deg, #ffe600, #ff6b35, #e94560);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .text-mint {
+      background: linear-gradient(135deg, #4ecca3, #3a86ff, #4ecca3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .text-muted {
+      color: #2a3a4e;
+      -webkit-text-fill-color: #2a3a4e;
+    }
+
+    .text-stroke {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 1px #3a4a5e;
+    }
+
+    /* ── Outline style ── */
+    .text-outline-fire {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 2px #e94560;
+    }
+
+    .text-outline-cyan {
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 2px #00d4ff;
+    }
+
+    /* ── Separator ── */
+    .marquee-separator {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 0.5rem;
+      color: #2a3a4e;
+      font-size: 0.6em;
+    }
+
+    .marquee-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 0.25rem;
+    }
+
+    /* ── Row background accents ── */
+    .marquee-row.row-highlight {
+      background: rgba(233, 69, 96, 0.03);
+    }
+
+    .marquee-row.row-dark {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* ── Section Dividers ── */
+    .marquee-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.2), transparent);
+      margin: 0.5rem 0;
+    }
+
+    /* ── Interactive Controls ── */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      padding: 0.6rem 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(22, 33, 62, 0.8);
+      color: #8892b0;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-radius: 6px;
+      backdrop-filter: blur(10px);
+    }
+
+    .ctrl-btn:hover, .ctrl-btn.active {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+    }
+
+    /* ── Speed indicator ── */
+    .speed-indicator {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.75rem;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .speed-indicator span {
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    /* ── Card marquee (different style) ── */
+    .card-marquee {
+      display: flex;
+      overflow: hidden;
+      gap: 1.5rem;
+      padding: 2rem 0;
+    }
+
+    .card-marquee-track {
+      display: flex;
+      gap: 1.5rem;
+      animation: marquee-scroll 40s linear infinite;
+      will-change: transform;
+    }
+
+    .mini-card {
+      flex-shrink: 0;
+      width: 280px;
+      padding: 1.5rem;
+      background: rgba(22, 33, 62, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+
+    .mini-card:hover {
+      border-color: rgba(233, 69, 96, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(233, 69, 96, 0.1);
+    }
+
+    .mini-card-title {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .mini-card-desc {
+      font-size: 0.8rem;
+      color: #5a6a80;
+      line-height: 1.5;
+    }
+
+    .mini-card-tag {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      background: rgba(233, 69, 96, 0.15);
+      color: var(--color-primary);
+      border-radius: 4px;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #3a4a5e;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+  <div class="bg-blob bg-blob-3"></div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-eyebrow">Infinite Scroll Typography</div>
+    <h1>
+      <span class="line-1">Marquee</span>
+      <span class="line-2">Scroll</span>
+    </h1>
+    <p class="hero-desc">Infinite scrolling text bands with varied speeds, directions, and gradient fills. Hover to pause any row.</p>
+  </header>
+
+  <!-- Marquee Row 1: Large Fire Gradient -->
+  <section class="marquee-section hero-spacing">
+    <div class="marquee-row marquee-lg row-highlight">
+      <div class="marquee-track" style="--duration: 25s; --direction: normal;">
+        <span class="marquee-item text-fire">Create</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#e94560"></span></span>
+        <span class="marquee-item text-outline-fire">Design</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ff6b35"></span></span>
+        <span class="marquee-item text-fire">Build</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ffe600"></span></span>
+        <span class="marquee-item text-outline-fire">Ship</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#e94560"></span></span>
+        <span class="marquee-item text-fire">Innovate</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ff6b35"></span></span>
+        <span class="marquee-item text-outline-fire">Inspire</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ffe600"></span></span>
+        <!-- Duplicate for seamless loop -->
+        <span class="marquee-item text-fire">Create</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#e94560"></span></span>
+        <span class="marquee-item text-outline-fire">Design</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ff6b35"></span></span>
+        <span class="marquee-item text-fire">Build</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ffe600"></span></span>
+        <span class="marquee-item text-outline-fire">Ship</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#e94560"></span></span>
+        <span class="marquee-item text-fire">Innovate</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ff6b35"></span></span>
+        <span class="marquee-item text-outline-fire">Inspire</span>
+        <span class="marquee-separator"><span class="marquee-dot" style="background:#ffe600"></span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee Row 2: Ocean Gradient, Reverse -->
+  <section class="marquee-section">
+    <div class="marquee-row marquee-md">
+      <div class="marquee-track" style="--duration: 35s; --direction: reverse;">
+        <span class="marquee-item text-ocean">Typography</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-outline-cyan">Motion</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-ocean">Interaction</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-outline-cyan">Animation</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-ocean">Experience</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-outline-cyan">Interface</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <!-- Duplicate -->
+        <span class="marquee-item text-ocean">Typography</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-outline-cyan">Motion</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-ocean">Interaction</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-outline-cyan">Animation</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-ocean">Experience</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-outline-cyan">Interface</span>
+        <span class="marquee-separator text-muted">◆</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee-divider"></div>
+
+  <!-- Marquee Row 3: Aurora, Small, Fast -->
+  <section class="marquee-section">
+    <div class="marquee-row marquee-sm row-dark">
+      <div class="marquee-track" style="--duration: 18s; --direction: normal;">
+        <span class="marquee-item text-aurora">SCROLL</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">EXPLORE</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-aurora">DISCOVER</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">IMMERSE</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-aurora">TRANSFORM</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">EVOLVE</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-aurora">ASCEND</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">CREATE</span>
+        <span class="marquee-separator">✦</span>
+        <!-- Duplicate -->
+        <span class="marquee-item text-aurora">SCROLL</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">EXPLORE</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-aurora">DISCOVER</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">IMMERSE</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-aurora">TRANSFORM</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">EVOLVE</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-aurora">ASCEND</span>
+        <span class="marquee-separator">✦</span>
+        <span class="marquee-item text-stroke">CREATE</span>
+        <span class="marquee-separator">✦</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="ctrl-btn active" data-speed="1">Normal</button>
+    <button class="ctrl-btn" data-speed="0.5">Slow</button>
+    <button class="ctrl-btn" data-speed="2">Fast</button>
+    <button class="ctrl-btn" data-speed="0">Pause</button>
+  </div>
+
+  <div class="speed-indicator">
+    Current Speed: <span id="speedLabel">1x</span>
+  </div>
+
+  <!-- Marquee Row 4: Sunset Gradient, Medium -->
+  <section class="marquee-section">
+    <div class="marquee-row marquee-md">
+      <div class="marquee-track" style="--duration: 40s; --direction: reverse;">
+        <span class="marquee-item text-sunset">The future belongs to those who believe in the beauty of their dreams</span>
+        <span class="marquee-separator">—</span>
+        <span class="marquee-item text-sunset">Design is not just what it looks like, design is how it works</span>
+        <span class="marquee-separator">—</span>
+        <span class="marquee-item text-sunset">Simplicity is the ultimate sophistication</span>
+        <span class="marquee-separator">—</span>
+        <!-- Duplicate -->
+        <span class="marquee-item text-sunset">The future belongs to those who believe in the beauty of their dreams</span>
+        <span class="marquee-separator">—</span>
+        <span class="marquee-item text-sunset">Design is not just what it looks like, design is how it works</span>
+        <span class="marquee-separator">—</span>
+        <span class="marquee-item text-sunset">Simplicity is the ultimate sophistication</span>
+        <span class="marquee-separator">—</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee-divider"></div>
+
+  <!-- Marquee Row 5: Mint Gradient, Fast Small -->
+  <section class="marquee-section">
+    <div class="marquee-row marquee-xs row-highlight">
+      <div class="marquee-track" style="--duration: 12s; --direction: normal;">
+        <span class="marquee-item text-mint">CSS</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">JAVASCRIPT</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">ANIMATION</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">PERFORMANCE</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">CREATIVITY</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">INNOVATION</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">MOTION</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">DESIGN</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">TYPOGRAPHY</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">LAYOUT</span>
+        <span class="marquee-separator">·</span>
+        <!-- Duplicate -->
+        <span class="marquee-item text-mint">CSS</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">JAVASCRIPT</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">ANIMATION</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">PERFORMANCE</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">CREATIVITY</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">INNOVATION</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">MOTION</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">DESIGN</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-mint">TYPOGRAPHY</span>
+        <span class="marquee-separator">·</span>
+        <span class="marquee-item text-muted">LAYOUT</span>
+        <span class="marquee-separator">·</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Card Marquee -->
+  <section class="marquee-section">
+    <div class="card-marquee">
+      <div class="card-marquee-track">
+        <div class="mini-card">
+          <div class="mini-card-title text-fire">Parallax Scrolling</div>
+          <div class="mini-card-desc">Depth and movement through layered scrolling speeds creating a 3D feel.</div>
+          <span class="mini-card-tag">Technique</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-ocean">Kinetic Typography</div>
+          <div class="mini-card-desc">Words in motion — text that dances, stretches, and breathes with intention.</div>
+          <span class="mini-card-tag">Typography</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-aurora">Scroll-triggered FX</div>
+          <div class="mini-card-desc">Animations that unfold as the user scrolls, revealing content progressively.</div>
+          <span class="mini-card-tag">Interaction</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-sunset">Gradient Morphing</div>
+          <div class="mini-card-desc">Seamlessly transitioning color palettes that respond to user input and time.</div>
+          <span class="mini-card-tag">Color</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-mint">Micro Interactions</div>
+          <div class="mini-card-desc">Small, delightful details that make interfaces feel alive and responsive.</div>
+          <span class="mini-card-tag">UX</span>
+        </div>
+        <!-- Duplicate for seamless loop -->
+        <div class="mini-card">
+          <div class="mini-card-title text-fire">Parallax Scrolling</div>
+          <div class="mini-card-desc">Depth and movement through layered scrolling speeds creating a 3D feel.</div>
+          <span class="mini-card-tag">Technique</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-ocean">Kinetic Typography</div>
+          <div class="mini-card-desc">Words in motion — text that dances, stretches, and breathes with intention.</div>
+          <span class="mini-card-tag">Typography</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-aurora">Scroll-triggered FX</div>
+          <div class="mini-card-desc">Animations that unfold as the user scrolls, revealing content progressively.</div>
+          <span class="mini-card-tag">Interaction</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-sunset">Gradient Morphing</div>
+          <div class="mini-card-desc">Seamlessly transitioning color palettes that respond to user input and time.</div>
+          <span class="mini-card-tag">Color</span>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title text-mint">Micro Interactions</div>
+          <div class="mini-card-desc">Small, delightful details that make interfaces feel alive and responsive.</div>
+          <span class="mini-card-tag">UX</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee Row 6: Large Stroke, Reverse -->
+  <section class="marquee-section">
+    <div class="marquee-row marquee-lg">
+      <div class="marquee-track" style="--duration: 30s; --direction: reverse;">
+        <span class="marquee-item text-stroke">MOTION</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-fire">FLOW</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-stroke">RHYTHM</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-ocean">BEAT</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <!-- Duplicate -->
+        <span class="marquee-item text-stroke">MOTION</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-fire">FLOW</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-stroke">RHYTHM</span>
+        <span class="marquee-separator text-muted">◆</span>
+        <span class="marquee-item text-ocean">BEAT</span>
+        <span class="marquee-separator text-muted">◆</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="marquee-divider"></div>
+    <p style="margin-top:2rem;">MARQUEE SCROLLING TEXT — PURE CSS + JS</p>
+  </footer>
+
+  <script>
+    // ── Speed Control ──
+    const speedBtns = document.querySelectorAll('.ctrl-btn');
+    const tracks = document.querySelectorAll('.marquee-track, .card-marquee-track');
+    const speedLabel = document.getElementById('speedLabel');
+
+    speedBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        speedBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const speed = parseFloat(btn.dataset.speed);
+        speedLabel.textContent = speed === 0 ? 'Paused' : speed + 'x';
+
+        const baseDurations = [];
+        tracks.forEach(track => {
+          const baseDuration = parseFloat(getComputedStyle(track).getPropertyValue('--duration')) || 30;
+          baseDurations.push(baseDuration);
+        });
+
+        // Store original durations if not yet stored
+        if (!window.__originalDurations) {
+          window.__originalDurations = [];
+          tracks.forEach(track => {
+            const base = parseFloat(track.style.getPropertyValue('--duration')) || 30;
+            window.__originalDurations.push(base);
+          });
+        }
+
+        tracks.forEach((track, i) => {
+          const orig = window.__originalDurations[i];
+          if (speed === 0) {
+            track.style.animationPlayState = 'paused';
+          } else {
+            track.style.animationPlayState = 'running';
+            track.style.animationDuration = (orig / speed) + 's';
+          }
+        });
+      });
+    });
+
+    // ── Hover pause for card marquee ──
+    const cardMarquee = document.querySelector('.card-marquee');
+    const cardTrack = document.querySelector('.card-marquee-track');
+
+    if (cardMarquee && cardTrack) {
+      cardMarquee.addEventListener('mouseenter', () => {
+        cardTrack.style.animationPlayState = 'paused';
+      });
+      cardMarquee.addEventListener('mouseleave', () => {
+        cardTrack.style.animationPlayState = 'running';
+      });
+    }
+
+    // ── Parallax on blobs ──
+    const blobs = document.querySelectorAll('.bg-blob');
+    window.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+
+      blobs.forEach((blob, i) => {
+        const factor = (i + 1) * 15;
+        blob.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+      });
+    }, { passive: true });
+
+    // ── Store original durations ──
+    window.__originalDurations = [];
+    tracks.forEach(track => {
+      const dur = parseFloat(track.style.getPropertyValue('--duration')) || 30;
+      window.__originalDurations.push(dur);
+    });
+  </script>
+</body>
+</html>

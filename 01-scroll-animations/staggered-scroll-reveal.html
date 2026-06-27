@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Staggered Scroll Reveal Animations
+  Inspired by "On-scroll animations" & "Scroll triggered animation"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staggered Scroll Reveal</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-secondary: #0f3460;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Section Spacing ── */
+  .section {
+    padding: 8rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .section + .section {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* ── Section Header ── */
+  .section-header {
+    margin-bottom: 4rem;
+  }
+
+  .section-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+  }
+
+  .section-heading {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .section-heading .gradient-text {
+    background: linear-gradient(135deg, var(--color-primary), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .section-desc {
+    font-size: 1.05rem;
+    color: var(--color-muted);
+    max-width: 600px;
+    line-height: 1.7;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(233, 69, 96, 0.08), transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -2px;
+  }
+
+  .hero-title .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .hero-title .word.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-title .line {
+    display: block;
+  }
+
+  .hero-title .line:nth-child(2) {
+    background: linear-gradient(90deg, var(--color-primary), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-muted);
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease 0.8s, transform 0.6s ease 0.8s;
+  }
+
+  .hero-subtitle.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Grid Cards ── */
+  .grid-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .grid-card {
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem;
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grid-card.revealed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .grid-card:hover {
+    border-color: rgba(233, 69, 96, 0.3);
+    box-shadow: 0 10px 40px rgba(233, 69, 96, 0.1);
+    transform: translateY(-4px) scale(1);
+  }
+
+  .grid-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.03), transparent);
+    transition: left 0.6s;
+  }
+
+  .grid-card:hover::before {
+    left: 100%;
+  }
+
+  .grid-card .card-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .grid-card .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .grid-card .card-body {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+  }
+
+  .grid-card .card-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-primary);
+    background: rgba(233, 69, 96, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    margin-top: 1rem;
+  }
+
+  /* ── List Items ── */
+  .feature-list {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.3s;
+  }
+
+  .feature-item.revealed {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .feature-item:hover {
+    border-color: rgba(233, 69, 96, 0.2);
+  }
+
+  .feature-item .feat-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(233, 69, 96, 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+  }
+
+  .feature-item .feat-content h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .feature-item .feat-content p {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  /* ── Text Blocks ── */
+  .text-blocks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .text-block {
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .text-block.from-left {
+    transform: translateX(-60px);
+  }
+
+  .text-block.from-right {
+    transform: translateX(60px);
+  }
+
+  .text-block.revealed {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .text-block h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .text-block p {
+    color: var(--color-muted);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  .text-block .highlight {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .visual-block {
+    position: relative;
+    height: 350px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--color-surface), #1e1e3f);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .visual-block .vis-shapes {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .visual-block .shape {
+    position: absolute;
+    border-radius: 16px;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .visual-block .shape.revealed {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .visual-block .shape-1 {
+    width: 120px; height: 120px;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    top: 20%; left: 15%;
+  }
+
+  .visual-block .shape-2 {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #00d2ff, #533483);
+    top: 15%; right: 25%;
+    border-radius: 50%;
+  }
+
+  .visual-block .shape-3 {
+    width: 150px; height: 60px;
+    background: linear-gradient(135deg, #00ff88, #00d2ff);
+    bottom: 25%; left: 30%;
+  }
+
+  /* ── Stats Row ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .stat-item.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .stat-num {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--color-primary), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-muted);
+    margin-top: 0.5rem;
+  }
+
+  /* ── Marquee ── */
+  .marquee-section {
+    overflow: hidden;
+    padding: 3rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .marquee-track {
+    display: flex;
+    animation: marquee 20s linear infinite;
+    width: max-content;
+  }
+
+  .marquee-item {
+    flex-shrink: 0;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 900;
+    padding: 0 2rem;
+    color: rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+  }
+
+  .marquee-item .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    margin: 0 1.5rem;
+    vertical-align: middle;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .grid-cards { grid-template-columns: 1fr; }
+    .text-blocks { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div>
+      <h1 class="hero-title">
+        <span class="line">
+          <span class="word">Staggered</span>
+          <span class="word">Scroll</span>
+        </span>
+        <span class="line">
+          <span class="word">Reveal</span>
+        </span>
+      </h1>
+      <p class="hero-subtitle">Elements cascade into view as you scroll — grids, lists, and text blocks each with their own rhythm.</p>
+    </div>
+  </div>
+
+  <!-- Marquee Divider -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span class="marquee-item">SCROLL <span class="dot"></span> REVEAL <span class="dot"></span> ANIMATE <span class="dot"></span> CASCADE <span class="dot"></span> STAGGER <span class="dot"></span></span>
+      <span class="marquee-item">SCROLL <span class="dot"></span> REVEAL <span class="dot"></span> ANIMATE <span class="dot"></span> CASCADE <span class="dot"></span> STAGGER <span class="dot"></span></span>
+    </div>
+  </div>
+
+  <!-- Section: Grid Cards -->
+  <div class="section" id="gridSection">
+    <div class="section-header">
+      <span class="section-tag">Grid Reveal</span>
+      <h2 class="section-heading">Cards <span class="gradient-text">Cascade</span> In</h2>
+      <p class="section-desc">Each card enters with a staggered delay, creating a wave-like reveal effect that draws the eye across the grid.</p>
+    </div>
+    <div class="grid-cards">
+      <div class="grid-card" data-stagger="0">
+        <div class="card-emoji">⚡</div>
+        <div class="card-title">Instant Impact</div>
+        <div class="card-body">First impressions matter. Elements that reveal with purpose guide the viewer's attention naturally.</div>
+        <span class="card-tag">Performance</span>
+      </div>
+      <div class="grid-card" data-stagger="1">
+        <div class="card-emoji">🎯</div>
+        <div class="card-title">Intentional Motion</div>
+        <div class="card-body">Every animation serves a purpose: to inform, to delight, or to guide the user through content.</div>
+        <span class="card-tag">Design</span>
+      </div>
+      <div class="grid-card" data-stagger="2">
+        <div class="card-emoji">🌊</div>
+        <div class="card-title">Rhythmic Flow</div>
+        <div class="card-body">Staggered timing creates rhythm — the visual equivalent of a beat that users can feel and follow.</div>
+        <span class="card-tag">Motion</span>
+      </div>
+      <div class="grid-card" data-stagger="3">
+        <div class="card-emoji">✨</div>
+        <div class="card-title">Subtle Elegance</div>
+        <div class="card-body">The best animations are barely noticed consciously but deeply felt — they create comfort and flow.</div>
+        <span class="card-tag">UX</span>
+      </div>
+      <div class="grid-card" data-stagger="4">
+        <div class="card-emoji">🔮</div>
+        <div class="card-title">Depth Cues</div>
+        <div class="card-body">Layered reveals create perceived depth, helping the brain parse information hierarchy instinctively.</div>
+        <span class="card-tag">3D</span>
+      </div>
+      <div class="grid-card" data-stagger="5">
+        <div class="card-emoji">🧩</div>
+        <div class="card-title">Progressive Load</div>
+        <div class="card-body">Content arriving on-demand reduces cognitive load and makes dense layouts feel light and breezy.</div>
+        <span class="card-tag">UX</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: List Items -->
+  <div class="section" id="listSection">
+    <div class="section-header">
+      <span class="section-tag">List Reveal</span>
+      <h2 class="section-heading">Slide <span class="gradient-text">From Left</span></h2>
+      <p class="section-desc">List items reveal sequentially from the side, each appearing with a stagger that creates a natural reading flow.</p>
+    </div>
+    <div class="feature-list">
+      <div class="feature-item" data-stagger="0">
+        <div class="feat-num">01</div>
+        <div class="feat-content">
+          <h3>Intersection Observer</h3>
+          <p>Modern scroll detection using the Intersection Observer API for performant, callback-based trigger points.</p>
+        </div>
+      </div>
+      <div class="feature-item" data-stagger="1">
+        <div class="feat-num">02</div>
+        <div class="feat-content">
+          <h3>CSS-Driven Transitions</h3>
+          <p>Animations are defined in CSS with transitions — JS only toggles classes, keeping rendering on the compositor thread.</p>
+        </div>
+      </div>
+      <div class="feature-item" data-stagger="2">
+        <div class="feat-num">03</div>
+        <div class="feat-content">
+          <h3>Staggered Timing</h3>
+          <p>Each element receives a progressive delay calculated from its position, creating a cascade without manual keyframing.</p>
+        </div>
+      </div>
+      <div class="feature-item" data-stagger="3">
+        <div class="feat-num">04</div>
+        <div class="feat-content">
+          <h3>Threshold Control</h3>
+          <p>Fine-tuned thresholds determine exactly when animations trigger, ensuring elements appear at the optimal viewport position.</p>
+        </div>
+      </div>
+      <div class="feature-item" data-stagger="4">
+        <div class="feat-num">05</div>
+        <div class="feat-content">
+          <h3>Multi-Axis Motion</h3>
+          <p>Grid items fade+translate, list items slide in horizontally, and text blocks enter from alternating sides — all context-aware.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Text Blocks -->
+  <div class="section" id="textSection">
+    <div class="section-header">
+      <span class="section-tag">Text Reveal</span>
+      <h2 class="section-heading">Words <span class="gradient-text">Materialize</span></h2>
+      <p class="section-desc">Text blocks enter from alternating sides, paired with geometric shapes that bloom into view.</p>
+    </div>
+    <div class="text-blocks">
+      <div class="text-block from-left" data-stagger="0">
+        <h3>Directional Flow</h3>
+        <p>Each element enters from a meaningful direction — left for reading start, right for emphasis — creating a <span class="highlight">natural narrative flow</span> that guides comprehension.</p>
+      </div>
+      <div class="visual-block" data-stagger="1">
+        <div class="vis-shapes">
+          <div class="shape shape-1" data-stagger="2"></div>
+          <div class="shape shape-2" data-stagger="3"></div>
+          <div class="shape shape-3" data-stagger="4"></div>
+        </div>
+      </div>
+      <div class="visual-block" data-stagger="2">
+        <div class="vis-shapes">
+          <div class="shape shape-1" data-stagger="0" style="background: linear-gradient(135deg, #533483, #00d2ff); top:30%; left:25%;"></div>
+          <div class="shape shape-2" data-stagger="1" style="background: linear-gradient(135deg, #e94560, #ff6b8a); width:100px; height:100px; top:10%; right:30%;"></div>
+          <div class="shape shape-3" data-stagger="3" style="background: linear-gradient(135deg, #00ff88, #533483); width:100px; height:50px; bottom:20%; left:20%;"></div>
+        </div>
+      </div>
+      <div class="text-block from-right" data-stagger="3">
+        <h3>Visual Harmony</h3>
+        <p>Paired content and visual elements reveal in <span class="highlight">synchronized choreography</span> — shapes bloom as their descriptions appear, making abstract concepts tangible.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Stats -->
+  <div class="section" id="statsSection">
+    <div class="section-header" style="text-align:center;">
+      <span class="section-tag">Stat Reveal</span>
+      <h2 class="section-heading">Numbers <span class="gradient-text">Appear</span></h2>
+    </div>
+    <div class="stat-row">
+      <div class="stat-item" data-stagger="0">
+        <div class="stat-num" data-target="60">0</div>
+        <div class="stat-label">FPS Target</div>
+      </div>
+      <div class="stat-item" data-stagger="1">
+        <div class="stat-num" data-target="0">0</div>
+        <div class="stat-label">Dependencies</div>
+      </div>
+      <div class="stat-item" data-stagger="2">
+        <div class="stat-num" data-target="5">0</div>
+        <div class="stat-label">KB Gzipped</div>
+      </div>
+      <div class="stat-item" data-stagger="3">
+        <div class="stat-num" data-target="100">0</div>
+        <div class="stat-label">% Pure CSS</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── IntersectionObserver for staggered reveals ──
+  const STAGGER_DELAY = 120; // ms between items in a group
+
+  // Generic observer: reveals elements with stagger based on data-stagger index
+  function createRevealObserver(selector, baseClass) {
+    const elements = document.querySelectorAll(selector);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const staggerIndex = parseInt(el.dataset.stagger || '0');
+          setTimeout(() => {
+            el.classList.add(baseClass || 'revealed');
+          }, staggerIndex * STAGGER_DELAY);
+          observer.unobserve(el);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -50px 0px'
+    });
+
+    elements.forEach(el => observer.observe(el));
+  }
+
+  // ── Hero Word Reveal ──
+  function revealHeroWords() {
+    const words = document.querySelectorAll('.hero-title .word');
+    words.forEach((word, i) => {
+      setTimeout(() => {
+        word.classList.add('revealed');
+      }, i * 150 + 300);
+    });
+
+    setTimeout(() => {
+      document.querySelector('.hero-subtitle').classList.add('revealed');
+    }, words.length * 150 + 600);
+  }
+
+  // ── Counter Animation ──
+  function animateCounters() {
+    const statNums = document.querySelectorAll('.stat-num');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.target);
+          animateNumber(el, 0, target, 1500);
+          observer.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    statNums.forEach(el => observer.observe(el));
+  }
+
+  function animateNumber(el, start, end, duration) {
+    const startTime = performance.now();
+    function update(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + (end - start) * eased);
+      el.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      }
+    }
+    requestAnimationFrame(update);
+  }
+
+  // ── Stat Items Reveal (separate from counters) ──
+  function observeStatItems() {
+    const items = document.querySelectorAll('.stat-item');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const staggerIndex = parseInt(el.dataset.stagger || '0');
+          setTimeout(() => {
+            el.classList.add('revealed');
+          }, staggerIndex * STAGGER_DELAY);
+          observer.unobserve(el);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    items.forEach(item => observer.observe(item));
+  }
+
+  // ── Initialize ──
+  createRevealObserver('.grid-card', 'revealed');
+  createRevealObserver('.feature-item', 'revealed');
+  createRevealObserver('.text-block', 'revealed');
+  createRevealObserver('.shape', 'revealed');
+  animateCounters();
+  observeStatItems();
+
+  // Hero animation on load
+  window.addEventListener('load', revealHeroWords);
+})();
+</script>
+</body>
+</html>

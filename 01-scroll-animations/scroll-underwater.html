@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Scroll Triggered Underwater Animation
+  Inspired by "Scroll Triggered Underwater Animation"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Underwater Animation</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+    --deep-blue: #030720;
+    --ocean-dark: #061230;
+    --ocean-mid: #0a1e44;
+    --ocean-light: #124a7a;
+    --ocean-surface: #1a6fb8;
+    --ocean-foam: #4fc3f7;
+    --coral: #ff6b8a;
+    --biolum: #7c4dff;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--deep-blue);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Canvas Background ── */
+  #underwaterCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── Depth Overlay ── */
+  .depth-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    transition: background 0.5s ease;
+  }
+
+  /* ── Caustics Effect ── */
+  .caustics {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.15;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(79, 195, 247, 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 40%, rgba(79, 195, 247, 0.3) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 60%, rgba(79, 195, 247, 0.2) 0%, transparent 40%);
+    animation: causticShift 8s ease-in-out infinite alternate;
+  }
+
+  @keyframes causticShift {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20px, 15px) scale(1.05); }
+    100% { transform: translate(15px, -10px) scale(0.98); }
+  }
+
+  /* ── Light Rays ── */
+  .light-rays {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 60%;
+    z-index: 2;
+    pointer-events: none;
+    background:
+      linear-gradient(175deg, rgba(79, 195, 247, 0.08) 0%, transparent 40%),
+      linear-gradient(170deg, rgba(79, 195, 247, 0.05) 10%, transparent 35%),
+      linear-gradient(160deg, rgba(79, 195, 247, 0.06) 5%, transparent 30%);
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+
+  /* ── Content ── */
+  .content {
+    position: relative;
+    z-index: 10;
+  }
+
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .section-inner {
+    max-width: 800px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Depth Gauge ── */
+  .depth-gauge {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .depth-bar {
+    width: 3px;
+    height: 150px;
+    background: rgba(79, 195, 247, 0.15);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .depth-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(180deg, var(--ocean-foam), var(--ocean-dark));
+    border-radius: 3px;
+    transition: height 0.3s;
+  }
+
+  .depth-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--ocean-foam);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .depth-value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ocean-foam);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Typography ── */
+  .ocean-title {
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .ocean-title.accent {
+    background: linear-gradient(180deg, #4fc3f7, #7c4dff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .ocean-title.coral {
+    background: linear-gradient(180deg, #4fc3f7, #ff6b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .ocean-title.biolum {
+    background: linear-gradient(180deg, #7c4dff, #e040fb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .ocean-sub {
+    font-size: 1.1rem;
+    color: rgba(79, 195, 247, 0.7);
+    line-height: 1.7;
+    max-width: 550px;
+    margin: 0 auto;
+  }
+
+  .ocean-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ocean-foam);
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Fish ── */
+  .fish-container {
+    position: fixed;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .fish {
+    font-size: 2rem;
+    animation: fishSwim 12s linear infinite;
+    filter: drop-shadow(0 0 10px rgba(79, 195, 247, 0.3));
+  }
+
+  @keyframes fishSwim {
+    0% { transform: translateX(-100vw) scaleX(1); }
+    49% { transform: translateX(100vw) scaleX(1); }
+    50% { transform: translateX(100vw) scaleX(-1); }
+    99% { transform: translateX(-100vw) scaleX(-1); }
+    100% { transform: translateX(-100vw) scaleX(1); }
+  }
+
+  /* ── Jellyfish Section ── */
+  .jelly-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .jelly-card {
+    background: rgba(10, 30, 68, 0.6);
+    border: 1px solid rgba(79, 195, 247, 0.12);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.6s, transform 0.6s, border-color 0.3s;
+  }
+
+  .jelly-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .jelly-card:hover {
+    border-color: rgba(79, 195, 247, 0.3);
+  }
+
+  .jelly-emoji {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: jellyBob 3s ease-in-out infinite;
+  }
+
+  @keyframes jellyBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .jelly-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--ocean-foam);
+  }
+
+  .jelly-card p {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  /* ── Bottom CTA ── */
+  .abyss-cta {
+    text-align: center;
+    padding: 6rem 2rem;
+    position: relative;
+    z-index: 10;
+  }
+
+  .abyss-cta .cta-btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, var(--ocean-mid), var(--ocean-light));
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-decoration: none;
+  }
+
+  .abyss-cta .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(79, 195, 247, 0.3);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .jelly-grid { grid-template-columns: 1fr; }
+    .depth-gauge { right: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Underwater Particle Canvas -->
+  <canvas id="underwaterCanvas"></canvas>
+
+  <!-- Depth Overlay -->
+  <div class="depth-overlay" id="depthOverlay"></div>
+
+  <!-- Caustics -->
+  <div class="caustics" id="caustics"></div>
+
+  <!-- Light Rays -->
+  <div class="light-rays" id="lightRays"></div>
+
+  <!-- Depth Gauge -->
+  <div class="depth-gauge">
+    <div class="depth-value" id="depthValue">0m</div>
+    <div class="depth-bar">
+      <div class="depth-fill" id="depthFill" style="height: 0%;"></div>
+    </div>
+    <div class="depth-label">Depth</div>
+  </div>
+
+  <!-- Swimming Fish -->
+  <div class="fish-container" style="top: 25%; animation-duration: 15s;">
+    <div class="fish" style="animation-duration: 15s;">🐠</div>
+  </div>
+  <div class="fish-container" style="top: 45%; animation-duration: 20s;">
+    <div class="fish" style="animation-duration: 20s; animation-delay: -5s;">🐟</div>
+  </div>
+  <div class="fish-container" style="top: 65%; animation-duration: 18s;">
+    <div class="fish" style="animation-duration: 18s; animation-delay: -10s;">🐡</div>
+  </div>
+
+  <!-- Content Sections -->
+  <div class="content">
+
+    <!-- Surface -->
+    <section class="section" id="surface">
+      <div class="section-inner">
+        <span class="ocean-tag">The Surface</span>
+        <h1 class="ocean-title accent">Dive Into<br>The Deep</h1>
+        <p class="ocean-sub">Scroll down to descend into the ocean depths. Watch as light fades, pressure builds, and bioluminescent creatures emerge from the darkness.</p>
+      </div>
+    </section>
+
+    <!-- Shallow Waters -->
+    <section class="section" id="shallow">
+      <div class="section-inner">
+        <span class="ocean-tag">Shallow Waters · 50m</span>
+        <h2 class="ocean-title accent">Sunlight<br>Zone</h2>
+        <p class="ocean-sub">Where light still penetrates and photosynthesis thrives. Coral reefs burst with color and life at these accessible depths.</p>
+      </div>
+    </section>
+
+    <!-- Twilight Zone -->
+    <section class="section" id="twilight">
+      <div class="section-inner">
+        <span class="ocean-tag">Twilight Zone · 200m</span>
+        <h2 class="ocean-title coral">Fading<br>Light</h2>
+        <p class="ocean-sub">The mesopelagic zone. Light diminishes rapidly. Creatures here have developed extraordinary adaptations to survive in perpetual twilight.</p>
+      </div>
+    </section>
+
+    <!-- Midnight Zone -->
+    <section class="section" id="midnight">
+      <div class="section-inner">
+        <span class="ocean-tag">Midnight Zone · 500m</span>
+        <h2 class="ocean-title biolum">Bioluminescence</h2>
+        <p class="ocean-sub">Complete darkness. Life here creates its own light. Bioluminescent organisms paint the abyss with ethereal, otherworldly glows.</p>
+      </div>
+
+      <div class="jelly-grid" style="margin-top: 4rem;">
+        <div class="jelly-card" data-stagger="0">
+          <div class="jelly-emoji">🪼</div>
+          <h3>Jellyfish</h3>
+          <p>Pulsing bell rhythms that propel them through infinite darkness.</p>
+        </div>
+        <div class="jelly-card" data-stagger="1">
+          <div class="jelly-emoji">🦑</div>
+          <h3>Squid</h3>
+          <p>Color-changing chromatophores communicate in the deep.</p>
+        </div>
+        <div class="jelly-card" data-stagger="2">
+          <div class="jelly-emoji">🐟</div>
+          <h3>Anglerfish</h3>
+          <p>Luminous lures dangle like lanterns in the abyss.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Abyss -->
+    <section class="section" id="abyss">
+      <div class="section-inner">
+        <span class="ocean-tag">The Abyss · 2000m</span>
+        <h2 class="ocean-title biolum">Eternal<br>Darkness</h2>
+        <p class="ocean-sub">At crushing depths, where pressure exceeds 200 atmospheres, life persists in forms we barely understand. The deepest mysteries remain unsolved.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CTA -->
+  <div class="abyss-cta">
+    <a href="#surface" class="cta-btn">Rise to Surface ↑</a>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Canvas Setup ──
+  const canvas = document.getElementById('underwaterCanvas');
+  const ctx = canvas.getContext('2d');
+  const depthOverlay = document.getElementById('depthOverlay');
+  const depthFill = document.getElementById('depthFill');
+  const depthValue = document.getElementById('depthValue');
+  const caustics = document.getElementById('caustics');
+  const lightRays = document.getElementById('lightRays');
+
+  let W, H;
+  function resizeCanvas() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // ── Particle System ──
+  class Bubble {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * W;
+      this.y = H + Math.random() * 100;
+      this.radius = Math.random() * 4 + 1;
+      this.speed = Math.random() * 0.8 + 0.3;
+      this.wobble = Math.random() * Math.PI * 2;
+      this.wobbleSpeed = Math.random() * 0.03 + 0.01;
+      this.wobbleAmp = Math.random() * 30 + 10;
+      this.opacity = Math.random() * 0.4 + 0.1;
+    }
+    update(depthFactor) {
+      this.y -= this.speed * (1 + depthFactor * 0.5);
+      this.wobble += this.wobbleSpeed;
+      this.x += Math.sin(this.wobble) * 0.5;
+      if (this.y < -20) this.reset();
+    }
+    draw(depthFactor) {
+      const alpha = this.opacity * (0.5 + depthFactor * 0.5);
+      ctx.beginPath();
+      ctx.arc(this.x + Math.sin(this.wobble) * this.wobbleAmp * 0.3, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(79, 195, 247, ${alpha})`;
+      ctx.fill();
+      // Highlight
+      ctx.beginPath();
+      ctx.arc(this.x + Math.sin(this.wobble) * this.wobbleAmp * 0.3 - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.6})`;
+      ctx.fill();
+    }
+  }
+
+  class BiolumParticle {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * W;
+      this.y = Math.random() * H;
+      this.radius = Math.random() * 3 + 1;
+      this.pulseSpeed = Math.random() * 0.02 + 0.005;
+      this.pulseOffset = Math.random() * Math.PI * 2;
+      this.driftX = (Math.random() - 0.5) * 0.3;
+      this.driftY = (Math.random() - 0.5) * 0.2;
+      this.hue = Math.random() < 0.5 ? 270 : 200; // purple or cyan
+    }
+    update(time, depthFactor) {
+      this.x += this.driftX;
+      this.y += this.driftY;
+      if (this.x < -20 || this.x > W + 20 || this.y < -20 || this.y > H + 20) {
+        this.reset();
+      }
+    }
+    draw(time, depthFactor) {
+      const pulse = Math.sin(time * this.pulseSpeed + this.pulseOffset) * 0.5 + 0.5;
+      const alpha = pulse * depthFactor * 0.7;
+      const r = this.radius * (1 + pulse * 0.5);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+      const color = this.hue === 270 ? `rgba(124, 77, 255, ${alpha})` : `rgba(79, 195, 247, ${alpha})`;
+      ctx.fillStyle = color;
+      ctx.fill();
+      // Glow
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, r * 3, 0, Math.PI * 2);
+      const glowColor = this.hue === 270 ? `rgba(124, 77, 255, ${alpha * 0.15})` : `rgba(79, 195, 247, ${alpha * 0.15})`;
+      ctx.fillStyle = glowColor;
+      ctx.fill();
+    }
+  }
+
+  class Plankton {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * W;
+      this.y = Math.random() * H;
+      this.size = Math.random() * 2 + 0.5;
+      this.driftX = (Math.random() - 0.5) * 0.15;
+      this.driftY = (Math.random() - 0.5) * 0.15;
+      this.flicker = Math.random() * Math.PI * 2;
+      this.flickerSpeed = Math.random() * 0.05 + 0.01;
+    }
+    update(depthFactor) {
+      this.x += this.driftX;
+      this.y += this.driftY;
+      this.flicker += this.flickerSpeed;
+      if (this.x < -10) this.x = W + 10;
+      if (this.x > W + 10) this.x = -10;
+      if (this.y < -10) this.y = H + 10;
+      if (this.y > H + 10) this.y = -10;
+    }
+    draw(depthFactor) {
+      const alpha = (0.15 + Math.sin(this.flicker) * 0.1) * (1 - depthFactor * 0.3);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(79, 195, 247, ${alpha})`;
+      ctx.fill();
+    }
+  }
+
+  // ── Create Particles ──
+  const bubbles = Array.from({ length: 40 }, () => new Bubble());
+  const biolumParticles = Array.from({ length: 60 }, () => new BiolumParticle());
+  const plankton = Array.from({ length: 80 }, () => new Plankton());
+
+  let currentDepth = 0;
+  let targetDepth = 0;
+
+  // ── Depth System ──
+  function getDepthFactor() {
+    return currentDepth; // 0 = surface, 1 = abyss
+  }
+
+  function updateDepthVisuals() {
+    const df = currentDepth;
+
+    // Depth overlay: gets darker as you go deeper
+    const r = Math.round(3 + df * -3);
+    const g = Math.round(7 + df * -5);
+    const b = Math.round(32 + df * -25);
+    const a = df * 0.5;
+    depthOverlay.style.background = `rgba(${r}, ${g}, ${b}, ${a})`;
+
+    // Caustics fade with depth
+    caustics.style.opacity = 0.15 * (1 - df * 0.9);
+
+    // Light rays fade with depth
+    lightRays.style.opacity = 1 - df * 0.95;
+
+    // Depth gauge
+    depthFill.style.height = (df * 100) + '%';
+    const depthMeters = Math.round(df * 2000);
+    depthValue.textContent = depthMeters + 'm';
+  }
+
+  // ── Animation Loop ──
+  let time = 0;
+  function animate() {
+    time++;
+    const df = getDepthFactor();
+
+    // Smooth depth transition
+    currentDepth += (targetDepth - currentDepth) * 0.05;
+
+    // Clear canvas with translucent fill for trail effect
+    ctx.fillStyle = df < 0.5
+      ? `rgba(3, 7, 32, ${0.15 + df * 0.1})`
+      : `rgba(2, 2, 15, ${0.2 + (df - 0.5) * 0.15})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Draw plankton (surface to mid)
+    if (df < 0.7) {
+      plankton.forEach(p => {
+        p.update(df);
+        p.draw(df);
+      });
+    }
+
+    // Draw bubbles (always)
+    bubbles.forEach(b => {
+      b.update(df);
+      b.draw(df);
+    });
+
+    // Draw bioluminescent particles (increases with depth)
+    const biolumCount = Math.floor(biolumParticles.length * Math.max(0, (df - 0.3) / 0.7));
+    for (let i = 0; i < biolumCount; i++) {
+      biolumParticles[i].update(time, df);
+      biolumParticles[i].draw(time, df);
+    }
+
+    updateDepthVisuals();
+    requestAnimationFrame(animate);
+  }
+
+  // ── Scroll Handler ──
+  function onScroll() {
+    const scrollY = window.pageYOffset;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    targetDepth = Math.min(scrollY / maxScroll, 1);
+  }
+
+  // ── Section Reveal ──
+  const sectionInners = document.querySelectorAll('.section-inner');
+  const jellyCards = document.querySelectorAll('.jelly-card');
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  sectionInners.forEach(inner => revealObserver.observe(inner));
+
+  const cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const stagger = parseInt(entry.target.dataset.stagger || '0');
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, stagger * 150);
+        cardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  jellyCards.forEach(card => cardObserver.observe(card));
+
+  // ── Init ──
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', resizeCanvas);
+  onScroll();
+  animate();
+})();
+</script>
+</body>
+</html>

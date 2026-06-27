@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  TEXT MORPHING — SVG Filter Displacement Morph
+  ============================================================
+  Words smoothly transform into each other using feTurbulence
+  + feDisplacementMap SVG filters. At least 5 word transitions
+  cycle automatically. Pure CSS + Vanilla JS. No dependencies.
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Morphing Animation</title>
+<style>
+  /* ── Reset & Custom Properties ── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a9e;
+    --color-glow: rgba(233, 69, 96, 0.35);
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* ── Background Ambience ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 30% 40%, rgba(233,69,96,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 70% at 70% 60%, rgba(110,231,183,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    z-index: 2;
+    position: relative;
+  }
+
+  header h1 {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-weight: 200;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #6ee7b7 50%, var(--color-primary) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  header p {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Main ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1000px;
+    padding: 1rem 2rem 2rem;
+    z-index: 2;
+  }
+
+  /* ── Morph Stage ── */
+  .morph-stage {
+    position: relative;
+    width: 100%;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1.5rem;
+    background: linear-gradient(145deg, var(--color-surface) 0%, rgba(22,33,62,0.4) 100%);
+    border: 1px solid rgba(233,69,96,0.1);
+    box-shadow:
+      0 0 80px rgba(233,69,96,0.04),
+      inset 0 0 60px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+
+  /* ── Word Display ── */
+  .word-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+  }
+
+  .morph-word {
+    position: absolute;
+    font-size: clamp(3rem, 9vw, 7.5rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0s;
+  }
+
+  /* SVG filter is applied via class toggle in JS */
+  .morph-word.incoming {
+    opacity: 1;
+  }
+
+  .morph-word.outgoing {
+    opacity: 1;
+  }
+
+  .morph-word.dissolve {
+    filter: url(#dissolveFilter);
+  }
+
+  /* ── Color Themes for Words ── */
+  .morph-word[data-theme="rose"] {
+    color: #ff6b9d;
+    text-shadow: 0 0 40px rgba(255,107,157,0.4), 0 0 80px rgba(255,107,157,0.15);
+  }
+  .morph-word[data-theme="teal"] {
+    color: #4ecdc4;
+    text-shadow: 0 0 40px rgba(78,205,196,0.4), 0 0 80px rgba(78,205,196,0.15);
+  }
+  .morph-word[data-theme="amber"] {
+    color: #fbbf24;
+    text-shadow: 0 0 40px rgba(251,191,36,0.4), 0 0 80px rgba(251,191,36,0.15);
+  }
+  .morph-word[data-theme="sky"] {
+    color: #38bdf8;
+    text-shadow: 0 0 40px rgba(56,189,248,0.4), 0 0 80px rgba(56,189,248,0.15);
+  }
+  .morph-word[data-theme="lime"] {
+    color: #a3e635;
+    text-shadow: 0 0 40px rgba(163,230,53,0.4), 0 0 80px rgba(163,230,53,0.15);
+  }
+  .morph-word[data-theme="orchid"] {
+    color: #c084fc;
+    text-shadow: 0 0 40px rgba(192,132,252,0.4), 0 0 80px rgba(192,132,252,0.15);
+  }
+
+  /* ── Subtitle ── */
+  .morph-subtitle {
+    position: absolute;
+    bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ── Progress Bar ── */
+  .progress-track {
+    width: 100%;
+    max-width: 400px;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-top: 2rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--color-primary), #6ee7b7);
+    border-radius: 2px;
+    transition: width 0.05s linear;
+  }
+
+  /* ── Word List ── */
+  .word-list {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .word-chip {
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    background: var(--color-surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+    transition: all 0.4s ease;
+  }
+
+  .word-chip.active {
+    border-color: var(--color-primary);
+    color: var(--color-text);
+    background: rgba(233,69,96,0.12);
+    box-shadow: 0 0 16px rgba(233,69,96,0.15);
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    background: transparent;
+    color: var(--color-muted);
+    border: 1px solid rgba(233,69,96,0.2);
+    padding: 0.45rem 1.3rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: rgba(233,69,96,0.08);
+  }
+
+  .btn.active {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: rgba(233,69,96,0.12);
+  }
+
+  /* ── Info Cards ── */
+  .info-bar {
+    width: 100%;
+    max-width: 800px;
+    padding: 1.5rem 2rem 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .info-card {
+    background: var(--color-surface);
+    border: 1px solid rgba(233,69,96,0.08);
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.4rem;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .info-card .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .info-card .value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  /* ── Reduce Motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .morph-word, .progress-fill {
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- SVG Filters -->
+  <svg style="position:absolute;width:0;height:0;" aria-hidden="true">
+    <defs>
+      <!-- Dissolve/morph filter using turbulence + displacement -->
+      <filter id="dissolveFilter" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence
+          id="turbulence"
+          type="fractalNoise"
+          baseFrequency="0.02"
+          numOctaves="3"
+          result="turbulence"
+          seed="1"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="turbulence"
+          scale="0"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+
+      <!-- More aggressive dissolve -->
+      <filter id="dissolveHeavy" x="-30%" y="-30%" width="160%" height="160%">
+        <feTurbulence
+          id="turbulenceHeavy"
+          type="turbulence"
+          baseFrequency="0.03"
+          numOctaves="4"
+          result="turbulence"
+          seed="2"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="turbulence"
+          scale="0"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </defs>
+  </svg>
+
+  <header>
+    <h1>Text Morphing</h1>
+    <p>SVG displacement transitions &middot; Automatic cycling &middot; Organic dissolution</p>
+  </header>
+
+  <main>
+    <div class="morph-stage">
+      <div class="word-container" id="wordContainer"></div>
+      <div class="morph-subtitle" id="subtitle">Transition 1</div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="word-list" id="wordList"></div>
+
+    <div class="controls">
+      <button class="btn" id="btnPause" onclick="togglePause()">Pause</button>
+      <button class="btn" id="btnHeavy" onclick="toggleHeavy()">Heavy Distort</button>
+      <button class="btn" onclick="restart()">Restart</button>
+    </div>
+  </main>
+
+  <div class="info-bar">
+    <div class="info-card">
+      <div class="label">Word</div>
+      <div class="value" id="infoWord">1 / 6</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Displacement</div>
+      <div class="value" id="infoDisp">0</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Mode</div>
+      <div class="value" id="infoMode">Normal</div>
+    </div>
+  </div>
+
+<script>
+/*
+  ============================================================
+  Text Morphing — Displacement Animation
+  ============================================================
+  Cycle through words using SVG feTurbulence + feDisplacementMap
+  to create organic dissolve transitions between word changes.
+*/
+
+const WORDS = [
+  { text: "INNOVATE", theme: "rose" },
+  { text: "CREATE", theme: "teal" },
+  { text: "INSPIRE", theme: "amber" },
+  { text: "EVOLVE", theme: "sky" },
+  { text: "TRANSFORM", theme: "lime" },
+  { text: "IMAGINE", theme: "orchid" }
+];
+
+// ── Timings ──
+const TRANSITION_DURATION = 1200; // ms for dissolve
+const HOLD_DURATION = 2000;       // ms to hold each word
+const TOTAL_PER_WORD = HOLD_DURATION + TRANSITION_DURATION;
+
+// ── State ──
+let currentIndex = 0;
+let paused = false;
+let heavyMode = false;
+let animFrame = null;
+let cycleTimer = null;
+
+// ── DOM references ──
+const container = document.getElementById('wordContainer');
+const wordList = document.getElementById('wordList');
+const progressFill = document.getElementById('progressFill');
+const subtitle = document.getElementById('subtitle');
+
+// ── Build word chips ──
+WORDS.forEach((w, i) => {
+  const chip = document.createElement('div');
+  chip.className = 'word-chip';
+  chip.dataset.index = i;
+  chip.textContent = w.text;
+  chip.onclick = () => goTo(i);
+  wordList.appendChild(chip);
+});
+
+// ── Create word elements ──
+let currentEl = null;
+let nextEl = null;
+
+function createWordElement(wordObj) {
+  const el = document.createElement('div');
+  el.className = 'morph-word';
+  el.dataset.theme = wordObj.theme;
+  el.textContent = wordObj.text;
+  el.style.opacity = '0';
+  container.appendChild(el);
+  return el;
+}
+
+// ── Filter animation ──
+function animateDisplacement(el, filterId, callback) {
+  const svgTurb = document.getElementById(
+    filterId === 'dissolveFilter' ? 'turbulence' : 'turbulenceHeavy'
+  );
+  const filterEl = document.getElementById(filterId);
+  const dispMap = filterEl.querySelector('feDisplacementMap');
+
+  const startTime = performance.now();
+  const maxScale = heavyMode ? 80 : 50;
+
+  // Build up displacement
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / TRANSITION_DURATION, 1);
+
+    // Ease in-out cubic
+    const eased = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    // Phase 1 (0-0.5): ramp up displacement & blur out
+    // Phase 2 (0.5-1.0): ramp down displacement & blur in
+    let scale;
+    if (progress < 0.5) {
+      scale = eased * 2 * maxScale;
+    } else {
+      scale = (2 - eased * 2) * maxScale;
+    }
+
+    dispMap.setAttribute('scale', scale.toFixed(1));
+
+    // Progress bar
+    progressFill.style.width = (progress * 100) + '%';
+    document.getElementById('infoDisp').textContent = Math.round(scale);
+
+    if (progress < 1) {
+      animFrame = requestAnimationFrame(animate);
+    } else {
+      dispMap.setAttribute('scale', '0');
+      if (callback) callback();
+    }
+  }
+
+  animFrame = requestAnimationFrame(animate);
+}
+
+function showWord(index) {
+  const nextWord = WORDS[index];
+  const prevIndex = currentIndex;
+
+  // Update chips
+  wordList.querySelectorAll('.word-chip').forEach((c, i) => {
+    c.classList.toggle('active', i === index);
+  });
+
+  subtitle.textContent = `Transition ${index + 1}`;
+  document.getElementById('infoWord').textContent = `${index + 1} / ${WORDS.length}`;
+
+  // Create new element
+  nextEl = createWordElement(nextWord);
+
+  if (currentEl) {
+    // Apply filter to both outgoing and incoming
+    const filterId = heavyMode ? 'dissolveHeavy' : 'dissolveFilter';
+    currentEl.classList.add('outgoing', 'dissolve');
+    currentEl.style.filter = `url(#${filterId === 'dissolveFilter' ? 'dissolveFilter' : 'dissolveHeavy'}) url(#${filterId === 'dissolveFilter' ? 'dissolveFilter' : 'dissolveHeavy'})`;
+    nextEl.classList.add('incoming', 'dissolve');
+    nextEl.style.filter = `url(#${filterId})`;
+    nextEl.style.opacity = '1';
+
+    animateDisplacement(nextEl, filterId, () => {
+      // Clean up old element
+      currentEl.remove();
+      currentEl = nextEl;
+      currentEl.classList.remove('dissolve');
+      currentEl.style.filter = '';
+      nextEl = null;
+
+      // Reset displacement
+      progressFill.style.width = '0%';
+      document.getElementById('infoDisp').textContent = '0';
+
+      // Schedule next
+      if (!paused) {
+        cycleTimer = setTimeout(() => {
+          currentIndex = (currentIndex + 1) % WORDS.length;
+          showWord(currentIndex);
+        }, HOLD_DURATION);
+      }
+    });
+  } else {
+    // First word — just show it
+    nextEl.style.opacity = '1';
+    nextEl.classList.add('incoming');
+    currentEl = nextEl;
+
+    if (!paused) {
+      cycleTimer = setTimeout(() => {
+        currentIndex = (currentIndex + 1) % WORDS.length;
+        showWord(currentIndex);
+      }, HOLD_DURATION);
+    }
+  }
+
+  currentIndex = index;
+}
+
+function goTo(index) {
+  clearTimeout(cycleTimer);
+  cancelAnimationFrame(animFrame);
+
+  // Reset filter scales
+  document.getElementById('dissolveFilter').querySelector('feDisplacementMap').setAttribute('scale', '0');
+  document.getElementById('dissolveHeavy').querySelector('feDisplacementMap').setAttribute('scale', '0');
+
+  // Remove existing elements
+  container.innerHTML = '';
+  currentEl = null;
+  nextEl = null;
+
+  currentIndex = index;
+  showWord(index);
+}
+
+function togglePause() {
+  paused = !paused;
+  const btn = document.getElementById('btnPause');
+  btn.textContent = paused ? 'Play' : 'Pause';
+  btn.classList.toggle('active', paused);
+
+  if (!paused) {
+    cycleTimer = setTimeout(() => {
+      currentIndex = (currentIndex + 1) % WORDS.length;
+      showWord(currentIndex);
+    }, HOLD_DURATION);
+  } else {
+    clearTimeout(cycleTimer);
+  }
+}
+
+function toggleHeavy() {
+  heavyMode = !heavyMode;
+  document.getElementById('btnHeavy').classList.toggle('active', heavyMode);
+  document.getElementById('infoMode').textContent = heavyMode ? 'Heavy' : 'Normal';
+}
+
+function restart() {
+  goTo(0);
+}
+
+// ── Initialize ──
+showWord(0);
+</script>
+</body>
+</html>

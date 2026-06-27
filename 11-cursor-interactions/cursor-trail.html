@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  CSS + JS Animation Library
+  File: cursor-trail.html
+  Category: 11 - Cursor Interactions
+  Description: Custom cursor with trail effect featuring
+               3 trail styles: Classic Dots, Gradient Comet,
+               and Magnetic Connection Lines. Smooth 60fps.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursor Trail Effects</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892b0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Custom Cursor ── */
+  .cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-primary);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+    mix-blend-mode: difference;
+  }
+
+  .cursor.hovering {
+    width: 50px;
+    height: 50px;
+    border-color: #ff6b81;
+  }
+
+  .cursor-dot {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10001;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ── Trail Canvas ── */
+  #trailCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 80px 40px 40px;
+    text-align: center;
+  }
+
+  header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b81, #f9d56e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+  }
+
+  header p {
+    color: var(--color-muted);
+    font-size: 1.1rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Style Switcher ── */
+  .style-switcher {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 30px 40px;
+    flex-wrap: wrap;
+  }
+
+  .style-btn {
+    padding: 12px 28px;
+    border: 2px solid var(--color-accent);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: none;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+  }
+
+  .style-btn:hover {
+    border-color: var(--color-primary);
+    background: rgba(233, 69, 96, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .style-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+  }
+
+  /* ── Demo Sections ── */
+  .demo-section {
+    padding: 60px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .demo-section h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--color-text);
+  }
+
+  .demo-section .subtitle {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+  }
+
+  /* ── Interactive Cards ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+  }
+
+  .card {
+    background: var(--color-surface);
+    border: 1px solid rgba(233, 69, 96, 0.15);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(233, 69, 96, 0.2);
+  }
+
+  .card .icon {
+    font-size: 2.4rem;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .card h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    color: var(--color-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  /* ── Stats Bar ── */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    padding: 40px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat .value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-primary);
+  }
+
+  .stat .label {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Big CTA area ── */
+  .cta-area {
+    padding: 80px 40px;
+    text-align: center;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    padding: 18px 48px;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b81);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 60px;
+    text-decoration: none;
+    cursor: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 30px rgba(233, 69, 96, 0.4);
+  }
+
+  .cta-btn:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 10px 40px rgba(233, 69, 96, 0.5);
+  }
+
+  /* ── Instructions ── */
+  .instructions {
+    background: var(--color-surface);
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin: 20px auto;
+    max-width: 700px;
+    border: 1px solid rgba(233, 69, 96, 0.1);
+  }
+
+  .instructions h3 {
+    color: var(--color-primary);
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .instructions ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .instructions li {
+    padding: 6px 0;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+  }
+
+  .instructions li::before {
+    content: '→ ';
+    color: var(--color-primary);
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 40px;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Custom cursor elements -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<!-- Trail render canvas -->
+<canvas id="trailCanvas"></canvas>
+
+<header>
+  <h1>Cursor Trail Effects</h1>
+  <p>Move your mouse to see mesmerizing trail effects. Switch between three unique trail styles below.</p>
+</header>
+
+<!-- Trail Style Switcher -->
+<div class="style-switcher">
+  <button class="style-btn active" data-style="dots" onclick="setTrailStyle('dots')">Classic Dots</button>
+  <button class="style-btn" data-style="comet" onclick="setTrailStyle('comet')">Gradient Comet</button>
+  <button class="style-btn" data-style="lines" onclick="setTrailStyle('lines')">Magnetic Lines</button>
+</div>
+
+<!-- Instructions -->
+<div class="instructions">
+  <h3>How It Works</h3>
+  <ul>
+    <li>Move your cursor around the page to see the active trail style</li>
+    <li>Click buttons to switch between Classic Dots, Gradient Comet, and Magnetic Lines</li>
+    <li>Hover over interactive elements to see the cursor grow</li>
+    <li>All rendering happens on a fixed canvas at 60fps using requestAnimationFrame</li>
+  </ul>
+</div>
+
+<!-- Demo Cards -->
+<div class="demo-section">
+  <h2>Interactive Elements</h2>
+  <p class="subtitle">Hover over these cards to see the cursor effect change</p>
+  <div class="cards-grid">
+    <div class="card">
+      <span class="icon">✦</span>
+      <h3>Particles</h3>
+      <p>Trail points that follow your movement with diminishing size and opacity</p>
+    </div>
+    <div class="card">
+      <span class="icon">◈</span>
+      <h3>Gradient</h3>
+      <p>Smooth color transitions that create a comet-like streaming effect</p>
+    </div>
+    <div class="card">
+      <span class="icon">⬡</span>
+      <h3>Lines</h3>
+      <p>Dynamic connections between trail points creating a mesh web</p>
+    </div>
+    <div class="card">
+      <span class="icon">◎</span>
+      <h3>Physics</h3>
+      <p>Easing functions simulate momentum and inertia for natural movement</p>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="value" id="fpsDisplay">60</div>
+    <div class="label">FPS</div>
+  </div>
+  <div class="stat">
+    <div class="value" id="pointCount">32</div>
+    <div class="label">Trail Points</div>
+  </div>
+  <div class="stat">
+    <div class="value" id="lineCount">0</div>
+    <div class="label">Active Lines</div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-area">
+  <a href="#" class="cta-btn">Experience the Trail</a>
+</div>
+
+<footer>
+  Cursor Trail Effects — Pure CSS + Vanilla JS Animation Library
+</footer>
+
+<script>
+/* ============================================
+   Cursor Trail Effects — Main Script
+   3 Styles: Classic Dots, Gradient Comet,
+   Magnetic Connection Lines
+   ============================================ */
+
+// ── Configuration ──
+const TRAIL_LENGTH = 32;
+const LINE_MAX_DIST = 120;
+const COMET_WIDTH_START = 28;
+const COMET_WIDTH_END = 1;
+
+// ── State ──
+let currentStyle = 'dots';
+let mouseX = -100, mouseY = -100;
+let cursorX = -100, cursorY = -100;
+let dotX = -100, dotY = -100;
+let hovering = false;
+let frameCount = 0;
+let lastFpsTime = performance.now();
+let currentFps = 60;
+let lineCountVal = 0;
+
+// ── Trail Points ──
+const trail = [];
+for (let i = 0; i < TRAIL_LENGTH; i++) {
+  trail.push({ x: -100, y: -100, age: i });
+}
+
+// ── Canvas Setup ──
+const canvas = document.getElementById('trailCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ── Cursor Elements ──
+const cursorEl = document.getElementById('cursor');
+const cursorDotEl = document.getElementById('cursorDot');
+
+// ── Mouse Tracking ──
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+// Track hovering on interactive elements
+document.querySelectorAll('.style-btn, .card, .cta-btn, a').forEach(el => {
+  el.addEventListener('mouseenter', () => { hovering = true; });
+  el.addEventListener('mouseleave', () => { hovering = false; });
+});
+
+// ── Style Switcher ──
+function setTrailStyle(style) {
+  currentStyle = style;
+  document.querySelectorAll('.style-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.style === style);
+  });
+  // Reset trail positions for clean transition
+  for (let i = 0; i < trail.length; i++) {
+    trail[i].x = mouseX;
+    trail[i].y = mouseY;
+  }
+}
+
+// ── Render: Classic Dots ──
+function renderDots() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for (let i = trail.length - 1; i >= 0; i--) {
+    const point = trail[i];
+    const progress = 1 - (i / trail.length);
+    const size = Math.max(2, 18 * progress);
+    const opacity = progress * 0.8;
+    
+    // Outer glow
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size + 4, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(233, 69, 96, ${opacity * 0.15})`;
+    ctx.fill();
+    
+    // Main dot
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(233, 69, 96, ${opacity * 0.6})`;
+    ctx.fill();
+    
+    // Bright center
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, Math.max(1, size * 0.4), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.9})`;
+    ctx.fill();
+  }
+}
+
+// ── Render: Gradient Comet ──
+function renderComet() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (trail.length < 2) return;
+  
+  // Draw comet body as a series of connected segments
+  for (let i = 0; i < trail.length - 1; i++) {
+    const point = trail[i];
+    const nextPoint = trail[i + 1];
+    const progress = 1 - (i / trail.length);
+    const width = COMET_WIDTH_START * progress + COMET_WIDTH_END;
+    const opacity = Math.pow(progress, 0.6) * 0.85;
+    
+    // Color gradient from warm to cool
+    const hue = 350 + (1 - progress) * 40;
+    const sat = 80 + progress * 20;
+    const light = 50 + progress * 20;
+    
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(nextPoint.x, nextPoint.y);
+    ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${opacity})`;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+  
+  // Draw glow at head
+  const head = trail[0];
+  const gradient = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, 40);
+  gradient.addColorStop(0, 'rgba(233, 69, 96, 0.5)');
+  gradient.addColorStop(0.4, 'rgba(255, 140, 150, 0.2)');
+  gradient.addColorStop(1, 'rgba(233, 69, 96, 0)');
+  ctx.beginPath();
+  ctx.arc(head.x, head.y, 40, 0, Math.PI * 2);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  
+  // Bright core at head
+  ctx.beginPath();
+  ctx.arc(head.x, head.y, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.fill();
+}
+
+// ── Render: Magnetic Connection Lines ──
+function renderLines() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let lCount = 0;
+  
+  // Draw connection lines between nearby trail points
+  for (let i = 0; i < trail.length; i++) {
+    for (let j = i + 1; j < trail.length; j++) {
+      const a = trail[i];
+      const b = trail[j];
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < LINE_MAX_DIST) {
+        const strength = 1 - (dist / LINE_MAX_DIST);
+        const progressA = 1 - (i / trail.length);
+        const progressB = 1 - (j / trail.length);
+        const avgProgress = (progressA + progressB) / 2;
+        const opacity = strength * avgProgress * 0.5;
+        
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(233, 69, 96, ${opacity})`;
+        ctx.lineWidth = strength * 2;
+        ctx.stroke();
+        lCount++;
+      }
+    }
+  }
+  
+  // Draw dots at each trail point
+  for (let i = 0; i < trail.length; i++) {
+    const point = trail[i];
+    const progress = 1 - (i / trail.length);
+    const size = Math.max(2, 10 * progress);
+    const opacity = progress * 0.9;
+    
+    // Glow
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size + 6, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(233, 69, 96, ${opacity * 0.1})`;
+    ctx.fill();
+    
+    // Point
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(233, 69, 96, ${opacity})`;
+    ctx.fill();
+    
+    // White center for front points
+    if (i < 5) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, Math.max(1, size * 0.35), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.8})`;
+      ctx.fill();
+    }
+  }
+  
+  lineCountVal = lCount;
+}
+
+// ── Animation Loop ──
+function animate() {
+  // Smooth cursor follow with easing
+  const ease = 0.15;
+  cursorX += (mouseX - cursorX) * ease;
+  cursorY += (mouseY - cursorY) * ease;
+  dotX += (mouseX - dotX) * 0.35;
+  dotY += (mouseY - dotY) * 0.35;
+
+  // Update custom cursor position
+  cursorEl.style.left = cursorX + 'px';
+  cursorEl.style.top = cursorY + 'px';
+  cursorDotEl.style.left = dotX + 'px';
+  cursorDotEl.style.top = dotY + 'px';
+
+  if (hovering) {
+    cursorEl.classList.add('hovering');
+  } else {
+    cursorEl.classList.remove('hovering');
+  }
+
+  // Shift trail points (move each point toward the previous)
+  for (let i = trail.length - 1; i > 0; i--) {
+    const prev = trail[i - 1];
+    // Use easing for smooth follow
+    trail[i].x += (prev.x - trail[i].x) * 0.35;
+    trail[i].y += (prev.y - trail[i].y) * 0.35;
+  }
+  // Head follows the actual mouse with slight easing
+  trail[0].x += (mouseX - trail[0].x) * 0.5;
+  trail[0].y += (mouseY - trail[0].y) * 0.5;
+
+  // Render active style
+  switch (currentStyle) {
+    case 'dots': renderDots(); lineCountVal = 0; break;
+    case 'comet': renderComet(); lineCountVal = 0; break;
+    case 'lines': renderLines(); break;
+  }
+
+  // Update stats
+  frameCount++;
+  const now = performance.now();
+  if (now - lastFpsTime >= 1000) {
+    currentFps = frameCount;
+    frameCount = 0;
+    lastFpsTime = now;
+    document.getElementById('fpsDisplay').textContent = currentFps;
+  }
+  document.getElementById('lineCount').textContent = lineCountVal;
+
+  requestAnimationFrame(animate);
+}
+
+// ── Init ──
+animate();
+</script>
+</body>
+</html>

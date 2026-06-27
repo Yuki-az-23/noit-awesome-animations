@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    Scroll Illustration Animation
+    Inspired by "Scroll Triggered Illustration Animation" on Awwwards
+    An illustrated scene that comes to life as you scroll — like a storybook progressing with scroll.
+    Pure CSS + Vanilla JS. No external dependencies.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Illustration Animation</title>
+  <style>
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --color-accent: #0f3460;
+      --color-gold: #f5c542;
+      --color-green: #4ecca3;
+      --color-blue: #3a86ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── Hero / Intro ── */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hero h1.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero p {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: #8892b0;
+      opacity: 0;
+      transition: opacity 1s 0.3s;
+    }
+
+    .hero p.visible { opacity: 1; }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      animation: bounce 2s infinite;
+    }
+
+    .scroll-hint span {
+      font-size: 0.8rem;
+      color: #8892b0;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .scroll-hint .arrow {
+      width: 24px;
+      height: 24px;
+      border-right: 2px solid var(--color-primary);
+      border-bottom: 2px solid var(--color-primary);
+      transform: rotate(45deg);
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+
+    /* ── Story Sections ── */
+    .story-section {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      overflow: hidden;
+    }
+
+    /* ── Scene Illustration (CSS-drawn) ── */
+    .scene-container {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      min-height: 500px;
+    }
+
+    /* ── Scene 1: Sunrise / Mountains ── */
+    .scene-sun {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, var(--color-gold) 30%, transparent 70%);
+      border-radius: 50%;
+      top: 8%;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      opacity: 0;
+      transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .scene-sun.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .scene-sun .ray {
+      position: absolute;
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--color-gold), transparent);
+      top: 50%;
+      left: 50%;
+      transform-origin: center 0;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .scene-sun.visible .ray { opacity: 0.6; }
+
+    .mountain {
+      position: absolute;
+      bottom: 0;
+      width: 0;
+      border-left: solid transparent;
+      border-right: solid transparent;
+      border-bottom: solid;
+      transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transform: translateY(60px);
+    }
+
+    .mountain.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .mountain-1 {
+      left: 5%;
+      border-left-width: 160px;
+      border-right-width: 160px;
+      border-bottom-width: 220px;
+      border-bottom-color: #1a3c5e;
+      transition-delay: 0.2s;
+    }
+
+    .mountain-2 {
+      left: 25%;
+      border-left-width: 200px;
+      border-right-width: 200px;
+      border-bottom-width: 280px;
+      border-bottom-color: #0f3460;
+      transition-delay: 0.4s;
+    }
+
+    .mountain-3 {
+      left: 50%;
+      border-left-width: 180px;
+      border-right-width: 180px;
+      border-bottom-width: 250px;
+      border-bottom-color: #16213e;
+      transition-delay: 0.6s;
+    }
+
+    .scene-tree {
+      position: absolute;
+      bottom: 0;
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .scene-tree.visible {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+
+    .tree-trunk {
+      width: 8px;
+      height: 50px;
+      background: #4a3728;
+      margin: 0 auto;
+    }
+
+    .tree-canopy {
+      width: 0;
+      height: 0;
+      border-left: 25px solid transparent;
+      border-right: 25px solid transparent;
+      border-bottom: 60px solid var(--color-green);
+    }
+
+    /* ── Scene 2: Ocean / Waves ── */
+    .ocean {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 200px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 1s;
+    }
+
+    .ocean.visible { opacity: 1; }
+
+    .wave {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      height: 60px;
+      border-radius: 50% 50% 0 0;
+      opacity: 0.6;
+      animation: wave-drift 8s linear infinite;
+    }
+
+    .wave-1 {
+      background: rgba(58, 134, 255, 0.3);
+      bottom: 40px;
+      animation-duration: 7s;
+    }
+
+    .wave-2 {
+      background: rgba(58, 134, 255, 0.2);
+      bottom: 20px;
+      animation-duration: 9s;
+      animation-direction: reverse;
+    }
+
+    .wave-3 {
+      background: rgba(78, 204, 163, 0.15);
+      bottom: 0;
+    }
+
+    @keyframes wave-drift {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .boat {
+      position: absolute;
+      bottom: 160px;
+      left: 30%;
+      opacity: 0;
+      transform: translateX(-200px);
+      transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .boat.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .boat-body {
+      width: 80px;
+      height: 20px;
+      background: #8b5e3c;
+      border-radius: 0 0 20px 20px;
+      position: relative;
+    }
+
+    .boat-sail {
+      position: absolute;
+      bottom: 20px;
+      left: 35px;
+      width: 0;
+      height: 0;
+      border-left: 3px solid var(--color-text);
+      border-right: 30px solid transparent;
+      border-bottom: 50px solid var(--color-text);
+      opacity: 0.9;
+    }
+
+    /* ── Scene 3: City / Buildings ── */
+    .building {
+      position: absolute;
+      bottom: 0;
+      background: var(--color-surface);
+      border-radius: 4px 4px 0 0;
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .building.visible {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+
+    .building .window {
+      width: 10px;
+      height: 10px;
+      background: var(--color-gold);
+      margin: 6px;
+      display: inline-block;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .building.visible .window { opacity: 0.8; }
+
+    .building-1 { left: 10%; width: 50px; height: 180px; transition-delay: 0.1s; }
+    .building-2 { left: 18%; width: 40px; height: 240px; transition-delay: 0.2s; }
+    .building-3 { left: 28%; width: 60px; height: 300px; transition-delay: 0.3s; }
+    .building-4 { left: 42%; width: 45px; height: 220px; transition-delay: 0.4s; }
+    .building-5 { left: 52%; width: 55px; height: 280px; transition-delay: 0.5s; }
+    .building-6 { left: 63%; width: 40px; height: 200px; transition-delay: 0.6s; }
+    .building-7 { left: 72%; width: 50px; height: 160px; transition-delay: 0.7s; }
+
+    .star {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #fff;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.5s;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    .star.visible { opacity: 0.8; }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* ── Scene 4: Forest / Fireflies ── */
+    .firefly {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--color-gold);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--color-gold), 0 0 20px var(--color-gold);
+      opacity: 0;
+      transition: opacity 0.8s;
+    }
+
+    .firefly.visible {
+      opacity: 1;
+      animation: firefly-float 4s ease-in-out infinite;
+    }
+
+    @keyframes firefly-float {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(15px, -20px); }
+      50% { transform: translate(-10px, -10px); }
+      75% { transform: translate(20px, -30px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .forest-tree {
+      position: absolute;
+      bottom: 0;
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .forest-tree.visible {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+
+    .ft-trunk {
+      width: 12px;
+      margin: 0 auto;
+      background: #3d2b1f;
+    }
+
+    .ft-top {
+      width: 0;
+      height: 0;
+      border-left: solid transparent;
+      border-right: solid transparent;
+      border-bottom: solid;
+    }
+
+    /* ── Narrative Text ── */
+    .narrative {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      max-width: 300px;
+      opacity: 0;
+      transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .narrative.left { left: 5%; transform: translateY(-50%) translateX(-30px); }
+    .narrative.right { right: 5%; transform: translateY(-50%) translateX(30px); }
+
+    .narrative.visible {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    .narrative h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--color-text), var(--color-gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .narrative p {
+      font-size: 1rem;
+      color: #8892b0;
+      line-height: 1.7;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-gold), var(--color-green));
+      z-index: 1000;
+      transition: width 0.1s;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .divider-dots {
+      display: flex;
+      gap: 12px;
+    }
+
+    .divider-dots span {
+      width: 6px;
+      height: 6px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      opacity: 0.4;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #8892b0;
+      font-size: 0.9rem;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      position: absolute;
+      top: 2rem;
+      left: 2rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: #4a5568;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .section-label.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <!-- Progress Bar -->
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1 id="heroTitle">Scroll to Explore</h1>
+    <p id="heroSub">An illustrated storybook that comes alive as you scroll</p>
+    <div class="scroll-hint">
+      <span>Scroll Down</span>
+      <div class="arrow"></div>
+    </div>
+  </section>
+
+  <!-- Scene 1: Mountains / Sunrise -->
+  <section class="story-section" data-scene="mountains">
+    <span class="section-label">Chapter I — Dawn</span>
+    <div class="narrative left" data-anim>
+      <h2>The Dawn</h2>
+      <p>As the first light breaks over the horizon, the mountains emerge from darkness, painted in hues of blue and shadow.</p>
+    </div>
+    <div class="scene-container">
+      <!-- Sun -->
+      <div class="scene-sun" data-anim></div>
+      <!-- Mountains -->
+      <div class="mountain mountain-1" data-anim data-delay="200"></div>
+      <div class="mountain mountain-2" data-anim data-delay="400"></div>
+      <div class="mountain mountain-3" data-anim data-delay="600"></div>
+      <!-- Trees -->
+      <div class="scene-tree" style="left:15%; bottom:0" data-anim data-delay="900">
+        <div class="tree-canopy"></div>
+        <div class="tree-trunk"></div>
+      </div>
+      <div class="scene-tree" style="left:70%; bottom:0" data-anim data-delay="1000">
+        <div class="tree-canopy"></div>
+        <div class="tree-trunk"></div>
+      </div>
+      <div class="scene-tree" style="left:85%; bottom:0" data-anim data-delay="1100">
+        <div class="tree-canopy" style="border-bottom-color:#3daa80"></div>
+        <div class="tree-trunk"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-dots"><span></span><span></span><span></span></div></div>
+
+  <!-- Scene 2: Ocean -->
+  <section class="story-section" data-scene="ocean">
+    <span class="section-label">Chapter II — Voyage</span>
+    <div class="narrative right" data-anim>
+      <h2>The Voyage</h2>
+      <p>A solitary vessel sets across the endless blue, where waves rise and fall in their eternal rhythm.</p>
+    </div>
+    <div class="scene-container">
+      <div class="boat" data-anim>
+        <div class="boat-sail"></div>
+        <div class="boat-body"></div>
+      </div>
+      <div class="ocean" data-anim>
+        <div class="wave wave-1"></div>
+        <div class="wave wave-2"></div>
+        <div class="wave wave-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-dots"><span></span><span></span><span></span></div></div>
+
+  <!-- Scene 3: City at Night -->
+  <section class="story-section" data-scene="city">
+    <span class="section-label">Chapter III — skyline</span>
+    <div class="narrative left" data-anim>
+      <h2>The skyline</h2>
+      <p>Lights flicker on one by one as the city awakens, each window a story, each tower a monument to ambition.</p>
+    </div>
+    <div class="scene-container">
+      <div class="star" style="top:8%;left:15%" data-anim data-delay="0"></div>
+      <div class="star" style="top:12%;left:45%" data-anim data-delay="100"></div>
+      <div class="star" style="top:5%;left:60%" data-anim data-delay="200"></div>
+      <div class="star" style="top:18%;left:80%" data-anim data-delay="300"></div>
+      <div class="star" style="top:10%;left:90%" data-anim data-delay="400"></div>
+      <div class="star" style="top:22%;left:30%" data-anim data-delay="150"></div>
+      <div class="star" style="top:3%;left:75%" data-anim data-delay="250"></div>
+
+      <div class="building building-1" data-anim data-delay="100">
+        <div class="window"></div><div class="window"></div>
+      </div>
+      <div class="building building-2" data-anim data-delay="200">
+        <div class="window"></div><div class="window"></div><div class="window"></div>
+      </div>
+      <div class="building building-3" data-anim data-delay="300">
+        <div class="window"></div><div class="window"></div><div class="window"></div><div class="window"></div>
+      </div>
+      <div class="building building-4" data-anim data-delay="400">
+        <div class="window"></div><div class="window"></div><div class="window"></div>
+      </div>
+      <div class="building building-5" data-anim data-delay="500">
+        <div class="window"></div><div class="window"></div><div class="window"></div><div class="window"></div><div class="window"></div>
+      </div>
+      <div class="building building-6" data-anim data-delay="600">
+        <div class="window"></div><div class="window"></div><div class="window"></div>
+      </div>
+      <div class="building building-7" data-anim data-delay="700">
+        <div class="window"></div><div class="window"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-dots"><span></span><span></span><span></span></div></div>
+
+  <!-- Scene 4: Forest / Fireflies -->
+  <section class="story-section" data-scene="forest">
+    <span class="section-label">Chapter IV — Enchantment</span>
+    <div class="narrative right" data-anim>
+      <h2>The Enchantment</h2>
+      <p>Deep in the ancient forest, fireflies dance their luminous waltz, weaving paths of gold through the emerald darkness.</p>
+    </div>
+    <div class="scene-container" style="height:450px">
+      <!-- Forest trees -->
+      <div class="forest-tree" style="left:5%; bottom:0" data-anim data-delay="0">
+        <div class="ft-top" style="border-left-width:30px;border-right-width:30px;border-bottom-width:80px;border-bottom-color:#2d6a4f"></div>
+        <div class="ft-trunk" style="height:40px"></div>
+      </div>
+      <div class="forest-tree" style="left:20%; bottom:0" data-anim data-delay="100">
+        <div class="ft-top" style="border-left-width:40px;border-right-width:40px;border-bottom-width:100px;border-bottom-color:#1b4332"></div>
+        <div class="ft-trunk" style="height:50px"></div>
+      </div>
+      <div class="forest-tree" style="left:40%; bottom:0" data-anim data-delay="200">
+        <div class="ft-top" style="border-left-width:35px;border-right-width:35px;border-bottom-width:90px;border-bottom-color:#2d6a4f"></div>
+        <div class="ft-trunk" style="height:45px"></div>
+      </div>
+      <div class="forest-tree" style="left:60%; bottom:0" data-anim data-delay="300">
+        <div class="ft-top" style="border-left-width:45px;border-right-width:45px;border-bottom-width:110px;border-bottom-color:#1b4332"></div>
+        <div class="ft-trunk" style="height:55px"></div>
+      </div>
+      <div class="forest-tree" style="left:80%; bottom:0" data-anim data-delay="400">
+        <div class="ft-top" style="border-left-width:30px;border-right-width:30px;border-bottom-width:75px;border-bottom-color:#2d6a4f"></div>
+        <div class="ft-trunk" style="height:35px"></div>
+      </div>
+      <!-- Fireflies -->
+      <div class="firefly" style="top:30%;left:25%;" data-anim data-delay="600"></div>
+      <div class="firefly" style="top:45%;left:55%;" data-anim data-delay="700"></div>
+      <div class="firefly" style="top:20%;left:70%;" data-anim data-delay="800"></div>
+      <div class="firefly" style="top:55%;left:35%;" data-anim data-delay="900"></div>
+      <div class="firefly" style="top:35%;left:80%;" data-anim data-delay="1000"></div>
+      <div class="firefly" style="top:25%;left:15%;" data-anim data-delay="1100"></div>
+      <div class="firefly" style="top:60%;left:60%;" data-anim data-delay="1200"></div>
+      <div class="firefly" style="top:40%;left:45%;" data-anim data-delay="1300"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Scroll Illustration Animation — Pure CSS + JS</p>
+  </footer>
+
+  <script>
+    // ── Intersection Observer for scroll-triggered animations ──
+    const animElements = document.querySelectorAll('[data-anim]');
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -80px 0px',
+      threshold: 0.15
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const delay = parseInt(el.dataset.delay || '0', 10);
+          setTimeout(() => {
+            el.classList.add('visible');
+          }, delay);
+          observer.unobserve(el);
+        }
+      });
+    }, observerOptions);
+
+    animElements.forEach(el => observer.observe(el));
+
+    // ── Hero animation on load ──
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('heroTitle').classList.add('visible');
+        document.getElementById('heroSub').classList.add('visible');
+      }, 300);
+    });
+
+    // ── Progress bar ──
+    const progressBar = document.getElementById('progressBar');
+
+    function updateProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      progressBar.style.width = progress + '%';
+    }
+
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    // ── Parallax effect on scene sections ──
+    const scenes = document.querySelectorAll('.story-section');
+
+    function updateParallax() {
+      scenes.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        const offset = (window.innerHeight / 2 - centerY) * 0.05;
+        const container = section.querySelector('.scene-container');
+        const narrative = section.querySelector('.narrative');
+        if (container) {
+          container.style.transform = `translateY(${offset}px)`;
+        }
+        if (narrative) {
+          const narrOffset = (window.innerHeight / 2 - centerY) * -0.03;
+          narrative.style.transform = narrative.classList.contains('left')
+            ? `translateY(calc(-50% + ${narrOffset}px))`
+            : `translateY(calc(-50% + ${narrOffset}px))`;
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateParallax, { passive: true });
+
+    // ── Sun rays ──
+    const sun = document.querySelector('.scene-sun');
+    if (sun) {
+      for (let i = 0; i < 12; i++) {
+        const ray = document.createElement('div');
+        ray.className = 'ray';
+        ray.style.transform = `rotate(${i * 30}deg) translateY(-80px)`;
+        sun.appendChild(ray);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  VARIABLE FONT ANIMATE — Simulated Variable Font Animation
+  ============================================================
+  Since we can't load actual variable fonts, we simulate
+  variable-font-style animations using CSS transforms:
+  scale (weight), letter-spacing (width), skew (slant),
+  font-size (optical sizing), contrast (opacity shift),
+  and a combined "all together" showcase.
+  Pure CSS + Vanilla JS. No dependencies.
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variable Font Animate</title>
+<style>
+  /* ── Reset & Custom Properties ── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a9e;
+    --color-glow: rgba(233, 69, 96, 0.35);
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(233,69,96,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 80% at 80% 100%, rgba(78,205,196,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 2.5rem 2rem 1rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  header h1 {
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    font-weight: 200;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #e94560, #4ecdc4, #fbbf24, #e94560);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradShift 6s ease-in-out infinite;
+  }
+
+  @keyframes gradShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  header p {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    padding: 0 2rem 3rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (max-width: 740px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Demo Card ── */
+  .demo-card {
+    background: linear-gradient(160deg, var(--color-surface) 0%, rgba(15,15,26,0.8) 100%);
+    border: 1px solid rgba(233,69,96,0.08);
+    border-radius: 1.25rem;
+    padding: 2rem 1.5rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .demo-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(233,69,96,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .demo-card:hover {
+    border-color: rgba(233,69,96,0.2);
+    box-shadow: 0 0 40px rgba(233,69,96,0.06);
+  }
+
+  .demo-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-muted);
+    margin-bottom: 0.3rem;
+  }
+
+  .demo-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+  }
+
+  .demo-axis {
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    opacity: 0.7;
+    margin-bottom: 1.2rem;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ── Animation Area ── */
+  .anim-area {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .anim-text {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    text-align: center;
+    line-height: 1.2;
+    transition: all 0.15s ease;
+    will-change: transform, letter-spacing, opacity;
+  }
+
+  /* ── 1. Weight Shift ── */
+  .weight-text {
+    color: #ff6b9d;
+    text-shadow: 0 0 30px rgba(255,107,157,0.3);
+  }
+
+  @keyframes weightShift {
+    0%, 100% { transform: scaleX(1); opacity: 1; }
+    50% { transform: scaleX(1.15); opacity: 0.85; }
+  }
+
+  .weight-text.animating {
+    animation: weightShift 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  /* ── 2. Width Stretch ── */
+  .width-text {
+    color: #4ecdc4;
+    text-shadow: 0 0 30px rgba(78,205,196,0.3);
+  }
+
+  @keyframes widthStretch {
+    0%, 100% { letter-spacing: -0.02em; transform: scaleX(1); }
+    50% { letter-spacing: 0.3em; transform: scaleX(1.05); }
+  }
+
+  .width-text.animating {
+    animation: widthStretch 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  /* ── 3. Slant / Italic ── */
+  .slant-text {
+    color: #fbbf24;
+    text-shadow: 0 0 30px rgba(251,191,36,0.3);
+  }
+
+  @keyframes slantItalic {
+    0%, 100% { transform: skewX(0deg); }
+    30% { transform: skewX(-12deg); }
+    70% { transform: skewX(8deg); }
+  }
+
+  .slant-text.animating {
+    animation: slantItalic 2.8s ease-in-out infinite;
+  }
+
+  /* ── 4. Optical Sizing ── */
+  .optical-text {
+    color: #38bdf8;
+    text-shadow: 0 0 30px rgba(56,189,248,0.3);
+  }
+
+  @keyframes opticalSize {
+    0%, 100% { font-size: 2rem; opacity: 1; }
+    40% { font-size: 3.2rem; opacity: 0.9; }
+    70% { font-size: 1.4rem; opacity: 0.7; }
+  }
+
+  .optical-text.animating {
+    animation: opticalSize 3.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    /* Override the fixed font-size from .anim-text */
+  }
+
+  /* ── 5. Contrast Shift ── */
+  .contrast-text {
+    color: #a3e635;
+    text-shadow: 0 0 30px rgba(163,230,53,0.3);
+  }
+
+  @keyframes contrastShift {
+    0%, 100% {
+      opacity: 1;
+      transform: scaleY(1);
+      letter-spacing: 0em;
+    }
+    25% {
+      opacity: 0.4;
+      transform: scaleY(0.85);
+      letter-spacing: 0.2em;
+    }
+    50% {
+      opacity: 1;
+      transform: scaleY(1.1);
+      letter-spacing: -0.03em;
+    }
+    75% {
+      opacity: 0.6;
+      transform: scaleY(0.92);
+      letter-spacing: 0.12em;
+    }
+  }
+
+  .contrast-text.animating {
+    animation: contrastShift 3s ease-in-out infinite;
+  }
+
+  /* ── 6. All Together ── */
+  .all-text {
+    color: #c084fc;
+    text-shadow: 0 0 30px rgba(192,132,252,0.3);
+  }
+
+  .all-text span {
+    display: inline-block;
+    transition: all 0.3s ease;
+  }
+
+  /* ── Play/Pause Overlay ── */
+  .play-btn {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    width: 32px;
+    height: 32px;
+    background: rgba(233,69,96,0.15);
+    border: 1px solid rgba(233,69,96,0.25);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 5;
+  }
+
+  .play-btn:hover {
+    background: rgba(233,69,96,0.25);
+    border-color: var(--color-primary);
+  }
+
+  .play-btn svg {
+    fill: var(--color-primary);
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ── Control Bar ── */
+  .global-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding-bottom: 2rem;
+    z-index: 2;
+    position: relative;
+    flex-wrap: wrap;
+  }
+
+  .gbtn {
+    background: var(--color-surface);
+    color: var(--color-muted);
+    border: 1px solid rgba(233,69,96,0.15);
+    padding: 0.5rem 1.5rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .gbtn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: rgba(233,69,96,0.08);
+  }
+
+  .gbtn.active {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: rgba(233,69,96,0.12);
+  }
+
+  /* ── Speed Slider ── */
+  .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--color-surface);
+    border: 1px solid rgba(233,69,96,0.12);
+    border-radius: 2rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+
+  .speed-control input[type="range"] {
+    -webkit-appearance: none;
+    width: 80px;
+    height: 3px;
+    background: rgba(233,69,96,0.2);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .speed-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  /* ── Reduce Motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .anim-text.animating {
+      animation: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Variable Font Animate</h1>
+  <p>Simulated variable-font axes via CSS transforms &middot; 6 animation modes</p>
+</header>
+
+<div class="grid">
+  <!-- 1. Weight Shift -->
+  <div class="demo-card" id="card-weight">
+    <button class="play-btn" onclick="toggleCard('weight')" title="Play/Pause">
+      <svg viewBox="0 0 24 24" id="icon-weight"><polygon points="8,5 19,12 8,19"/></svg>
+    </button>
+    <div class="demo-label">Axis 01</div>
+    <div class="demo-title">Weight Shift</div>
+    <div class="demo-axis">font-weight: 300 → 900</div>
+    <div class="anim-area">
+      <div class="anim-text weight-text" id="anim-weight">BOLD</div>
+    </div>
+  </div>
+
+  <!-- 2. Width Stretch -->
+  <div class="demo-card" id="card-width">
+    <button class="play-btn" onclick="toggleCard('width')" title="Play/Pause">
+      <svg viewBox="0 0 24 24" id="icon-width"><polygon points="8,5 19,12 8,19"/></svg>
+    </button>
+    <div class="demo-label">Axis 02</div>
+    <div class="demo-title">Width Stretch</div>
+    <div class="demo-axis">font-width: 75% → 125%</div>
+    <div class="anim-area">
+      <div class="anim-text width-text" id="anim-width">EXPAND</div>
+    </div>
+  </div>
+
+  <!-- 3. Slant Italic -->
+  <div class="demo-card" id="card-slant">
+    <button class="play-btn" onclick="toggleCard('slant')" title="Play/Pause">
+      <svg viewBox="0 0 24 24" id="icon-slant"><polygon points="8,5 19,12 8,19"/></svg>
+    </button>
+    <div class="demo-label">Axis 03</div>
+    <div class="demo-title">Slant Italic</div>
+    <div class="demo-axis">font-slant: 0° → 15°</div>
+    <div class="anim-area">
+      <div class="anim-text slant-text" id="anim-slant">LEAN</div>
+    </div>
+  </div>
+
+  <!-- 4. Optical Sizing -->
+  <div class="demo-card" id="card-optical">
+    <button class="play-btn" onclick="toggleCard('optical')" title="Play/Pause">
+      <svg viewBox="0 0 24 24" id="icon-optical"><polygon points="8,5 19,12 8,19"/></svg>
+    </button>
+    <div class="demo-label">Axis 04</div>
+    <div class="demo-title">Optical Sizing</div>
+    <div class="demo-axis">font-size: 12pt → 144pt</div>
+    <div class="anim-area">
+      <div class="anim-text optical-text" id="anim-optical">SCALE</div>
+    </div>
+  </div>
+
+  <!-- 5. Contrast Shift -->
+  <div class="demo-card" id="card-contrast">
+    <button class="play-btn" onclick="toggleCard('contrast')" title="Play/Pause">
+      <svg viewBox="0 0 24 24" id="icon-contrast"><polygon points="8,5 19,12 8,19"/></svg>
+    </button>
+    <div class="demo-label">Axis 05</div>
+    <div class="demo-title">Contrast Shift</div>
+    <div class="demo-axis">font-contrast: low → high</div>
+    <div class="anim-area">
+      <div class="anim-text contrast-text" id="anim-contrast">SHIFT</div>
+    </div>
+  </div>
+
+  <!-- 6. All Together -->
+  <div class="demo-card" id="card-all">
+    <button class="play-btn" onclick="toggleCard('all')" title="Play/Pause">
+      <svg viewBox="0 0 24 24" id="icon-all"><polygon points="8,5 19,12 8,19"/></svg>
+    </button>
+    <div class="demo-label">Axis 06</div>
+    <div class="demo-title">All Together</div>
+    <div class="demo-axis">weight + width + slant + size + contrast</div>
+    <div class="anim-area">
+      <div class="anim-text all-text" id="anim-all">EVERYTHING</div>
+    </div>
+  </div>
+</div>
+
+<div class="global-controls">
+  <button class="gbtn" id="btnPlayAll" onclick="playAll()">Play All</button>
+  <button class="gbtn" onclick="pauseAll()">Pause All</button>
+  <button class="gbtn" onclick="resetAll()">Reset</button>
+  <div class="speed-control">
+    <span>Speed</span>
+    <input type="range" min="0.3" max="3" step="0.1" value="1" id="speedSlider" oninput="updateSpeed()">
+    <span id="speedVal">1.0x</span>
+  </div>
+</div>
+
+<script>
+/*
+  ============================================================
+  Variable Font Animate — JS Controller
+  ============================================================
+*/
+
+// ── State ──
+const cards = ['weight', 'width', 'slant', 'optical', 'contrast', 'all'];
+const cardState = {};
+cards.forEach(c => cardState[c] = { playing: false, raf: null, startTime: 0 });
+
+let allTextChars = [];
+const allTextEl = document.getElementById('anim-all');
+
+// ── Initialize "All Together" characters ──
+function initAllChars() {
+  const text = 'EVERYTHING';
+  allTextEl.innerHTML = '';
+  allTextChars = [];
+  text.split('').forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.textContent = ch;
+    allTextEl.appendChild(span);
+    allTextChars.push(span);
+  });
+}
+initAllChars();
+
+// ── Toggle card play/pause ──
+function toggleCard(name) {
+  if (cardState[name].playing) {
+    pauseCard(name);
+  } else {
+    playCard(name);
+  }
+}
+
+function playCard(name) {
+  const el = document.getElementById(`anim-${name}`);
+  const icon = document.getElementById(`icon-${name}`);
+
+  cardState[name].playing = true;
+
+  // Update play/pause icon
+  icon.innerHTML = '<rect x="7" y="5" width="3" height="14"/><rect x="14" y="5" width="3" height="14"/>';
+
+  if (name !== 'all') {
+    // Use CSS animation for simple cards
+    el.style.animationDuration = getAnimDuration(name);
+    el.classList.add('animating');
+  } else {
+    // "All Together" uses JS-driven per-character animation
+    animateAllTogether();
+  }
+}
+
+function pauseCard(name) {
+  const el = document.getElementById(`anim-${name}`);
+  const icon = document.getElementById(`icon-${name}`);
+
+  cardState[name].playing = false;
+  icon.innerHTML = '<polygon points="8,5 19,12 8,19"/>';
+
+  if (name !== 'all') {
+    el.classList.remove('animating');
+  } else {
+    if (cardState.all.raf) cancelAnimationFrame(cardState.all.raf);
+  }
+}
+
+function getAnimDuration(name) {
+  const speed = parseFloat(document.getElementById('speedSlider').value);
+  const baseDurations = {
+    weight: 2.4,
+    width: 3,
+    slant: 2.8,
+    optical: 3.5,
+    contrast: 3
+  };
+  return (baseDurations[name] || 3) / speed + 's';
+}
+
+// ── "All Together" — JS-driven multi-axis animation ──
+function animateAllTogether() {
+  if (!cardState.all.playing) return;
+
+  const speed = parseFloat(document.getElementById('speedSlider').value);
+  const t = performance.now() / 1000 * speed;
+
+  allTextChars.forEach((char, i) => {
+    const phase = i * 0.3;
+
+    // Weight: scaleX oscillation
+    const weight = 1 + 0.2 * Math.sin(t * 2 + phase);
+
+    // Width: letter-spacing oscillation
+    const widthEm = 0.05 * Math.sin(t * 1.5 + phase + 1);
+
+    // Slant: skewX oscillation
+    const skew = 10 * Math.sin(t * 1.8 + phase + 2);
+
+    // Optical sizing: scaleY and font-size
+    const optScale = 1 + 0.15 * Math.sin(t * 2.2 + phase + 3);
+
+    // Contrast: opacity
+    const opacity = 0.5 + 0.5 * Math.abs(Math.sin(t * 2.5 + phase + 4));
+
+    char.style.transform = `scaleX(${weight}) skewX(${skew}deg) scaleY(${optScale})`;
+    char.style.letterSpacing = `${widthEm}em`;
+    char.style.opacity = opacity;
+  });
+
+  cardState.all.raf = requestAnimationFrame(animateAllTogether);
+}
+
+// ── Global Controls ──
+function playAll() {
+  cards.forEach(name => playCard(name));
+  document.getElementById('btnPlayAll').classList.add('active');
+}
+
+function pauseAll() {
+  cards.forEach(name => pauseCard(name));
+  document.getElementById('btnPlayAll').classList.remove('active');
+}
+
+function resetAll() {
+  pauseAll();
+
+  // Reset all text elements
+  allTextChars.forEach(ch => {
+    ch.style.transform = '';
+    ch.style.letterSpacing = '';
+    ch.style.opacity = '';
+  });
+
+  // Reset slider
+  document.getElementById('speedSlider').value = 1;
+  document.getElementById('speedVal').textContent = '1.0x';
+
+  // Reset animation durations
+  cards.forEach(name => {
+    const el = document.getElementById(`anim-${name}`);
+    if (name !== 'all') {
+      el.style.animationDuration = '';
+    }
+  });
+}
+
+function updateSpeed() {
+  const speed = parseFloat(document.getElementById('speedSlider').value);
+  document.getElementById('speedVal').textContent = speed.toFixed(1) + 'x';
+
+  // Update durations for all playing CSS-animated cards
+  cards.forEach(name => {
+    if (name === 'all') return;
+    const el = document.getElementById(`anim-${name}`);
+    if (cardState[name].playing) {
+      el.style.animationDuration = getAnimDuration(name);
+    }
+  });
+}
+
+// ── Auto-play on load ──
+setTimeout(playAll, 500);
+</script>
+</body>
+</html>

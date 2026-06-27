@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Text Path Animation
+  Inspired by "Text Animation Following a Path"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Path Animation</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Section Styling ── */
+  .demo-section {
+    padding: 6rem 2rem;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .demo-section:last-child {
+    border-bottom: none;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem;
+    color: var(--color-muted);
+  }
+
+  /* ── SVG Path Container ── */
+  .path-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    overflow: visible;
+  }
+
+  .path-svg {
+    width: 100%;
+    overflow: visible;
+  }
+
+  /* ── Sine Wave Section ── */
+  #sineSection .path-svg {
+    height: 300px;
+  }
+
+  /* ── Circle Section ── */
+  #circleSection .path-svg {
+    height: 500px;
+  }
+
+  /* ── Bezier Section ── */
+  #bezierSection .path-svg {
+    height: 400px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 900;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title .accent {
+    background: linear-gradient(135deg, var(--color-primary), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    color: var(--color-muted);
+    max-width: 500px;
+    line-height: 1.7;
+  }
+
+  /* ── Wave Marquee ── */
+  .wave-marquee {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .wave-text {
+    font-size: 2rem;
+    font-weight: 800;
+    fill: none;
+    stroke: url(#waveGradient);
+    stroke-width: 1;
+  }
+
+  /* ── Spinning Circle ── */
+  .circle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+  }
+
+  /* ── Infinity Section ── */
+  .infinity-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+  }
+
+  /* ── Spirograph ── */
+  .spiro-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+  }
+
+  /* ── Multi-line path ── */
+  .multiline-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* ── Animated text along path styles ── */
+  .path-text {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  /* ── Canvas Section ── */
+  .canvas-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+  }
+
+  .canvas-container canvas {
+    border-radius: 16px;
+    background: rgba(22, 33, 62, 0.3);
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .ctrl-btn {
+    padding: 0.6rem 1.5rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+
+  .ctrl-btn:hover, .ctrl-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* ── Speed Slider ── */
+  .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  .speed-control label {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .speed-control input[type="range"] {
+    width: 200px;
+    accent-color: var(--color-primary);
+  }
+
+  .speed-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    min-width: 30px;
+  }
+
+  @media (max-width: 768px) {
+    .path-svg { height: auto; }
+    #sineSection .path-svg { height: 200px; }
+    #circleSection .path-svg { height: 350px; }
+    #bezierSection .path-svg { height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <header class="hero">
+    <h1 class="hero-title">Text <span class="accent">Path</span> Animation</h1>
+    <p class="hero-sub">Text that flows, dances, and glides along SVG paths — sine waves, circles, bezier curves, and spirograph patterns.</p>
+  </header>
+
+  <!-- 1. Sine Wave -->
+  <section class="demo-section" id="sineSection">
+    <div class="section-label">01 — Sine Wave</div>
+    <h2 class="section-title">Flowing Along a Sine Curve</h2>
+    <div class="path-container">
+      <svg class="path-svg" viewBox="0 0 1000 300" id="sineSvg">
+        <defs>
+          <linearGradient id="sineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#e94560"/>
+            <stop offset="50%" style="stop-color:#00d2ff"/>
+            <stop offset="100%" style="stop-color:#533483"/>
+          </linearGradient>
+        </defs>
+        <!-- Path will be generated by JS -->
+      </svg>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn active" data-speed="1" data-target="sine">Normal</button>
+      <button class="ctrl-btn" data-speed="2" data-target="sine">Fast</button>
+      <button class="ctrl-btn" data-speed="0.5" data-target="sine">Slow</button>
+    </div>
+  </section>
+
+  <!-- 2. Circle Path -->
+  <section class="demo-section" id="circleSection">
+    <div class="section-label">02 — Circle</div>
+    <h2 class="section-title">Orbiting Around a Circle</h2>
+    <div class="path-container">
+      <svg class="path-svg" viewBox="0 0 500 500" id="circleSvg">
+        <defs>
+          <linearGradient id="circleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#e94560"/>
+            <stop offset="100%" style="stop-color:#00d2ff"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 3. Bezier Curve -->
+  <section class="demo-section" id="bezierSection">
+    <div class="section-label">03 — Bezier Curve</div>
+    <h2 class="section-title">Gliding on Bezier Curves</h2>
+    <div class="path-container">
+      <svg class="path-svg" viewBox="0 0 1000 400" id="bezierSvg">
+        <defs>
+          <linearGradient id="bezierGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#533483"/>
+            <stop offset="50%" style="stop-color:#e94560"/>
+            <stop offset="100%" style="stop-color:#00d2ff"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4. Canvas Spirograph -->
+  <section class="demo-section" id="spiroSection">
+    <div class="section-label">04 — Spirograph</div>
+    <h2 class="section-title">Canvas Spirograph Text Path</h2>
+    <div class="canvas-container">
+      <canvas id="spiroCanvas" width="800" height="500"></canvas>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn active" data-shape="spiro">Spirograph</button>
+      <button class="ctrl-btn" data-shape="lissajous">Lissajous</button>
+      <button class="ctrl-btn" data-shape="rose">Rose Curve</button>
+    </div>
+    <div class="speed-control">
+      <label>Speed</label>
+      <input type="range" id="spiroSpeed" min="0.2" max="3" step="0.1" value="1">
+      <span class="speed-value" id="spiroSpeedVal">1x</span>
+    </div>
+  </section>
+
+  <!-- 5. Marquee Wave -->
+  <section class="demo-section" id="marqueeSection">
+    <div class="section-label">05 — Wave Marquee</div>
+    <h2 class="section-title">Scrolling Text on a Wave</h2>
+    <div class="wave-marquee">
+      <svg width="100%" height="200" id="marqueeSvg">
+        <defs>
+          <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#e94560"/>
+            <stop offset="33%" style="stop-color:#00d2ff"/>
+            <stop offset="66%" style="stop-color:#533483"/>
+            <stop offset="100%" style="stop-color:#e94560"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </section>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Utility ──
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function createSVGElement(tag, attrs = {}) {
+    const el = document.createElementNS(SVG_NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  }
+
+  // ── 1. SINE WAVE PATH ──
+  function initSineWave() {
+    const svg = document.getElementById('sineSvg');
+    const amplitude = 80;
+    const frequency = 0.008;
+    const yOffset = 150;
+
+    // Generate sine path
+    let pathD = '';
+    for (let x = -50; x <= 1050; x += 2) {
+      const y = yOffset + Math.sin(x * frequency) * amplitude;
+      pathD += (x === -50 ? 'M' : 'L') + ` ${x} ${y} `;
+    }
+
+    // Visible path (faint)
+    const pathEl = createSVGElement('path', {
+      d: pathD,
+      fill: 'none',
+      stroke: 'rgba(233, 69, 96, 0.1)',
+      'stroke-width': '2'
+    });
+    svg.appendChild(pathEl);
+
+    // Animated text path
+    const textPath = createSVGElement('textPath', {
+      href: '#sinePath'
+    });
+    textPath.textContent = '◆ TEXT FLOWING ALONG A SINE WAVE ◆ PURE SVG ANIMATION ◆ NO EXTERNAL LIBRARIES ◆ CSS + VANILLA JS ◆ PATH-FOLLOWING TYPOGRAPHY ◆ ';
+
+    const text = createSVGElement('text', {
+      class: 'path-text',
+      fill: 'url(#sineGrad)',
+      'font-size': '18',
+      'font-weight': '700',
+      'letter-spacing': '2'
+    });
+    text.appendChild(textPath);
+    svg.appendChild(text);
+
+    // Add path definition
+    const defs = createSVGElement('defs');
+    const pathDef = createSVGElement('path', { id: 'sinePath', d: pathD });
+    defs.appendChild(pathDef);
+    svg.insertBefore(defs, svg.firstChild);
+
+    textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#sinePath');
+
+    // Animate offset
+    let offset = 0;
+    let speed = 1;
+    function animateSine() {
+      offset -= 0.5 * speed;
+      textPath.setAttribute('startOffset', offset + '%');
+      requestAnimationFrame(animateSine);
+    }
+    animateSine();
+
+    // Speed controls
+    document.querySelectorAll('[data-target="sine"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-target="sine"]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        speed = parseFloat(btn.dataset.speed);
+      });
+    });
+  }
+
+  // ── 2. CIRCLE PATH ──
+  function initCirclePath() {
+    const svg = document.getElementById('circleSvg');
+    const cx = 250, cy = 250, r = 180;
+
+    // Circle path
+    const pathD = `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`;
+
+    const defs = createSVGElement('defs');
+    const pathDef = createSVGElement('path', { id: 'circlePath', d: pathD });
+    defs.appendChild(pathDef);
+    svg.insertBefore(defs, svg.firstChild);
+
+    // Visible circle (faint)
+    const circleVis = createSVGElement('path', {
+      d: pathD,
+      fill: 'none',
+      stroke: 'rgba(0, 210, 255, 0.12)',
+      'stroke-width': '2',
+      'stroke-dasharray': '8 4'
+    });
+    svg.appendChild(circleVis);
+
+    // Center glow
+    const glow = createSVGElement('circle', {
+      cx, cy, r: '40',
+      fill: 'none',
+      stroke: 'url(#circleGrad)',
+      'stroke-width': '1',
+      opacity: '0.3'
+    });
+    svg.appendChild(glow);
+
+    // Inner text (spinning)
+    const textPath = createSVGElement('textPath', {
+      href: '#circlePath'
+    });
+    textPath.textContent = '● ORBITING TEXT ● AROUND AND AROUND ● CIRCULAR PATH ● SVG TEXT PATH ● INFINITE LOOP ● ';
+
+    const text = createSVGElement('text', {
+      fill: 'url(#circleGrad)',
+      'font-size': '16',
+      'font-weight': '700',
+      'letter-spacing': '3'
+    });
+    text.appendChild(textPath);
+    svg.appendChild(text);
+
+    // Animate
+    let offset = 0;
+    function animateCircle() {
+      offset -= 0.3;
+      textPath.setAttribute('startOffset', offset + '%');
+      requestAnimationFrame(animateCircle);
+    }
+    animateCircle();
+
+    // Second ring (outer, decorative)
+    const outerPathD = `M ${cx} ${cy - r - 30} A ${r + 30} ${r + 30} 0 1 1 ${cx} ${cy - r - 30} Z`;
+    const outerVis = createSVGElement('path', {
+      d: outerPathD,
+      fill: 'none',
+      stroke: 'rgba(233, 69, 96, 0.08)',
+      'stroke-width': '1',
+      'stroke-dasharray': '4 8'
+    });
+    svg.appendChild(outerVis);
+  }
+
+  // ── 3. BEZIER CURVE ──
+  function initBezierCurve() {
+    const svg = document.getElementById('bezierSvg');
+
+    const pathD = 'M 0 350 C 100 50, 250 350, 400 150 S 650 350, 800 100 S 950 300, 1000 200';
+
+    const defs = createSVGElement('defs');
+    const pathDef = createSVGElement('path', { id: 'bezierPath', d: pathD });
+    defs.appendChild(pathDef);
+    svg.insertBefore(defs, svg.firstChild);
+
+    // Visible path (faint)
+    const pathVis = createSVGElement('path', {
+      d: pathD,
+      fill: 'none',
+      stroke: 'rgba(83, 52, 131, 0.15)',
+      'stroke-width': '2'
+    });
+    svg.appendChild(pathVis);
+
+    // Animated text
+    const textPath = createSVGElement('textPath', {
+      href: '#bezierPath'
+    });
+    textPath.textContent = '✦ FLOWING ALONG BEZIER CURVES ✦ SMOOTH AND ORGANIC PATHS ✦ SVG CUBIC BEZIER ✦ TEXT FOLLOWING COMPLEX TRAJECTORIES ✦ ';
+
+    const text = createSVGElement('text', {
+      fill: 'url(#bezierGrad)',
+      'font-size': '18',
+      'font-weight': '700',
+      'letter-spacing': '2'
+    });
+    text.appendChild(textPath);
+    svg.appendChild(text);
+
+    // Animate
+    let offset2 = 0;
+    function animateBezier() {
+      offset2 -= 0.4;
+      textPath.setAttribute('startOffset', offset2 + '%');
+      requestAnimationFrame(animateBezier);
+    }
+    animateBezier();
+
+    // Moving dot
+    const dot = createSVGElement('circle', {
+      r: '5',
+      fill: '#e94560'
+    });
+    svg.appendChild(dot);
+
+    const pathLength = pathDef.getTotalLength();
+    let dotT = 0;
+    function animateDot() {
+      dotT = (dotT + 0.002) % 1;
+      const pt = pathDef.getPointAtLength(dotT * pathLength);
+      dot.setAttribute('cx', pt.x);
+      dot.setAttribute('cy', pt.y);
+
+      // Dot glow
+      const glow = createSVGElement('circle', {
+        r: '15',
+        fill: 'rgba(233, 69, 96, 0.2)'
+      });
+      // Reuse glow dot
+      if (svg.querySelector('.dot-glow')) {
+        svg.querySelector('.dot-glow').setAttribute('cx', pt.x);
+        svg.querySelector('.dot-glow').setAttribute('cy', pt.y);
+      } else {
+        const glowEl = createSVGElement('circle', {
+          r: '15',
+          fill: 'rgba(233, 69, 96, 0.2)',
+          class: 'dot-glow'
+        });
+        svg.insertBefore(glowEl, dot);
+      }
+
+      requestAnimationFrame(animateDot);
+    }
+    animateDot();
+  }
+
+  // ── 4. CANVAS SPIROGRAPH ──
+  function initSpirograph() {
+    const canvas = document.getElementById('spiroCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    let t = 0;
+    let shape = 'spiro';
+    let speed = 1;
+    let trailPoints = [];
+
+    const shapes = {
+      spiro: (t) => {
+        const R = 150, r = 55, d = 120;
+        return {
+          x: W / 2 + (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t),
+          y: H / 2 + (R - r) * Math.sin(t) - d * Math.sin((R - r) / r * t)
+        };
+      },
+      lissajous: (t) => {
+        return {
+          x: W / 2 + 200 * Math.sin(3 * t + Math.PI / 4),
+          y: H / 2 + 150 * Math.sin(2 * t)
+        };
+      },
+      rose: (t) => {
+        const k = 5;
+        const r = 180 * Math.cos(k * t);
+        return {
+          x: W / 2 + r * Math.cos(t),
+          y: H / 2 + r * Math.sin(t)
+        };
+      }
+    };
+
+    function drawSpiro() {
+      ctx.fillStyle = 'rgba(15, 15, 26, 0.08)';
+      ctx.fillRect(0, 0, W, H);
+
+      const pos = shapes[shape](t);
+      trailPoints.push({ x: pos.x, y: pos.y, t: t });
+
+      // Keep last 600 points
+      if (trailPoints.length > 600) trailPoints.shift();
+
+      // Draw trail
+      for (let i = 0; i < trailPoints.length; i++) {
+        const p = trailPoints[i];
+        const alpha = i / trailPoints.length;
+        const hue = (p.t * 30) % 360;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, 80%, 60%, ${alpha * 0.8})`;
+        ctx.fill();
+      }
+
+      // Draw current position (head dot)
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#e94560';
+      ctx.fill();
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 12, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(233, 69, 96, 0.3)';
+      ctx.fill();
+
+      // Draw text along path
+      const text = 'TEXT PATH ◆ SPIROGRAPH ◆ FLOWING ◆ ';
+      const charSpacing = 30;
+      const textStart = Math.max(0, trailPoints.length - text.length * charSpacing / 2);
+      for (let i = 0; i < text.length; i++) {
+        const idx = trailPoints.length - 1 - i * (charSpacing / 2);
+        if (idx >= 0 && idx < trailPoints.length) {
+          const p = trailPoints[idx];
+          const prevIdx = Math.max(0, idx - 1);
+          const prev = trailPoints[prevIdx];
+          const angle = Math.atan2(p.y - prev.y, p.x - prev.x);
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(angle);
+          const charAlpha = (trailPoints.length - idx) / trailPoints.length;
+          ctx.fillStyle = `rgba(233, 69, 96, ${charAlpha * 0.7})`;
+          ctx.font = '700 12px "Segoe UI", system-ui, sans-serif';
+          ctx.fillText(text[i], 0, 0);
+          ctx.restore();
+        }
+      }
+
+      t += 0.02 * speed;
+      requestAnimationFrame(drawSpiro);
+    }
+
+    // Clear and restart on shape change
+    document.querySelectorAll('[data-shape]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-shape]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        shape = btn.dataset.shape;
+        trailPoints = [];
+        t = 0;
+        ctx.clearRect(0, 0, W, H);
+      });
+    });
+
+    const speedSlider = document.getElementById('spiroSpeed');
+    const speedVal = document.getElementById('spiroSpeedVal');
+    speedSlider.addEventListener('input', () => {
+      speed = parseFloat(speedSlider.value);
+      speedVal.textContent = speed.toFixed(1) + 'x';
+    });
+
+    drawSpiro();
+  }
+
+  // ── 5. WAVE MARQUEE ──
+  function initWaveMarquee() {
+    const svg = document.getElementById('marqueeSvg');
+    const W = 1400;
+    svg.setAttribute('viewBox', `0 0 ${W} 200`);
+
+    // Generate wave path
+    let pathD = '';
+    for (let x = 0; x <= W; x += 2) {
+      const y = 100 + Math.sin(x * 0.015) * 40 + Math.sin(x * 0.005) * 20;
+      pathD += (x === 0 ? 'M' : 'L') + ` ${x} ${y} `;
+    }
+
+    const defs = createSVGElement('defs');
+    const pathDef = createSVGElement('path', { id: 'wavePath', d: pathD });
+    defs.appendChild(pathDef);
+    svg.insertBefore(defs, svg.firstChild);
+
+    // Faint wave line
+    const waveVis = createSVGElement('path', {
+      d: pathD,
+      fill: 'none',
+      stroke: 'rgba(233, 69, 96, 0.08)',
+      'stroke-width': '1'
+    });
+    svg.appendChild(waveVis);
+
+    // Marquee text 1
+    const tp1 = createSVGElement('textPath', { href: '#wavePath' });
+    tp1.textContent = '★ SCROLLING WAVE TEXT ★ FLOWING GRADIENT MARQUEE ★ PURE CSS + JS ★ NO FRAMEWORKS ★ ';
+    const t1 = createSVGElement('text', {
+      fill: 'url(#waveGradient)',
+      'font-size': '20',
+      'font-weight': '800',
+      'letter-spacing': '3'
+    });
+    t1.appendChild(tp1);
+    svg.appendChild(t1);
+
+    // Marquee text 2 (offset)
+    const tp2 = createSVGElement('textPath', { href: '#wavePath' });
+    tp2.textContent = '◆ ANIMATED TYPOGRAPHY ◆ PATH FOLLOWING TEXT ◆ SINE WAVE MARQUEE ◆ ';
+    const t2 = createSVGElement('text', {
+      fill: 'rgba(233, 69, 96, 0.25)',
+      'font-size': '28',
+      'font-weight': '900',
+      'letter-spacing': '4',
+      dy: '35'
+    });
+    t2.appendChild(tp2);
+    svg.appendChild(t2);
+
+    // Animate
+    let offset1 = 0, offset2 = 50;
+    function animateMarquee() {
+      offset1 -= 0.3;
+      offset2 -= 0.2;
+      tp1.setAttribute('startOffset', offset1 + '%');
+      tp2.setAttribute('startOffset', offset2 + '%');
+      requestAnimationFrame(animateMarquee);
+    }
+    animateMarquee();
+  }
+
+  // ── Initialize All ──
+  initSineWave();
+  initCirclePath();
+  initBezierCurve();
+  initSpirograph();
+  initWaveMarquee();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Leon Sans Animation
+  Inspired by "Leon Sans typeface code animation" & "Leon Sans typeface animation"
+  Large animated text built from particles/dots that form letter shapes.
+  Letters assemble and disassemble with wave and ripple effects.
+  Pure CSS + Vanilla JS · No dependencies
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leon Sans Particle Animation</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f1a;--surface:#16213e;--primary:#e94560;--accent:#ffc947;
+  --accent2:#6c5ce7;--text:#eaeaea;--muted:#7a7a9a;
+}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);overflow:hidden;
+  height:100vh;width:100vw;
+}
+
+canvas#mainCanvas{
+  position:fixed;inset:0;z-index:1;
+}
+
+/* ── controls ── */
+.controls{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+}
+.ctrl-btn{
+  background:rgba(26,26,46,.8);backdrop-filter:blur(8px);
+  border:1px solid rgba(233,69,96,.25);color:var(--text);
+  padding:8px 20px;border-radius:50px;font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:all .3s;
+}
+.ctrl-btn:hover{border-color:var(--primary);background:rgba(233,69,96,.12);transform:translateY(-2px)}
+.ctrl-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ── input ── */
+.text-input{
+  position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:10;
+  background:rgba(26,26,46,.8);backdrop-filter:blur(8px);
+  border:1px solid rgba(233,69,96,.25);color:var(--text);
+  padding:10px 24px;border-radius:50px;font-size:1rem;font-weight:600;
+  text-align:center;width:280px;outline:none;transition:border-color .3s;
+  letter-spacing:2px;text-transform:uppercase;
+}
+.text-input:focus{border-color:var(--primary)}
+.text-input::placeholder{color:var(--muted);text-transform:none;letter-spacing:0}
+
+/* ── info ── */
+.info{
+  position:fixed;top:24px;right:24px;z-index:10;
+  font-size:.72rem;color:var(--muted);text-align:right;line-height:1.8;
+}
+.info span{color:var(--primary);font-weight:700}
+</style>
+</head>
+<body>
+
+<canvas id="mainCanvas"></canvas>
+
+<input type="text" class="text-input" id="textInput" value="LEON" maxlength="8" placeholder="Type text…">
+
+<div class="controls">
+  <button class="ctrl-btn active" data-effect="assemble">Assemble</button>
+  <button class="ctrl-btn" data-effect="wave">Wave</button>
+  <button class="ctrl-btn" data-effect="ripple">Ripple</button>
+  <button class="ctrl-btn" data-effect="breathe">Breathe</button>
+  <button class="ctrl-btn" data-effect="explode">Explode</button>
+</div>
+
+<div class="info">
+  Particles: <span id="pCount">0</span><br>
+  FPS: <span id="fpsCount">0</span><br>
+  Effect: <span id="effectLabel">Assemble</span>
+</div>
+
+<script>
+/* ══════════════════════════════════
+   Particle Text Engine
+   Uses off-screen canvas to rasterise text,
+   then extracts pixel positions as particles.
+   ══════════════════════════════════ */
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const textInput = document.getElementById('textInput');
+const pCountEl = document.getElementById('pCount');
+const fpsEl = document.getElementById('fpsCount');
+const effectLabel = document.getElementById('effectLabel');
+const ctrlBtns = document.querySelectorAll('.ctrl-btn');
+
+let W, H, dpr;
+let particles = [];
+let currentText = textInput.value;
+let currentEffect = 'assemble';
+let mouse = {x: -999, y: -999};
+let time = 0;
+let lastTime = performance.now();
+let fps = 0;
+let frameCount = 0;
+let fpsTimer = 0;
+
+/* ── Resize ── */
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  rebuildParticles();
+}
+window.addEventListener('resize', resize);
+
+/* ── Build particles from text ── */
+function rebuildParticles() {
+  const offCanvas = document.createElement('canvas');
+  const offCtx = offCanvas.getContext('2d');
+  const fontSize = Math.min(W / (currentText.length * 0.85), H * 0.35, 200);
+  offCanvas.width = W;
+  offCanvas.height = H;
+
+  offCtx.fillStyle = '#fff';
+  offCtx.font = `900 ${fontSize}px "Segoe UI", system-ui, -apple-system, sans-serif`;
+  offCtx.textAlign = 'center';
+  offCtx.textBaseline = 'middle';
+  offCtx.fillText(currentText, W/2, H/2);
+
+  const imageData = offCtx.getImageData(0, 0, W, H).data;
+
+  /* Sample points */
+  const gap = 4;
+  const newPositions = [];
+  for(let y = 0; y < H; y += gap) {
+    for(let x = 0; x < W; x += gap) {
+      const idx = (y * W + x) * 4;
+      if(imageData[idx + 3] > 128) {
+        newPositions.push({x, y});
+      }
+    }
+  }
+
+  /* Match existing particles or create new ones */
+  const maxParticles = Math.min(newPositions.length, 4000);
+  const step = Math.max(1, Math.floor(newPositions.length / maxParticles));
+  const sampled = [];
+  for(let i = 0; i < newPositions.length && sampled.length < maxParticles; i += step) {
+    sampled.push(newPositions[i]);
+  }
+
+  /* Reuse or create particles */
+  const oldLen = particles.length;
+  const newLen = sampled.length;
+
+  for(let i = 0; i < newLen; i++) {
+    if(i < oldLen) {
+      particles[i].targetX = sampled[i].x;
+      particles[i].targetY = sampled[i].y;
+    } else {
+      particles.push({
+        x: W/2 + (Math.random()-0.5)*W,
+        y: H/2 + (Math.random()-0.5)*H,
+        targetX: sampled[i].x,
+        targetY: sampled[i].y,
+        vx: 0,
+        vy: 0,
+        size: 1.5 + Math.random()*1.5,
+        baseSize: 1.5 + Math.random()*1.5,
+        hue: Math.random() > 0.5 ? 350 : 45, /* red or gold */
+      });
+    }
+  }
+  /* Remove excess */
+  if(newLen < oldLen) particles.length = newLen;
+}
+
+/* ── Effect switching ── */
+ctrlBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    ctrlBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentEffect = btn.dataset.effect;
+    effectLabel.textContent = btn.textContent;
+    if(currentEffect === 'explode') {
+      particles.forEach(p => {
+        p.vx = (Math.random()-0.5)*20;
+        p.vy = (Math.random()-0.5)*20;
+      });
+    }
+  });
+});
+
+textInput.addEventListener('input', () => {
+  currentText = textInput.value.toUpperCase() || 'LEON';
+  rebuildParticles();
+});
+
+/* ── Mouse ── */
+document.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+/* ── Animation loop ── */
+function animate(now) {
+  const dt = Math.min((now - lastTime) / 16.67, 3);
+  lastTime = now;
+  time += 0.01;
+
+  /* FPS */
+  frameCount++;
+  fpsTimer += now - (lastTime - dt*16.67);
+  if(frameCount % 30 === 0) {
+    fps = Math.round(1000 / ((now - fpsTimer) / 30 || 16.67));
+    fpsTimer = now;
+  }
+  if(frameCount % 10 === 0) fpsEl.textContent = fps;
+
+  ctx.fillStyle = 'rgba(15,15,26,0.12)';
+  ctx.fillRect(0, 0, W, H);
+
+  const centerX = W / 2;
+  const centerY = H / 2;
+
+  particles.forEach((p, i) => {
+    let targetX = p.targetX;
+    let targetY = p.targetY;
+
+    /* ── Apply effects ── */
+    switch(currentEffect) {
+      case 'wave': {
+        const waveOffset = Math.sin(time * 3 + p.targetX * 0.02 + p.targetY * 0.01) * 15;
+        const waveOffsetY = Math.cos(time * 2.5 + p.targetX * 0.01) * 8;
+        targetX = p.targetX + waveOffset;
+        targetY = p.targetY + waveOffsetY;
+        break;
+      }
+      case 'ripple': {
+        const dx = p.targetX - centerX;
+        const dy = p.targetY - centerY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const ripple = Math.sin(dist * 0.04 - time * 5) * 12;
+        const angle = Math.atan2(dy, dx);
+        targetX = p.targetX + Math.cos(angle) * ripple;
+        targetY = p.targetY + Math.sin(angle) * ripple;
+        break;
+      }
+      case 'breathe': {
+        const scale = 1 + Math.sin(time * 2) * 0.04;
+        const offX = (p.targetX - centerX) * (scale - 1);
+        const offY = (p.targetY - centerY) * (scale - 1);
+        targetX = p.targetX + offX;
+        targetY = p.targetY + offY;
+        p.size = p.baseSize * (1 + Math.sin(time * 3 + i * 0.01) * 0.3);
+        break;
+      }
+      case 'explode': {
+        /* particles already have velocity from effect switch */
+        break;
+      }
+      case 'assemble':
+      default:
+        break;
+    }
+
+    /* Mouse repulsion */
+    const mdx = p.x - mouse.x;
+    const mdy = p.y - mouse.y;
+    const mDist = Math.sqrt(mdx*mdx + mdy*mdy);
+    if(mDist < 100 && currentEffect !== 'explode') {
+      const force = (100 - mDist) / 100 * 6;
+      p.vx += (mdx / mDist) * force;
+      p.vy += (mdy / mDist) * force;
+    }
+
+    /* Spring physics toward target */
+    if(currentEffect === 'explode') {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+      /* Slowly return */
+      const dx = targetX - p.x;
+      const dy = targetY - p.y;
+      p.vx += dx * 0.002;
+      p.vy += dy * 0.002;
+    } else {
+      const dx = targetX - p.x;
+      const dy = targetY - p.y;
+      p.vx += dx * 0.06;
+      p.vy += dy * 0.06;
+      p.vx *= 0.85;
+      p.vy *= 0.85;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+
+    /* Draw particle */
+    const alpha = Math.min(1, 0.6 + Math.abs(p.vx + p.vy) * 0.05);
+    const hue = p.hue;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = `hsl(${hue}, 85%, 60%)`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(0.5, p.size || p.baseSize), 0, Math.PI*2);
+    ctx.fill();
+
+    /* Glow */
+    if((p.size || p.baseSize) > 2) {
+      ctx.globalAlpha = alpha * 0.15;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(1, (p.size || p.baseSize) * 2.5), 0, Math.PI*2);
+      ctx.fill();
+    }
+  });
+
+  ctx.globalAlpha = 1;
+
+  if(frameCount % 10 === 0) pCountEl.textContent = particles.length;
+
+  requestAnimationFrame(animate);
+}
+
+/* ── Init ── */
+resize();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

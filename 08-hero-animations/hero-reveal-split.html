@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ========================================================
+       Hero Reveal Split Animation
+       Two halves slide apart to reveal content underneath.
+       Text animates character by character with staggered
+       reveal for sub-elements. Cinematic entrance.
+       ======================================================== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Reveal Split Animation</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --color-muted: #8892a4;
+      --split-duration: 1s;
+      --split-ease: cubic-bezier(0.77, 0, 0.175, 1);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+    }
+
+    /* === Split Overlay (covers hero initially) === */
+    .split-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      pointer-events: none;
+    }
+
+    .split-half {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--split-duration) var(--split-ease);
+    }
+
+    .split-half::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+
+    .split-half-left {
+      transform: translateX(0);
+      background: var(--color-bg);
+    }
+
+    .split-half-left::before {
+      background: linear-gradient(90deg, transparent 0%, rgba(233, 69, 96, 0.05) 80%, rgba(233, 69, 96, 0.1) 100%);
+    }
+
+    .split-half-right {
+      transform: translateX(0);
+      background: var(--color-bg);
+    }
+
+    .split-half-right::before {
+      background: linear-gradient(270deg, transparent 0%, rgba(233, 69, 96, 0.05) 80%, rgba(233, 69, 96, 0.1) 100%);
+    }
+
+    /* Split line in center */
+    .split-line {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 100%;
+      background: var(--color-primary);
+      opacity: 0.4;
+      z-index: 10;
+      transition: opacity 0.6s ease 0.3s;
+    }
+
+    /* Decorative text on split halves */
+    .split-half .split-text {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 5rem;
+      font-weight: 900;
+      opacity: 0.04;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      user-select: none;
+    }
+
+    .split-half-left .split-text {
+      right: 10%;
+      transition: opacity 0.4s ease, transform var(--split-duration) var(--split-ease);
+    }
+
+    .split-half-right .split-text {
+      left: 10%;
+      transition: opacity 0.4s ease, transform var(--split-duration) var(--split-ease);
+    }
+
+    /* Revealed state */
+    .split-overlay.revealed .split-half-left {
+      transform: translateX(-105%);
+    }
+
+    .split-overlay.revealed .split-half-right {
+      transform: translateX(105%);
+    }
+
+    .split-overlay.revealed .split-line {
+      opacity: 0;
+    }
+
+    .split-overlay.revealed .split-text {
+      opacity: 0;
+    }
+
+    /* === Re-trigger button === */
+    .replay-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 200;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .replay-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.5s ease, transform 0.3s, box-shadow 0.3s;
+    }
+
+    .replay-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.5);
+    }
+
+    /* === Hero Content (underneath split) === */
+    .hero {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 30%, rgba(100, 150, 255, 0.05) 0%, transparent 50%),
+        var(--color-bg);
+      overflow: hidden;
+    }
+
+    /* Animated gradient circle */
+    .hero-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(233, 69, 96, 0.12) 0%, transparent 60%);
+      animation: glowPulse 6s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 0.9; }
+    }
+
+    /* Grid pattern */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridShift 20s linear infinite;
+    }
+
+    @keyframes gridShift {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(60px); }
+    }
+
+    /* === Text Content === */
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 0 24px;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      background: rgba(233, 69, 96, 0.08);
+      border: 1px solid rgba(233, 69, 96, 0.25);
+      padding: 6px 20px;
+      border-radius: 30px;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .hero-tag.reveal {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 24px;
+    }
+
+    .hero-title .char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(60px) scale(0.8);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .hero-title .char.reveal {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .hero-title .char.space {
+      width: 0.3em;
+    }
+
+    .hero-title .accent {
+      color: var(--color-primary);
+    }
+
+    .hero-title .line-break {
+      display: block;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+      color: var(--color-muted);
+      max-width: 480px;
+      margin: 0 auto 36px;
+      line-height: 1.65;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .hero-subtitle.reveal {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    /* CTA Buttons */
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .hero-actions.reveal {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--color-text);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      transform: scale(1.05);
+    }
+
+    /* Feature row */
+    .hero-features {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-top: 48px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .hero-features.reveal {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .feature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(233, 69, 96, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .feature-label {
+      font-size: 0.72rem;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 600px) {
+      .hero-features { flex-direction: column; gap: 16px; }
+      .hero-actions { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Split Overlay -->
+  <div class="split-overlay" id="splitOverlay">
+    <div class="split-line"></div>
+    <div class="split-half split-half-left">
+      <div class="split-text">REV</div>
+    </div>
+    <div class="split-half split-half-right">
+      <div class="split-text">EAL</div>
+    </div>
+  </div>
+
+  <!-- Replay Button -->
+  <button class="replay-btn" id="replayBtn">↻ Replay Animation</button>
+
+  <!-- Hero Content -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-content">
+      <div class="hero-tag" id="heroTag">Split Reveal Effect</div>
+
+      <h1 class="hero-title" id="heroTitle"></h1>
+
+      <p class="hero-subtitle" id="heroSubtitle">
+        Two halves slide apart in perfect symmetry, unveiling the hero content beneath. Each character animates in sequence with elastic easing for a cinematic entrance.
+      </p>
+
+      <div class="hero-actions" id="heroActions">
+        <a href="#" class="btn btn-primary">Explore Now →</a>
+        <a href="#" class="btn btn-outline">Learn More</a>
+      </div>
+
+      <div class="hero-features" id="heroFeatures">
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <span class="feature-label">Fast</span>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">✨</div>
+          <span class="feature-label">Elegant</span>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎨</div>
+          <span class="feature-label">Custom</span>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📱</div>
+          <span class="feature-label">Responsive</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /* === Hero Reveal Split Controller === */
+    const splitOverlay = document.getElementById('splitOverlay');
+    const replayBtn = document.getElementById('replayBtn');
+    const heroTag = document.getElementById('heroTag');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    const heroActions = document.getElementById('heroActions');
+    const heroFeatures = document.getElementById('heroFeatures');
+
+    /* Title text to split into characters */
+    const titleLine1 = 'Beyond the';
+    const titleLine2 = 'Horizon';
+
+    /* Build character spans for the title */
+    function buildTitleChars() {
+      heroTitle.innerHTML = '';
+      let charIndex = 0;
+
+      [titleLine1, titleLine2].forEach((line, lineIdx) => {
+        const lineEl = document.createElement('span');
+        lineEl.classList.add('line-break');
+
+        for (let i = 0; i < line.length; i++) {
+          const span = document.createElement('span');
+          span.classList.add('char');
+
+          if (line[i] === ' ') {
+            span.classList.add('space');
+            span.innerHTML = '&nbsp;';
+          } else {
+            /* Apply accent color to "Horizon" */
+            if (lineIdx === 1) {
+              span.classList.add('accent');
+            }
+            span.textContent = line[i];
+          }
+
+          span.dataset.index = charIndex;
+          charIndex++;
+          lineEl.appendChild(span);
+        }
+
+        heroTitle.appendChild(lineEl);
+      });
+    }
+
+    /* Run the reveal sequence */
+    function runReveal() {
+      /* Reset everything */
+      splitOverlay.classList.remove('revealed');
+      replayBtn.classList.remove('visible');
+
+      heroTag.classList.remove('reveal');
+      heroSubtitle.classList.remove('reveal');
+      heroActions.classList.remove('reveal');
+      heroFeatures.classList.remove('reveal');
+
+      const chars = heroTitle.querySelectorAll('.char');
+      chars.forEach(c => c.classList.remove('reveal'));
+
+      buildTitleChars();
+
+      /* Sequence timing */
+      const TIMING = {
+        splitStart: 400,
+        tagReveal: 1100,
+        charStart: 1300,
+        charInterval: 40,
+        subtitleReveal: 2400,
+        actionsReveal: 2800,
+        featuresReveal: 3200,
+        replayBtn: 3800
+      };
+
+      /* 1. Start split animation */
+      setTimeout(() => {
+        splitOverlay.classList.add('revealed');
+      }, TIMING.splitStart);
+
+      /* 2. Reveal tag */
+      setTimeout(() => {
+        heroTag.classList.add('reveal');
+      }, TIMING.tagReveal);
+
+      /* 3. Character-by-character title reveal */
+      const allChars = heroTitle.querySelectorAll('.char');
+      allChars.forEach((char, i) => {
+        setTimeout(() => {
+          char.classList.add('reveal');
+        }, TIMING.charStart + (i * TIMING.charInterval));
+      });
+
+      /* 4. Reveal subtitle */
+      setTimeout(() => {
+        heroSubtitle.classList.add('reveal');
+      }, TIMING.subtitleReveal);
+
+      /* 5. Reveal actions */
+      setTimeout(() => {
+        heroActions.classList.add('reveal');
+      }, TIMING.actionsReveal);
+
+      /* 6. Reveal features */
+      setTimeout(() => {
+        heroFeatures.classList.add('reveal');
+      }, TIMING.featuresReveal);
+
+      /* 7. Show replay button */
+      setTimeout(() => {
+        replayBtn.classList.add('visible');
+      }, TIMING.replayBtn);
+    }
+
+    /* Replay button */
+    replayBtn.addEventListener('click', () => {
+      runReveal();
+    });
+
+    /* Auto-reveal on load */
+    buildTitleChars();
+    runReveal();
+  </script>
+</body>
+</html>

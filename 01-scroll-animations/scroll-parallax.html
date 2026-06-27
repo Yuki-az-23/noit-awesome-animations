@@ -1,0 +1,565 @@
+<!--
+  scroll-parallax.html
+  Multi-layer parallax effect on scroll with smooth eased movement
+  using requestAnimationFrame. Three parallax-depth sections.
+  Pure CSS + vanilla JS. No dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Parallax</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a8e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .parallax-hero {
+    position: relative;
+    height: 100vh;
+    min-height: 600px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .p-layer {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+  }
+
+  .p-layer--bg {
+    z-index: 1;
+  }
+
+  .p-layer--bg .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: .35;
+  }
+
+  .p-layer--bg .orb-1 {
+    width: 500px; height: 500px;
+    background: var(--color-primary);
+    top: -10%; left: -5%;
+  }
+
+  .p-layer--bg .orb-2 {
+    width: 400px; height: 400px;
+    background: var(--color-accent);
+    bottom: -5%; right: -5%;
+  }
+
+  .p-layer--bg .orb-3 {
+    width: 300px; height: 300px;
+    background: #0f3460;
+    top: 40%; left: 55%;
+  }
+
+  .p-layer--mid {
+    z-index: 2;
+  }
+
+  .p-layer--mid .grid-lines {
+    position: absolute;
+    inset: 0;
+    opacity: .06;
+    background-image:
+      linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  .p-layer--mid .diamond {
+    position: absolute;
+    width: 120px; height: 120px;
+    border: 1px solid rgba(233,69,96,.2);
+    transform: rotate(45deg);
+  }
+
+  .p-layer--mid .diamond-1 { top: 18%; left: 12%; width: 80px; height: 80px; }
+  .p-layer--mid .diamond-2 { top: 30%; right: 15%; width: 140px; height: 140px; }
+  .p-layer--mid .diamond-3 { bottom: 25%; left: 40%; width: 60px; height: 60px; }
+  .p-layer--mid .diamond-4 { bottom: 15%; right: 25%; width: 100px; height: 100px; }
+
+  .p-layer--fg {
+    z-index: 3;
+  }
+
+  .p-layer--fg .float-tag {
+    position: absolute;
+    padding: .4rem 1rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    backdrop-filter: blur(8px);
+  }
+
+  .p-layer--fg .tag-1 {
+    top: 25%; left: 8%;
+    background: rgba(233,69,96,.15);
+    border: 1px solid rgba(233,69,96,.3);
+    color: var(--color-primary);
+  }
+
+  .p-layer--fg .tag-2 {
+    top: 60%; right: 10%;
+    background: rgba(83,52,131,.2);
+    border: 1px solid rgba(83,52,131,.4);
+    color: #b898d8;
+  }
+
+  .p-layer--fg .tag-3 {
+    bottom: 20%; left: 20%;
+    background: rgba(15,52,96,.2);
+    border: 1px solid rgba(15,52,96,.5);
+    color: #6ba3d6;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    padding: 2rem;
+  }
+
+  .hero-content .badge {
+    display: inline-block;
+    padding: .3rem .9rem;
+    border: 1px solid var(--color-primary);
+    border-radius: 999px;
+    font-size: .7rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 20%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-content p {
+    max-width: 460px;
+    margin: 0 auto;
+    color: var(--color-muted);
+    font-size: 1.1rem;
+  }
+
+  /* ── Parallax Sections ── */
+  .px-section {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+
+  .px-section:nth-child(even) {
+    flex-direction: row-reverse;
+  }
+
+  .px-section-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 6rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    width: 100%;
+  }
+
+  .px-section:nth-child(even) .px-section-inner {
+    direction: rtl;
+  }
+
+  .px-section:nth-child(even) .px-section-inner > * {
+    direction: ltr;
+  }
+
+  .px-visual {
+    position: relative;
+    height: 360px;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .px-visual .layer {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+    border-radius: inherit;
+  }
+
+  .px-visual .layer-bg {
+    background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+    opacity: .3;
+  }
+
+  .px-visual .layer-mid {
+    background: linear-gradient(180deg, transparent 0%, rgba(15,15,26,.7) 100%);
+  }
+
+  .px-visual .layer-fg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+  }
+
+  .px-visual .layer-fg .shape {
+    width: 120px;
+    height: 120px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    box-shadow: 0 20px 60px rgba(233,69,96,.3);
+    will-change: transform;
+  }
+
+  .px-text .label {
+    display: inline-block;
+    font-size: .7rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: .75rem;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+
+  .px-text .label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1rem;
+    height: 2px;
+    background: var(--color-primary);
+  }
+
+  .px-text h2 {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .px-text p {
+    color: var(--color-muted);
+    margin-bottom: 1.5rem;
+    max-width: 420px;
+  }
+
+  .px-text .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+
+  .pill {
+    padding: .3rem .9rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 500;
+    background: rgba(233,69,96,.1);
+    color: var(--color-primary);
+    border: 1px solid rgba(233,69,96,.2);
+  }
+
+  /* ── Depth markers ── */
+  .depth-bar {
+    position: fixed;
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .depth-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    transition: background .3s, transform .3s;
+  }
+
+  .depth-dot.active {
+    background: var(--color-primary);
+    transform: scale(1.5);
+  }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .stat-block {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: var(--color-surface);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.05);
+  }
+
+  .stat-block .num {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-block .lbl {
+    color: var(--color-muted);
+    font-size: .85rem;
+    margin-top: .25rem;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-muted);
+    font-size: .85rem;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
+
+  @media (max-width: 800px) {
+    .px-section-inner { grid-template-columns: 1fr; }
+    .px-section:nth-child(even) .px-section-inner { direction: ltr; }
+    .px-visual { height: 250px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .p-layer, .layer, .shape { transform: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Depth indicator -->
+<div class="depth-bar" id="depthBar">
+  <div class="depth-dot active" data-section="0"></div>
+  <div class="depth-dot" data-section="1"></div>
+  <div class="depth-dot" data-section="2"></div>
+  <div class="depth-dot" data-section="3"></div>
+</div>
+
+<!-- Hero with parallax layers -->
+<section class="parallax-hero" data-px="hero">
+  <div class="p-layer p-layer--bg" data-speed="0.3">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="p-layer p-layer--mid" data-speed="0.5">
+    <div class="grid-lines"></div>
+    <div class="diamond diamond-1"></div>
+    <div class="diamond diamond-2"></div>
+    <div class="diamond diamond-3"></div>
+    <div class="diamond diamond-4"></div>
+  </div>
+  <div class="p-layer p-layer--fg" data-speed="0.8">
+    <div class="float-tag tag-1">60fps</div>
+    <div class="float-tag tag-2">GPU-accelerated</div>
+    <div class="float-tag tag-3">Zero dependencies</div>
+  </div>
+  <div class="hero-content">
+    <span class="badge">Parallax Effect</span>
+    <h1>Depth on<br>Scroll</h1>
+    <p>Multiple layers move at different speeds to create a convincing sense of depth.</p>
+  </div>
+</section>
+
+<!-- Section 1: Background parallax -->
+<section class="px-section" data-px="section-1">
+  <div class="px-section-inner">
+    <div class="px-text">
+      <span class="label">Background Layer</span>
+      <h2>Slow & Subtle</h2>
+      <p>The deepest layer drifts gently, establishing atmosphere without overwhelming the foreground content.</p>
+      <div class="pill-row">
+        <span class="pill">0.2× speed</span>
+        <span class="pill">Depth cue</span>
+        <span class="pill">Atmosphere</span>
+      </div>
+    </div>
+    <div class="px-visual">
+      <div class="layer layer-bg" data-speed="0.2"></div>
+      <div class="layer layer-mid" data-speed="0.4"></div>
+      <div class="layer layer-fg" data-speed="0.7">
+        <div class="shape" data-speed="0.9"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 2: Midground parallax -->
+<section class="px-section" data-px="section-2">
+  <div class="px-section-inner">
+    <div class="px-text">
+      <span class="label">Midground Layer</span>
+      <h2>Balanced Motion</h2>
+      <p>The midground layer moves at a moderate pace, bridging background calmness with foreground energy.</p>
+      <div class="pill-row">
+        <span class="pill">0.5× speed</span>
+        <span class="pill">Rhythm</span>
+        <span class="pill">Transition</span>
+      </div>
+    </div>
+    <div class="px-visual">
+      <div class="layer layer-bg" data-speed="0.15"></div>
+      <div class="layer layer-mid" data-speed="0.5"></div>
+      <div class="layer layer-fg" data-speed="0.75">
+        <div class="shape" data-speed="1"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Foreground parallax -->
+<section class="px-section" data-px="section-3">
+  <div class="px-section-inner">
+    <div class="px-text">
+      <span class="label">Foreground Layer</span>
+      <h2>Dynamic & Bold</h2>
+      <p>The closest layer moves fastest, creating dramatic contrast that draws the eye and delivers impact.</p>
+      <div class="pill-row">
+        <span class="pill">0.8× speed</span>
+        <span class="pill">Impact</span>
+        <span class="pill">Energy</span>
+      </div>
+    </div>
+    <div class="px-visual">
+      <div class="layer layer-bg" data-speed="0.1"></div>
+      <div class="layer layer-mid" data-speed="0.35"></div>
+      <div class="layer layer-fg" data-speed="0.85">
+        <div class="shape" data-speed="1.2"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-block">
+    <div class="num">3</div>
+    <div class="lbl">Depth layers</div>
+  </div>
+  <div class="stat-block">
+    <div class="num">60</div>
+    <div class="lbl">FPS target</div>
+  </div>
+  <div class="stat-block">
+    <div class="num">0</div>
+    <div class="lbl">Dependencies</div>
+  </div>
+</div>
+
+<footer>
+  <p>Scroll Parallax Demo &middot; Pure CSS + Vanilla JS &middot; requestAnimationFrame Easing</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Collect all parallax elements with their speed
+  const pxElements = [];
+  document.querySelectorAll('[data-speed]').forEach((el) => {
+    pxElements.push({
+      el: el,
+      speed: parseFloat(el.dataset.speed)
+    });
+  });
+
+  // Smooth scroll value tracking
+  let currentScroll = window.scrollY;
+  let targetScroll = window.scrollY;
+
+  // Depth dots
+  const dots = document.querySelectorAll('.depth-dot');
+  const sections = document.querySelectorAll('[data-px]');
+
+  function updateDots() {
+    const scrollMid = currentScroll + window.innerHeight / 2;
+    let active = 0;
+    sections.forEach((s, i) => {
+      if (scrollMid >= s.offsetTop) active = i;
+    });
+    dots.forEach((d, i) => d.classList.toggle('active', i === active));
+  }
+
+  function animate() {
+    if (!prefersReduced) {
+      // Smooth interpolation
+      currentScroll += (targetScroll - currentScroll) * 0.08;
+
+      pxElements.forEach(({ el, speed }) => {
+        const rect = el.closest('[data-px]') || el.closest('.parallax-hero');
+        if (!rect) return;
+        const sectionTop = rect.offsetTop;
+        const offset = currentScroll - sectionTop;
+        const yOffset = offset * speed * 0.3;
+        el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
+      });
+    }
+
+    updateDots();
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('scroll', () => {
+    targetScroll = window.scrollY;
+  }, { passive: true });
+
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>

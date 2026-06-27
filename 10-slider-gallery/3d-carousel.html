@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  3D CAROUSEL - Inspired by Awwwards "3D Carousel Effect"
+  ============================================================
+  8 Cards arranged in a 3D cylinder with perspective transform,
+  auto-rotate, and manual drag/swipe control.
+  Pure CSS + Vanilla JS | No Dependencies
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Carousel - CSS/JS Animations</title>
+<style>
+  /* ========== ROOT & RESET ========== */
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-secondary: #533483;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-text-dim: #8892a4;
+    --radius: 12px;
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ========== HEADER ========== */
+  .carousel-header {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 10;
+  }
+  .carousel-header h1 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a, var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .carousel-header p {
+    color: var(--color-text-dim);
+    font-size: 0.85rem;
+    margin-top: 6px;
+  }
+
+  /* ========== SCENE (perspective container) ========== */
+  .scene {
+    perspective: 1200px;
+    width: 100vw;
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .scene:active { cursor: grabbing; }
+
+  /* ========== CAROUSEL ========== */
+  .carousel {
+    width: 260px;
+    height: 320px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.4s var(--ease-smooth);
+  }
+  .carousel.dragging {
+    transition: none;
+  }
+
+  /* ========== CARDS ========== */
+  .carousel-card {
+    position: absolute;
+    width: 260px;
+    height: 320px;
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.3s, filter 0.3s;
+  }
+  .carousel-card .card-image {
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  .carousel-card .card-image::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, var(--color-surface));
+  }
+  .carousel-card .card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    position: absolute;
+    bottom: -16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(233,69,96,0.3);
+  }
+  .carousel-card .card-body {
+    padding: 26px 16px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .carousel-card .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .carousel-card .card-desc {
+    font-size: 0.78rem;
+    color: var(--color-text-dim);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .carousel-card .card-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(233,69,96,0.12);
+    color: var(--color-primary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: auto;
+    width: fit-content;
+  }
+
+  /* ========== CONTROLS ========== */
+  .controls {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 100;
+  }
+  .controls button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    background: rgba(22,33,62,0.9);
+    color: var(--color-text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+  }
+  .controls button:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    transform: scale(1.1);
+  }
+  .controls .auto-btn {
+    width: auto;
+    padding: 0 20px;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* ========== NAV DOTS ========== */
+  .nav-dots {
+    position: fixed;
+    bottom: 88px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+  }
+  .nav-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .nav-dots .dot.active {
+    background: var(--color-primary);
+    transform: scale(1.3);
+  }
+
+  /* ========== BACKGROUND GLOW ========== */
+  .bg-glow {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(233,69,96,0.08), transparent 70%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<!-- ==================== HEADER ==================== -->
+<header class="carousel-header">
+  <h1>3D Carousel</h1>
+  <p>Drag to rotate · Scroll to navigate · Auto-play enabled</p>
+</header>
+
+<!-- ==================== SCENE ==================== -->
+<div class="scene" id="scene">
+  <div class="carousel" id="carousel">
+    <!-- Cards built by JS -->
+  </div>
+</div>
+
+<!-- ==================== NAV DOTS ==================== -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- ==================== CONTROLS ==================== -->
+<div class="controls">
+  <button id="prevBtn" title="Previous">◀</button>
+  <button class="auto-btn" id="autoBtn" title="Toggle auto-rotate">⏸ Pause</button>
+  <button id="nextBtn" title="Next">▶</button>
+</div>
+
+<!-- ==================== JS ==================== -->
+<script>
+(function() {
+  'use strict';
+
+  // === CARD DATA ===
+  const cards = [
+    { icon: '🚀', title: 'Space Explorer', desc: 'Journey through the cosmos with stunning 3D depth and perspective.', tag: '3D', color: '#e94560', gradient: 'linear-gradient(135deg, #0f3460, #16213e)' },
+    { icon: '🎨', title: 'Color Theory', desc: 'Dynamic palettes that shift with the angle of rotation.', tag: 'Design', color: '#ff6b8a', gradient: 'linear-gradient(135deg, #533483, #2b1055)' },
+    { icon: '⚡', title: 'Lightning Fast', desc: 'GPU-accelerated transforms for buttery 60fps performance.', tag: 'Performance', color: '#ffb347', gradient: 'linear-gradient(135deg, #e94560, #0f3460)' },
+    { icon: '🌊', title: 'Fluid Motion', desc: 'Physics-based easing that feels natural and intuitive.', tag: 'Motion', color: '#4fc3f7', gradient: 'linear-gradient(135deg, #0f3460, #16213e)' },
+    { icon: '🔮', title: 'Deep Focus', desc: 'Cards recede into depth with accurate perspective scaling.', tag: 'UX', color: '#ce93d8', gradient: 'linear-gradient(135deg, #533483, #311b92)' },
+    { icon: '🎯', title: 'Precision Aim', desc: 'Snap to the nearest card with spring-based deceleration.', tag: 'Interaction', color: '#e94560', gradient: 'linear-gradient(135deg, #e94560, #533483)' },
+    { icon: '✨', title: 'Sparkle Effect', desc: 'Subtle glow and shadow that responds to the active card.', tag: 'Polish', color: '#ffd54f', gradient: 'linear-gradient(135deg, #f57f17, #e94560)' },
+    { icon: '🔬', title: 'Micro Details', desc: 'Backface visibility, edge lighting, and depth shadows.', tag: 'Detail', color: '#80cbc4', gradient: 'linear-gradient(135deg, #004d40, #0f3460)' },
+  ];
+
+  const TOTAL = cards.length;
+  const ANGLE = 360 / TOTAL;
+  // The radius is calculated based on card width to space cards naturally
+  const RADIUS = Math.round((260 / 2) / Math.tan(Math.PI / TOTAL)); // ~329 for 8 cards
+  const CAROUSEL = document.getElementById('carousel');
+  const SCENE = document.getElementById('scene');
+  const NAV_DOTS = document.getElementById('navDots');
+
+  let currentAngle = 0;
+  let targetAngle = 0;
+  let autoRotate = true;
+  let autoSpeed = 0.15; // degrees per frame
+  let isDragging = false;
+  let startX = 0;
+  let dragAngle = 0;
+
+  // === BUILD CARDS ===
+  cards.forEach((card, i) => {
+    const el = document.createElement('div');
+    el.className = 'carousel-card';
+    el.innerHTML = `
+      <div class="card-image" style="background: ${card.gradient};">
+        <div class="card-icon">${card.icon}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${card.title}</div>
+        <div class="card-desc">${card.desc}</div>
+        <span class="card-tag">${card.tag}</span>
+      </div>
+    `;
+    el.style.transform = `rotateY(${ANGLE * i}deg) translateZ(${RADIUS}px)`;
+    CAROUSEL.appendChild(el);
+
+    // Nav dot
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.dataset.index = i;
+    dot.addEventListener('click', () => goTo(i));
+    NAV_DOTS.appendChild(dot);
+  });
+
+  const cardEls = CAROUSEL.querySelectorAll('.carousel-card');
+  const dotEls = NAV_DOTS.querySelectorAll('.dot');
+
+  // === UPDATE ===
+  function getActiveIndex() {
+    let norm = ((-currentAngle % 360) + 360) % 360;
+    return Math.round(norm / ANGLE) % TOTAL;
+  }
+
+  function updateDots() {
+    const active = getActiveIndex();
+    dotEls.forEach((d, i) => d.classList.toggle('active', i === active));
+  }
+
+  function goTo(index) {
+    const active = getActiveIndex();
+    let diff = index - active;
+    // Take shortest path
+    if (diff > TOTAL / 2) diff -= TOTAL;
+    if (diff < -TOTAL / 2) diff += TOTAL;
+    targetAngle = currentAngle - (diff * ANGLE);
+    autoRotate = false;
+    updateAutoBtn();
+  }
+
+  // === DRAG / SWIPE ===
+  function onPointerDown(e) {
+    isDragging = true;
+    startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    dragAngle = currentAngle;
+    CAROUSEL.classList.add('dragging');
+    autoRotate = false;
+  }
+
+  function onPointerMove(e) {
+    if (!isDragging) return;
+    const x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const dx = x - startX;
+    currentAngle = dragAngle + dx * 0.4;
+  }
+
+  function onPointerUp(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    CAROUSEL.classList.remove('dragging');
+    // Snap to nearest card
+    const nearest = Math.round(currentAngle / ANGLE) * ANGLE;
+    targetAngle = nearest;
+    // Resume auto rotate after 3s
+    setTimeout(() => { if (!isDragging) { autoRotate = true; updateAutoBtn(); } }, 3000);
+  }
+
+  SCENE.addEventListener('mousedown', onPointerDown);
+  SCENE.addEventListener('touchstart', onPointerDown, { passive: true });
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('touchmove', onPointerMove, { passive: true });
+  window.addEventListener('mouseup', onPointerUp);
+  window.addEventListener('touchend', onPointerUp);
+
+  // Scroll wheel
+  SCENE.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    targetAngle -= e.deltaY * 0.3;
+    autoRotate = false;
+    updateAutoBtn();
+    clearTimeout(window._wheelResume);
+    window._wheelResume = setTimeout(() => { autoRotate = true; updateAutoBtn(); }, 3000);
+  }, { passive: false });
+
+  // === AUTO ROTATE TOGGLE ===
+  const autoBtn = document.getElementById('autoBtn');
+  function updateAutoBtn() {
+    autoBtn.textContent = autoRotate ? '⏸ Pause' : '▶ Play';
+  }
+  autoBtn.addEventListener('click', () => {
+    autoRotate = !autoRotate;
+    updateAutoBtn();
+  });
+
+  // === PREV / NEXT ===
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    targetAngle += ANGLE;
+    autoRotate = false; updateAutoBtn();
+    setTimeout(() => { autoRotate = true; updateAutoBtn(); }, 3000);
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    targetAngle -= ANGLE;
+    autoRotate = false; updateAutoBtn();
+    setTimeout(() => { autoRotate = true; updateAutoBtn(); }, 3000);
+  });
+
+  // === ANIMATION LOOP ===
+  function animate() {
+    if (autoRotate && !isDragging) {
+      targetAngle -= autoSpeed;
+    }
+
+    if (!isDragging) {
+      currentAngle += (targetAngle - currentAngle) * 0.08;
+    }
+
+    CAROUSEL.style.transform = `rotateY(${currentAngle}deg)`;
+    updateDots();
+
+    // Card depth effects
+    cardEls.forEach((card, i) => {
+      const cardAngle = ANGLE * i + currentAngle;
+      const rad = (cardAngle * Math.PI) / 180;
+      const z = Math.cos(rad);
+      const opacity = 0.35 + 0.65 * ((z + 1) / 2);
+      const blur = z < -0.3 ? Math.abs(z) * 2 : 0;
+      card.style.opacity = opacity;
+      card.style.filter = blur > 0 ? `blur(${blur.toFixed(1)}px)` : 'none';
+      card.style.boxShadow = z > 0.5
+        ? `0 20px 60px rgba(233,69,96,${(0.15 * z).toFixed(2)})`
+        : '0 4px 12px rgba(0,0,0,0.3)';
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+})();
+</script>
+
+</body>
+</html>

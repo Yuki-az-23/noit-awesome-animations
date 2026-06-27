@@ -1,0 +1,456 @@
+<!--
+  ============================================================
+  Animated Quiz UI – Gamified Quiz with Animations
+  Part of: CSS+JS Animations Library / 13-micro-interactions
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Quiz UI</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --color-bg:#0f0f1a;
+    --color-surface:#16213e;
+    --color-primary:#e94560;
+    --color-primary-light:#ff6b81;
+    --color-accent:#0f3460;
+    --color-success:#10b981;
+    --color-error:#ef4444;
+    --color-text:#eaeaea;
+    --color-text-muted:#7f8c9b;
+    --color-gold:#fbbf24;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--color-bg);
+    color:var(--color-text);
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:40px 20px;
+  }
+  h1{
+    font-size:2rem;font-weight:700;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:48px;text-align:center;
+  }
+
+  .quiz-container{
+    width:100%;max-width:560px;
+  }
+
+  /* ── Progress Bar ── */
+  .progress-section{margin-bottom:32px}
+  .progress-info{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:10px;font-size:.85rem;
+  }
+  .progress-info .question-num{color:var(--color-text-muted);font-weight:500}
+  .progress-info .question-num span{color:var(--color-primary);font-weight:700}
+  .score-display{
+    display:flex;align-items:center;gap:6px;
+    font-weight:700;color:var(--color-gold);
+  }
+  .score-display .score-icon{font-size:1.1rem}
+  .score-display .score-value{
+    display:inline-block;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .score-display .score-value.bump{transform:scale(1.4)}
+
+  .progress-bar{
+    width:100%;height:8px;
+    background:var(--color-accent);border-radius:4px;overflow:hidden;
+  }
+  .progress-bar-fill{
+    height:100%;width:0%;
+    background:linear-gradient(90deg,var(--color-primary),var(--color-primary-light),var(--color-gold));
+    border-radius:4px;
+    transition:width .6s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .progress-bar-fill::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+    animation:shimmer 1.5s ease infinite;
+  }
+  @keyframes shimmer{
+    0%{transform:translateX(-100%)}
+    100%{transform:translateX(100%)}
+  }
+
+  /* ── Question Card ── */
+  .question-card{
+    background:var(--color-surface);
+    border-radius:20px;
+    padding:36px 32px 28px;
+    position:relative;
+    box-shadow:0 8px 30px rgba(0,0,0,.3);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .question-card.entering{
+    animation:cardIn .5s cubic-bezier(.4,0,.2,1) forwards;
+  }
+  .question-card.exiting{
+    animation:cardOut .35s ease forwards;
+  }
+  @keyframes cardIn{
+    0%{opacity:0;transform:translateX(60px) scale(.96)}
+    100%{opacity:1;transform:translateX(0) scale(1)}
+  }
+  @keyframes cardOut{
+    0%{opacity:1;transform:translateX(0) scale(1)}
+    100%{opacity:0;transform:translateX(-60px) scale(.96)}
+  }
+
+  .question-category{
+    display:inline-block;
+    font-size:.7rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--color-primary);
+    background:rgba(233,69,96,.12);
+    padding:4px 12px;border-radius:20px;
+    margin-bottom:16px;
+  }
+  .question-text{
+    font-size:1.2rem;font-weight:600;line-height:1.5;
+    margin-bottom:28px;
+  }
+
+  /* ── Answer Options ── */
+  .answers{
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .answer-option{
+    display:flex;align-items:center;gap:14px;
+    background:rgba(15,52,96,.5);
+    border:2px solid var(--color-accent);
+    border-radius:14px;
+    padding:14px 18px;
+    cursor:pointer;
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+    -webkit-user-select:none;user-select:none;
+  }
+  .answer-option:hover{
+    background:rgba(233,69,96,.08);
+    border-color:rgba(233,69,96,.4);
+    transform:translateX(6px);
+  }
+  .answer-option .letter{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:10px;font-weight:700;font-size:.85rem;
+    background:var(--color-accent);color:var(--color-text-muted);
+    transition:all .3s cubic-bezier(.34,1.56,.64,1);
+    flex-shrink:0;
+  }
+  .answer-option:hover .letter{
+    background:rgba(233,69,96,.2);color:var(--color-primary);
+  }
+  .answer-option .answer-text{font-size:.95rem;font-weight:500}
+
+  /* Selected state */
+  .answer-option.selected{
+    border-color:var(--color-primary);
+    background:rgba(233,69,96,.12);
+  }
+  .answer-option.selected .letter{
+    background:var(--color-primary);color:#fff;
+    transform:scale(1.15);
+  }
+
+  /* Correct / Wrong */
+  .answer-option.correct{
+    border-color:var(--color-success);
+    background:rgba(16,185,129,.12);
+  }
+  .answer-option.correct .letter{
+    background:var(--color-success);color:#fff;
+  }
+  .answer-option.wrong{
+    border-color:var(--color-error);
+    background:rgba(239,68,68,.12);
+  }
+  .answer-option.wrong .letter{
+    background:var(--color-error);color:#fff;
+  }
+
+  .answer-option.disabled{pointer-events:none;opacity:.55}
+
+  /* ── Feedback ── */
+  .feedback{
+    margin-top:20px;
+    padding:12px 18px;border-radius:12px;
+    font-weight:600;font-size:.9rem;
+    opacity:0;transform:translateY(8px);
+    transition:all .3s ease;
+  }
+  .feedback.visible{opacity:1;transform:translateY(0)}
+  .feedback.correct{
+    background:rgba(16,185,129,.15);color:var(--color-success);
+  }
+  .feedback.wrong{
+    background:rgba(239,68,68,.15);color:var(--color-error);
+  }
+
+  /* ── Next Button ── */
+  .next-btn{
+    display:none;
+    margin-top:24px;width:100%;padding:14px;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    border:none;border-radius:14px;
+    color:#fff;font-size:1rem;font-weight:700;
+    cursor:pointer;
+    transition:transform .15s ease,box-shadow .2s ease;
+  }
+  .next-btn.visible{display:block}
+  .next-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(233,69,96,.4)}
+  .next-btn:active{transform:scale(.97)}
+
+  /* ── Result Screen ── */
+  .result-screen{
+    display:none;text-align:center;padding:40px 20px;
+  }
+  .result-screen.visible{display:block;animation:cardIn .5s ease forwards}
+  .result-title{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .result-score{
+    font-size:4rem;font-weight:800;
+    background:linear-gradient(135deg,var(--color-gold),var(--color-primary));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin:16px 0;
+  }
+  .result-msg{color:var(--color-text-muted);font-size:1rem;margin-bottom:32px;line-height:1.6}
+  .restart-btn{
+    padding:14px 40px;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    border:none;border-radius:14px;color:#fff;
+    font-size:1rem;font-weight:700;cursor:pointer;
+    transition:transform .15s ease;
+  }
+  .restart-btn:hover{transform:scale(1.05)}
+  .restart-btn:active{transform:scale(.97)}
+
+  /* ── Confetti dots ── */
+  .confetti-dot{
+    position:fixed;width:8px;height:8px;
+    border-radius:50%;pointer-events:none;z-index:999;
+    animation:confettiFall 1.2s ease-out forwards;
+  }
+  @keyframes confettiFall{
+    0%{opacity:1;transform:translate(0,0) scale(1)}
+    100%{opacity:0;transform:translate(var(--cx),var(--cy)) scale(.2)}
+  }
+</style>
+</head>
+<body>
+
+<div class="quiz-container" id="quiz">
+  <h1>UX Misconceptions Quiz</h1>
+
+  <div class="progress-section">
+    <div class="progress-info">
+      <span class="question-num">Question <span id="qNum">1</span> / <span id="qTotal">5</span></span>
+      <div class="score-display">
+        <span class="score-icon">⭐</span>
+        <span class="score-value" id="scoreValue">0</span>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="question-card entering" id="questionCard">
+    <div class="question-category" id="qCategory"></div>
+    <div class="question-text" id="qText"></div>
+    <div class="answers" id="answersContainer"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">Next Question →</button>
+  </div>
+
+  <div class="result-screen" id="resultScreen">
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <button class="restart-btn" id="restartBtn">Play Again</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ── Quiz Data ── */
+  const quizData = [
+    {
+      category:'Design',
+      question:'Making a website beautiful is the most important goal of UX design.',
+      options:['True','False — usability matters more','Both beauty and usability equally','It depends on the client'],
+      correct: 1,
+      explanation:'UX design prioritizes making products usable and accessible. Visual appeal supports usability but isn\'t the primary goal.'
+    },
+    {
+      category:'Process',
+      question:'UX design is just wireframing and prototyping.',
+      options:['Yes, that covers it','No — it includes research, testing, strategy, and more','Only for digital products','Prototyping is the main phase'],
+      correct: 1,
+      explanation:'UX encompasses research, information architecture, interaction design, usability testing, and strategic thinking — not just deliverables.'
+    },
+    {
+      category:'Users',
+      question:'Users always know what they want.',
+      options:['Absolutely — ask them directly','Often yes, but verify','Rarely — observe behavior instead','Only power users do'],
+      correct: 2,
+      explanation:'People struggle to articulate real needs. observing actual behavior and user testing reveals insights that surveys miss.'
+    },
+    {
+      category:'Method',
+      question:'More features make a product better.',
+      options:['True — features equal value','False — simplicity wins','More features reduce confusion','Only on enterprise products'],
+      correct: 1,
+      explanation:'Feature creep creates complexity. Great UX comes from doing fewer things exceptionally well. Each feature adds cognitive load.'
+    },
+    {
+      category:'Testing',
+      question:'Usability testing is too expensive and time-consuming.',
+      options:['Yes, skip it','It can be fast and cheap with 5 users','Only large companies need it','Automated tests replace it'],
+      correct: 1,
+      explanation:'Jakob Nielsen showed that testing with just 5 users uncovers 85% of usability problems. It\'s one of the highest-ROI activities in design.'
+    }
+  ];
+
+  const letters = ['A','B','C','D'];
+  let current = 0;
+  let score = 0;
+  let answered = false;
+
+  const qNum = document.getElementById('qNum');
+  const qTotal = document.getElementById('qTotal');
+  const progressFill = document.getElementById('progressFill');
+  const questionCard = document.getElementById('questionCard');
+  const qCategory = document.getElementById('qCategory');
+  const qText = document.getElementById('qText');
+  const answersContainer = document.getElementById('answersContainer');
+  const feedback = document.getElementById('feedback');
+  const nextBtn = document.getElementById('nextBtn');
+  const scoreValue = document.getElementById('scoreValue');
+  const resultScreen = document.getElementById('resultScreen');
+
+  qTotal.textContent = quizData.length;
+
+  function renderQuestion(){
+    answered = false;
+    feedback.className = 'feedback';
+    feedback.textContent = '';
+    nextBtn.classList.remove('visible');
+
+    const data = quizData[current];
+    qNum.textContent = current + 1;
+    progressFill.style.width = ((current) / quizData.length * 100) + '%';
+    qCategory.textContent = data.category;
+    qText.textContent = data.question;
+
+    answersContainer.innerHTML = '';
+    data.options.forEach((opt, i)=>{
+      const div = document.createElement('div');
+      div.className = 'answer-option';
+      div.innerHTML = `<span class="letter">${letters[i]}</span><span class="answer-text">${opt}</span>`;
+      div.addEventListener('click',()=>selectAnswer(i, div));
+      answersContainer.appendChild(div);
+    });
+
+    questionCard.classList.remove('exiting');
+    questionCard.classList.add('entering');
+  }
+
+  function selectAnswer(index, el){
+    if(answered) return;
+    answered = true;
+
+    const data = quizData[current];
+    const isCorrect = index === data.correct;
+    const allOptions = answersContainer.querySelectorAll('.answer-option');
+
+    allOptions.forEach((opt, i) => {
+      opt.classList.add('disabled');
+      if(i === data.correct) opt.classList.add('correct');
+      if(i === index && !isCorrect) opt.classList.add('wrong');
+    });
+
+    if(isCorrect){
+      score++;
+      scoreValue.textContent = score;
+      scoreValue.classList.add('bump');
+      setTimeout(()=>scoreValue.classList.remove('bump'),300);
+      feedback.className = 'feedback correct visible';
+      feedback.textContent = '✓ Correct! ' + data.explanation;
+      spawnConfetti();
+    } else {
+      feedback.className = 'feedback wrong visible';
+      feedback.textContent = '✗ Not quite. ' + data.explanation;
+    }
+
+    nextBtn.classList.add('visible');
+  }
+
+  function nextQuestion(){
+    questionCard.classList.remove('entering');
+    questionCard.classList.add('exiting');
+    setTimeout(()=>{
+      current++;
+      if(current >= quizData.length){
+        showResult();
+      } else {
+        renderQuestion();
+      }
+    },350);
+  }
+
+  function showResult(){
+    questionCard.style.display = 'none';
+    progressFill.style.width = '100%';
+    const pct = Math.round((score / quizData.length) * 100);
+    let title, msg;
+    if(pct === 100){ title='🏆 Perfect!'; msg='You\'re a UX expert — no misconceptions here!'; }
+    else if(pct >= 60){ title='👏 Great job!'; msg=`You got ${score} out of ${quizData.length} right. Solid UX instincts!`; }
+    else { title='🤔 Keep learning!'; msg=`You got ${score} out of ${quizData.length}. Every misconception debunked is a win.`; }
+
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultScore').textContent = `${score} / ${quizData.length}`;
+    document.getElementById('resultMsg').textContent = msg;
+    resultScreen.classList.add('visible');
+    if(score >= 3) spawnConfetti();
+  }
+
+  function spawnConfetti(){
+    const colors = ['#e94560','#ff6b81','#fbbf24','#10b981','#7c3aed','#3b82f6'];
+    for(let i=0;i<18;i++){
+      const dot = document.createElement('div');
+      dot.className = 'confetti-dot';
+      dot.style.background = colors[Math.floor(Math.random()*colors.length)];
+      dot.style.left = (30 + Math.random()*40)+'%';
+      dot.style.top = (30 + Math.random()*30)+'%';
+      dot.style.width = (5+Math.random()*6)+'px';
+      dot.style.height = dot.style.width;
+      dot.style.setProperty('--cx',(Math.random()*120-60)+'px');
+      dot.style.setProperty('--cy',(Math.random()*180+40)+'px');
+      dot.style.animationDelay = (Math.random()*0.2)+'s';
+      document.body.appendChild(dot);
+      dot.addEventListener('animationend',()=>dot.remove());
+    }
+  }
+
+  nextBtn.addEventListener('click', nextQuestion);
+  document.getElementById('restartBtn').addEventListener('click', ()=>{
+    current = 0; score = 0; answered = false;
+    scoreValue.textContent = '0';
+    resultScreen.classList.remove('visible');
+    questionCard.style.display = '';
+    renderQuestion();
+  });
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>

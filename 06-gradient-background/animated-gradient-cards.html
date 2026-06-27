@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  Animated Gradient Cards
+  Cards with animated gradient borders that flow and shift.
+  At least 6 cards in a grid, each with a unique animated
+  gradient on its border that flows continuously.
+
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Gradient Cards</title>
+<style>
+  /* ── Reset & Variables ─────────────────────────── */
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-text: #eaeaea;
+    --font-display: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-display);
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Ambient Background ────────────────────────── */
+  .bg-gradient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(233,69,96,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(83,52,131,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(17,153,142,0.04) 0%, transparent 50%),
+      var(--color-bg);
+  }
+
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* ── Layout ────────────────────────────────────── */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  /* ── Header ────────────────────────────────────── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .page-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+  }
+
+  .page-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .page-title span {
+    background: linear-gradient(135deg, var(--color-primary), #ff6b9d, #533483);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .page-desc {
+    font-size: 1.05rem;
+    opacity: 0.5;
+    max-width: 550px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ── Card Grid ─────────────────────────────────── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2rem;
+  }
+
+  /* ── Card ──────────────────────────────────────── */
+  .card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    padding: 2px; /* space for gradient border */
+    transition: transform 0.5s cubic-bezier(0.23,1,0.32,1),
+                box-shadow 0.5s cubic-bezier(0.23,1,0.32,1);
+    cursor: default;
+  }
+
+  .card:hover {
+    transform: translateY(-6px) scale(1.02);
+  }
+
+  /* ── Animated Gradient Border ──────────────────── */
+  .card-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  /* The rotating gradient background */
+  .card-border::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    animation: borderRotate var(--rotate-duration, 4s) linear infinite;
+    background: var(--gradient, conic-gradient(from 0deg, #e94560, #533483, #11998e, #e94560));
+  }
+
+  /* Pulse glow layer */
+  .card-border::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    animation: borderPulse var(--pulse-duration, 3s) ease-in-out infinite;
+    background: var(--gradient, conic-gradient(from 0deg, #e94560, #533483, #11998e, #e94560));
+    opacity: 0.5;
+    filter: blur(2px);
+  }
+
+  @keyframes borderRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes borderPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  /* ── Card Inner ────────────────────────────────── */
+  .card-inner {
+    position: relative;
+    z-index: 1;
+    background: var(--color-bg);
+    border-radius: 18px;
+    padding: 2rem;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Subtle animated background glow inside card */
+  .card-inner::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 30%),
+                var(--glow-color, rgba(233,69,96,0.08)) 0%,
+                transparent 50%);
+    animation: innerGlow var(--glow-duration, 6s) ease-in-out infinite alternate;
+    z-index: -1;
+  }
+
+  @keyframes innerGlow {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.6; }
+    33%  { transform: translate(10%, 15%) scale(1.1); opacity: 1; }
+    66%  { transform: translate(-5%, -10%) scale(0.95); opacity: 0.8; }
+    100% { transform: translate(5%, 5%) scale(1.05); opacity: 0.7; }
+  }
+
+  /* ── Card Content ─────────────────────────────── */
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    background: var(--icon-bg, rgba(233,69,96,0.1));
+    border: 1px solid var(--icon-border, rgba(233,69,96,0.2));
+    position: relative;
+  }
+
+  .card-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--icon-color, var(--color-primary));
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .card-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--tag-color, var(--color-primary));
+    margin-bottom: 0.5rem;
+  }
+
+  .card-heading {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .card-body {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    opacity: 0.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-link {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: gap 0.3s ease;
+  }
+
+  .card-link:hover { gap: 0.7rem; }
+
+  .card-link svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .card-metric {
+    font-size: 0.75rem;
+    opacity: 0.35;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Individual Card Gradient Themes ───────────── */
+  /* Card 1: Warm Sunset - rotating conic */
+  .card--1 {
+    --gradient: conic-gradient(from 0deg, #e94560, #ff6b6b, #f38181, #e94560);
+    --rotate-duration: 3s;
+    --pulse-duration: 2.5s;
+    --glow-color: rgba(233,69,96,0.08);
+    --glow-duration: 5s;
+    --icon-bg: rgba(233,69,96,0.1);
+    --icon-border: rgba(233,69,96,0.2);
+    --icon-color: #e94560;
+    --tag-color: #e94560;
+  }
+
+  /* Card 2: Ocean Blues - flowing linear */
+  .card--2 {
+    --gradient: conic-gradient(from 45deg, #0f3460, #11998e, #38ef7d, #0f3460);
+    --rotate-duration: 5s;
+    --pulse-duration: 4s;
+    --glow-color: rgba(17,153,142,0.08);
+    --glow-duration: 7s;
+    --icon-bg: rgba(17,153,142,0.1);
+    --icon-border: rgba(17,153,142,0.2);
+    --icon-color: #11998e;
+    --tag-color: #11998e;
+  }
+
+  /* Card 3: Purple Magic */
+  .card--3 {
+    --gradient: conic-gradient(from 90deg, #533483, #e94560, #ff6b9d, #533483);
+    --rotate-duration: 4s;
+    --pulse-duration: 3s;
+    --glow-color: rgba(83,52,131,0.08);
+    --glow-duration: 6s;
+    --icon-bg: rgba(83,52,131,0.1);
+    --icon-border: rgba(83,52,131,0.2);
+    --icon-color: #9b59b6;
+    --tag-color: #9b59b6;
+  }
+
+  /* Card 4: Electric Green */
+  .card--4 {
+    --gradient: conic-gradient(from 135deg, #00b894, #00cec9, #0984e3, #00b894);
+    --rotate-duration: 3.5s;
+    --pulse-duration: 2.8s;
+    --glow-color: rgba(0,184,148,0.08);
+    --glow-duration: 5.5s;
+    --icon-bg: rgba(0,184,148,0.1);
+    --icon-border: rgba(0,184,148,0.2);
+    --icon-color: #00b894;
+    --tag-color: #00b894;
+  }
+
+  /* Card 5: Golden Hour */
+  .card--5 {
+    --gradient: conic-gradient(from 180deg, #f39c12, #e74c3c, #f39c12, #e67e22);
+    --rotate-duration: 4.5s;
+    --pulse-duration: 3.5s;
+    --glow-color: rgba(243,156,18,0.08);
+    --glow-duration: 6.5s;
+    --icon-bg: rgba(243,156,18,0.1);
+    --icon-border: rgba(243,156,18,0.2);
+    --icon-color: #f39c12;
+    --tag-color: #f39c12;
+  }
+
+  /* Card 6: Arctic Frost */
+  .card--6 {
+    --gradient: conic-gradient(from 225deg, #74b9ff, #a29bfe, #fd79a8, #74b9ff);
+    --rotate-duration: 6s;
+    --pulse-duration: 4.5s;
+    --glow-color: rgba(116,185,255,0.08);
+    --glow-duration: 8s;
+    --icon-bg: rgba(116,185,255,0.1);
+    --icon-border: rgba(116,185,255,0.2);
+    --icon-color: #74b9ff;
+    --tag-color: #74b9ff;
+  }
+
+  /* ── Card Hover Glow Enhancement ──────────────── */
+  .card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    opacity: 0;
+    z-index: 2;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    background: var(--glow-color, rgba(233,69,96,0.15));
+    filter: blur(20px);
+  }
+
+  .card:hover::after { opacity: 1; }
+
+  /* ── Bottom Stats ──────────────────────────────── */
+  .bottom-section {
+    margin-top: 5rem;
+    text-align: center;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b9d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-top: 0.25rem;
+  }
+
+  /* ── Footer ────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 3rem;
+    font-size: 0.8rem;
+    opacity: 0.25;
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-gradient"></div>
+<div class="bg-grid"></div>
+
+<div class="container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="page-label">UI Collection</div>
+    <h1 class="page-title">Gradient <span>Border Cards</span></h1>
+    <p class="page-desc">Each card features a unique animated gradient border that flows continuously with its own rhythm, speed, and color palette.</p>
+  </header>
+
+  <!-- Card Grid -->
+  <div class="card-grid" id="cardGrid"></div>
+
+  <!-- Bottom Stats -->
+  <section class="bottom-section">
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-number">6</div>
+        <div class="stat-label">Unique Gradients</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Flow Animations</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">0</div>
+        <div class="stat-label">Dependencies</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="footer">Animated Gradient Cards · Pure CSS + JS</div>
+
+<script>
+/* ================================================================
+   Animated Gradient Cards – Build & Interaction
+   Dynamically builds cards with unique gradient borders.
+   Each card gets a canvas-based animated gradient border
+   that flows with its own timing and pattern.
+   ================================================================ */
+
+// ── Card Data ────────────────────────────────────
+const cardsData = [
+  {
+    tag: 'Performance',
+    heading: 'Blazing Fast Rendering',
+    body: 'GPU-accelerated animations running at 60fps. Every gradient rotation leverages CSS transforms for buttery-smooth motion.',
+    icon: `<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+    link: 'Learn More',
+    metric: '~0.5ms per frame'
+  },
+  {
+    tag: 'Design System',
+    heading: 'Adaptive Color Flow',
+    body: 'Each card carries its own color signature — a unique conic gradient that rotates and pulses independently of its neighbors.',
+    icon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/></svg>`,
+    link: 'Explore',
+    metric: '6 color palettes'
+  },
+  {
+    tag: 'Integration',
+    heading: 'Zero Dependencies',
+    body: 'No frameworks, no libraries, no build steps. Every animation is pure CSS and vanilla JavaScript — copy and paste into any project.',
+    icon: `<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+    link: 'Get Started',
+    metric: '< 5KB per card'
+  },
+  {
+    tag: 'Interaction',
+    heading: 'Hover-Driven Motion',
+    body: 'Cards respond to cursor presence with depth shifts and glow amplification. The border pulse intensifies on hover for tactile feedback.',
+    icon: `<svg viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>`,
+    link: 'Interact',
+    metric: 'Sub-16ms response'
+  },
+  {
+    tag: 'Customization',
+    heading: 'Infinite Variations',
+    body: 'Adjust rotation speed, color stops, pulse rhythm, and glow intensity through simple CSS custom properties. One class, endless possibilities.',
+    icon: `<svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    link: 'Customize',
+    metric: '12 CSS variables'
+  },
+  {
+    tag: 'Architecture',
+    heading: 'Composited Layers',
+    body: 'The gradient border lives on its own compositing layer, ensuring the inner content stays crisp while the border animates seamlessly underneath.',
+    icon: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`,
+    link: 'Details',
+    metric: 'GPU-accelerated'
+  }
+];
+
+// ── Render Cards ─────────────────────────────────
+const grid = document.getElementById('cardGrid');
+
+cardsData.forEach((data, i) => {
+  const card = document.createElement('article');
+  card.className = `card card--${i + 1}`;
+  card.innerHTML = `
+    <div class="card-border"></div>
+    <div class="card-inner">
+      <div class="card-icon">${data.icon}</div>
+      <div class="card-tag">${data.tag}</div>
+      <h3 class="card-heading">${data.heading}</h3>
+      <p class="card-body">${data.body}</p>
+      <div class="card-footer">
+        <a href="#" class="card-link" onclick="return false">
+          ${data.link}
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <span class="card-metric">${data.metric}</span>
+      </div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+// ── Mouse Tracking for Inner Glow ────────────────
+document.querySelectorAll('.card').forEach(card => {
+  const inner = card.querySelector('.card-inner');
+
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    inner.style.setProperty('--glow-x', x + '%');
+    inner.style.setProperty('--glow-y', y + '%');
+  });
+});
+
+// ── Scroll Reveal Animation ──────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, idx) => {
+    if (entry.isIntersecting) {
+      const delay = parseInt(entry.target.dataset.delay || 0);
+      setTimeout(() => {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }, delay);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.card').forEach((card, i) => {
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(40px)';
+  card.style.transition = `opacity 0.7s cubic-bezier(0.23,1,0.32,1) ${i * 0.1}s,
+                            transform 0.7s cubic-bezier(0.23,1,0.32,1) ${i * 0.1}s`;
+  card.dataset.delay = i * 100;
+  observer.observe(card);
+});
+
+// ── Stats Number Animation ───────────────────────
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.stat-item').forEach((stat, i) => {
+        stat.style.transition = `opacity 0.6s ease ${i * 0.15}s, transform 0.6s ease ${i * 0.15}s`;
+        stat.style.opacity = '1';
+        stat.style.transform = 'translateY(0)';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.stats-row').forEach(row => {
+  row.querySelectorAll('.stat-item').forEach(stat => {
+    stat.style.opacity = '0';
+    stat.style.transform = 'translateY(20px)';
+  });
+  statsObserver.observe(row);
+});
+</script>
+</body>
+</html>

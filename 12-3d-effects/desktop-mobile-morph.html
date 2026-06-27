@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Desktop to Mobile Morphing
+  Inspired by "Desktop to Mobile morphing".
+  Device frame that morphs from desktop monitor to
+  mobile phone shape and back. Smooth 3D transform
+  between the two form factors.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desktop Mobile Morph</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+    --color-warm: #ff6b35;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Scene container with perspective */
+  .scene {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1200px;
+    position: relative;
+  }
+
+  /* Background grid / dots */
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* Ambient glow */
+  .ambient-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.15;
+    transition: background 1.5s ease;
+    pointer-events: none;
+  }
+
+  .ambient-glow.glow-1 {
+    top: 20%;
+    left: 30%;
+    background: var(--color-primary);
+  }
+
+  .ambient-glow.glow-2 {
+    bottom: 20%;
+    right: 25%;
+    background: var(--color-accent);
+  }
+
+  /* Device frame wrapper */
+  .device-wrapper {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Monitor / Desktop device */
+  .monitor {
+    width: 520px;
+    height: 320px;
+    border-radius: 12px;
+    background: var(--color-surface);
+    border: 2px solid rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+    transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                height 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                border-radius 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .monitor.morphed-to-phone {
+    width: 220px;
+    height: 440px;
+    border-radius: 30px;
+    transform: translateZ(50px);
+  }
+
+  /* Monitor notch area */
+  .monitor-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 20px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 0 0 8px 8px;
+    transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                height 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                border-radius 1.2s;
+    z-index: 5;
+  }
+
+  .monitor.morphed-to-phone .monitor-notch {
+    width: 100px;
+    height: 28px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  /* Screen content */
+  .screen-content {
+    position: absolute;
+    inset: 0;
+    padding: 28px 16px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: padding 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .monitor.morphed-to-phone .screen-content {
+    padding: 36px 14px 30px;
+  }
+
+  /* Navbar */
+  .screen-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    margin-bottom: 4px;
+    transition: all 0.8s ease;
+  }
+
+  .screen-nav .logo-placeholder {
+    width: 50px;
+    height: 8px;
+    background: rgba(233,69,96,0.5);
+    border-radius: 4px;
+    transition: width 0.8s ease;
+  }
+
+  .monitor.morphed-to-phone .screen-nav .logo-placeholder {
+    width: 35px;
+  }
+
+  .screen-nav .nav-dots {
+    display: flex;
+    gap: 6px;
+    transition: opacity 0.5s;
+  }
+
+  .screen-nav .nav-dots span {
+    width: 20px;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+  }
+
+  .monitor.morphed-to-phone .screen-nav .nav-dots {
+    opacity: 0;
+  }
+
+  /* Hero area */
+  .screen-hero {
+    flex: 0 0 auto;
+    transition: all 0.8s ease;
+  }
+
+  .screen-hero-bar {
+    height: 12px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+
+  .screen-hero-bar.large {
+    width: 70%;
+    height: 16px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-warm));
+    border-radius: 8px;
+  }
+
+  .screen-hero-bar.medium {
+    width: 50%;
+  }
+
+  .screen-hero-bar.small {
+    width: 35%;
+  }
+
+  /* Cards row */
+  .screen-cards {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    transition: all 0.8s ease;
+  }
+
+  .screen-card {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.8s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .screen-card .card-accent {
+    height: 30px;
+    background: linear-gradient(135deg, rgba(233,69,96,0.3), rgba(83,52,131,0.3));
+    border-radius: 4px;
+  }
+
+  .screen-card .card-line {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+  }
+
+  .screen-card .card-line.short {
+    width: 60%;
+  }
+
+  /* Mobile layout (stacked cards) */
+  .monitor.morphed-to-phone .screen-cards {
+    flex-direction: column;
+  }
+
+  .monitor.morphed-to-phone .screen-card .card-accent {
+    height: 40px;
+  }
+
+  /* Screen bottom bar (mobile) */
+  .screen-bottom-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 0 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .screen-bottom-bar span {
+    width: 20px;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+  }
+
+  .monitor.morphed-to-phone .screen-bottom-bar {
+    opacity: 1;
+  }
+
+  /* Monitor stand */
+  .monitor-stand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.5s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .stand-neck {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(90deg, #2a2a4a, #1a1a3e);
+    border-radius: 2px;
+    transition: height 0.8s ease, width 0.8s ease, opacity 0.5s;
+  }
+
+  .stand-base {
+    width: 120px;
+    height: 8px;
+    background: linear-gradient(90deg, #2a2a4a, #1a1a3e);
+    border-radius: 0 0 4px 4px;
+    transition: opacity 0.5s, transform 0.8s;
+  }
+
+  .monitor.morphed-to-phone ~ .monitor-stand .stand-neck,
+  .device-wrapper.phone-state .monitor-stand {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  /* Home indicator (mobile) */
+  .home-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .monitor.morphed-to-phone .home-indicator { opacity: 1; }
+
+  /* Side panel info */
+  .info-panel {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .info-panel.left {
+    left: 5%;
+    text-align: left;
+  }
+
+  .info-panel.right {
+    right: 5%;
+    text-align: right;
+  }
+
+  .info-panel h3 {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 0.8rem;
+  }
+
+  .info-panel p {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    max-width: 200px;
+  }
+
+  .info-panel.left.hidden {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-30px);
+  }
+
+  .info-panel.right.hidden {
+    opacity: 0;
+    transform: translateY(-50%) translateX(30px);
+  }
+
+  /* Toggle button */
+  .morph-toggle {
+    position: fixed;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .morph-toggle:hover {
+    background: rgba(233,69,96,0.1);
+    border-color: var(--color-primary);
+  }
+
+  .morph-toggle .device-icon {
+    width: 36px;
+    height: 24px;
+    border: 2px solid var(--color-muted);
+    border-radius: 3px;
+    position: relative;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .morph-toggle .device-icon.phone {
+    width: 18px;
+    height: 30px;
+    border-radius: 6px;
+  }
+
+  .morph-toggle .device-icon::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: var(--color-muted);
+    border-radius: 1px;
+    transition: opacity 0.3s;
+  }
+
+  .morph-toggle .device-icon.phone::before { opacity: 0; }
+
+  .morph-toggle .arrow {
+    color: var(--color-muted);
+    font-size: 1.2rem;
+    transition: color 0.3s;
+  }
+
+  .morph-toggle:hover .arrow { color: var(--color-primary); }
+
+  .morph-label {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+
+  .morph-toggle:hover .morph-label { color: var(--color-text); }
+
+  /* Specs display */
+  .specs {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    gap: 2rem;
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .spec-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .spec-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+    transition: all 0.8s ease;
+  }
+
+  /* Floating particles */
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    opacity: 0.2;
+    animation: floatParticle 8s ease-in-out infinite;
+  }
+
+  @keyframes floatParticle {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(var(--px, 20px), var(--py, -30px)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="ambient-glow glow-1" id="glow1"></div>
+<div class="ambient-glow glow-2" id="glow2"></div>
+
+<!-- Floating particles -->
+<div class="particle" style="top:15%; left:20%; --px:30px; --py:-25px; animation-delay:0s;"></div>
+<div class="particle" style="top:35%; left:75%; --px:-20px; --py:35px; animation-delay:-2s;"></div>
+<div class="particle" style="top:70%; left:40%; --px:25px; --py:-15px; animation-delay:-4s;"></div>
+<div class="particle" style="top:50%; left:60%; --px:-30px; --py:-20px; animation-delay:-6s;"></div>
+<div class="particle" style="top:80%; left:15%; --px:15px; --py:25px; animation-delay:-3s;"></div>
+<div class="particle" style="top:25%; left:85%; --px:-10px; --py:-35px; animation-delay:-5s;"></div>
+
+<!-- Specs bar -->
+<div class="specs" id="specsBar">
+  <div class="spec-item">
+    <span class="spec-value" id="specWidth">520</span>
+    <span>Width</span>
+  </div>
+  <div class="spec-item">
+    <span class="spec-value" id="specHeight">320</span>
+    <span>Height</span>
+  </div>
+  <div class="spec-item">
+    <span class="spec-value" id="specRatio">16:10</span>
+    <span>Ratio</span>
+  </div>
+  <div class="spec-item">
+    <span class="spec-value" id="specRadius">12</span>
+    <span>Radius</span>
+  </div>
+</div>
+
+<!-- Side info panels -->
+<div class="info-panel left" id="infoLeft">
+  <h3>Desktop</h3>
+  <p>Wide format optimized for multi-column layouts, complex navigation, and extended viewing sessions.</p>
+</div>
+
+<div class="info-panel right" id="infoRight">
+  <h3>Responsive</h3>
+  <p>Seamlessly adapts form factor and layout to deliver the best experience at every screen size.</p>
+</div>
+
+<!-- Main scene -->
+<section class="scene" id="scene">
+  <div class="device-wrapper" id="deviceWrapper">
+    <div class="monitor" id="device">
+      <!-- Notch -->
+      <div class="monitor-notch"></div>
+
+      <!-- Screen content -->
+      <div class="screen-content">
+        <div class="screen-nav">
+          <div class="logo-placeholder"></div>
+          <div class="nav-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="screen-hero">
+          <div class="screen-hero-bar large"></div>
+          <div class="screen-hero-bar medium"></div>
+          <div class="screen-hero-bar small"></div>
+        </div>
+
+        <div class="screen-cards">
+          <div class="screen-card">
+            <div class="card-accent"></div>
+            <div class="card-line"></div>
+            <div class="card-line short"></div>
+          </div>
+          <div class="screen-card">
+            <div class="card-accent" style="background: linear-gradient(135deg, rgba(15,52,96,0.5), rgba(83,52,131,0.5))"></div>
+            <div class="card-line"></div>
+            <div class="card-line short"></div>
+          </div>
+          <div class="screen-card">
+            <div class="card-accent" style="background: linear-gradient(135deg, rgba(255,107,53,0.3), rgba(233,69,96,0.3))"></div>
+            <div class="card-line"></div>
+            <div class="card-line short"></div>
+          </div>
+        </div>
+
+        <div class="screen-bottom-bar">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- Home indicator (mobile) -->
+      <div class="home-indicator"></div>
+    </div>
+
+    <!-- Monitor stand -->
+    <div class="monitor-stand" id="monitorStand">
+      <div class="stand-neck"></div>
+      <div class="stand-base"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Toggle button -->
+<div class="morph-toggle" id="morphToggle" onclick="toggleMorph()">
+  <div class="device-icon" id="toggleIcon1"></div>
+  <span class="arrow">→</span>
+  <div class="device-icon phone" id="toggleIcon2"></div>
+  <span class="morph-label" id="morphLabel">Morph Device</span>
+</div>
+
+<script>
+(function() {
+  const device = document.getElementById('device');
+  const monitorStand = document.getElementById('monitorStand');
+  const infoLeft = document.getElementById('infoLeft');
+  const infoRight = document.getElementById('infoRight');
+  const morphLabel = document.getElementById('morphLabel');
+  const specWidth = document.getElementById('specWidth');
+  const specHeight = document.getElementById('specHeight');
+  const specRatio = document.getElementById('specRatio');
+  const specRadius = document.getElementById('specRadius');
+  const glow1 = document.getElementById('glow1');
+  const glow2 = document.getElementById('glow2');
+
+  let isPhone = false;
+  let morphAnimId = null;
+
+  // Animate number smoothly
+  function animateValue(element, start, end, duration, suffix = '') {
+    const startTime = performance.now();
+    function update(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + (end - start) * eased);
+      element.textContent = current + suffix;
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  window.toggleMorph = function() {
+    isPhone = !isPhone;
+
+    if (isPhone) {
+      device.classList.add('morphed-to-phone');
+      monitorStand.style.opacity = '0';
+      monitorStand.style.transform = 'translateY(20px)';
+      infoLeft.classList.add('hidden');
+      infoRight.classList.remove('hidden');
+      morphLabel.textContent = 'Back to Desktop';
+
+      animateValue(specWidth, 520, 220, 1200);
+      animateValue(specHeight, 320, 440, 1200);
+      animateValue(specRadius, 12, 30, 1200);
+      specRatio.textContent = '9:19.5';
+
+      // Shift ambient glow
+      glow1.style.background = '#533483';
+      glow2.style.background = '#e94560';
+    } else {
+      device.classList.remove('morphed-to-phone');
+      monitorStand.style.opacity = '1';
+      monitorStand.style.transform = 'translateY(0)';
+      infoLeft.classList.remove('hidden');
+      infoRight.classList.add('hidden');
+      morphLabel.textContent = 'Morph Device';
+
+      animateValue(specWidth, 220, 520, 1200);
+      animateValue(specHeight, 440, 320, 1200);
+      animateValue(specRadius, 30, 12, 1200);
+      specRatio.textContent = '16:10';
+
+      glow1.style.background = '#e94560';
+      glow2.style.background = '#0f3460';
+    }
+
+    // Slight 3D tilt animation
+    const wrapper = document.getElementById('deviceWrapper');
+    wrapper.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+    wrapper.style.transform = 'rotateY(15deg) rotateX(-5deg)';
+
+    setTimeout(() => {
+      wrapper.style.transform = isPhone ? 'rotateY(-8deg) rotateX(3deg)' : 'rotateY(5deg) rotateX(-3deg)';
+    }, 800);
+  };
+
+  // Initial subtle 3D tilt that follows mouse
+  const wrapper = document.getElementById('deviceWrapper');
+  document.addEventListener('mousemove', (e) => {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const dx = (e.clientX - cx) / cx;
+    const dy = (e.clientY - cy) / cy;
+
+    if (!isPhone) {
+      wrapper.style.transform = `rotateY(${dx * 8}deg) rotateX(${-dy * 5}deg)`;
+    } else {
+      wrapper.style.transform = `rotateY(${dx * 12}deg) rotateX(${-dy * 8}deg)`;
+    }
+  });
+
+  // Auto-morph demo
+  let autoMorphTimeout;
+  function scheduleAutoMorph() {
+    autoMorphTimeout = setTimeout(() => {
+      toggleMorph();
+      setTimeout(() => {
+        toggleMorph();
+        scheduleAutoMorph();
+      }, 3000);
+    }, 5000);
+  }
+  scheduleAutoMorph();
+
+  // Reset auto-morph on manual click
+  const origToggle = window.toggleMorph;
+  const toggleBtn = document.getElementById('morphToggle');
+  toggleBtn.addEventListener('click', () => {
+    clearTimeout(autoMorphTimeout);
+    scheduleAutoMorph();
+  });
+
+  // Keyboard toggle
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      toggleMorph();
+      clearTimeout(autoMorphTimeout);
+      scheduleAutoMorph();
+    }
+  });
+})();
+</script>
+</body>
+</html>

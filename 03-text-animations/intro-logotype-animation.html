@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Intro Logotype Animation
+  Inspired by "Intro Logotype Animation" & "Animated Typography Intro"
+  Cinematic logo/text reveal animation sequence. Letters appear one by one
+  with different techniques: fade, scale, slide, rotate, blur.
+  Staggered timing with dramatic pauses. Pure CSS + Vanilla JS.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intro Logotype Animation</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f1a;--surface:#16213e;--primary:#e94560;--accent:#ffc947;
+  --accent2:#6c5ce7;--text:#eaeaea;--muted:#7a7a9a;
+  --card:#1a1a2e;--border:rgba(233,69,96,.18);
+}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+
+/* ── background effects ── */
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.03;
+  background-image:linear-gradient(var(--text) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--text) 1px,transparent 1px);
+  background-size:80px 80px;
+}
+.bg-glow{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 40%,rgba(233,69,96,.08) 0%,transparent 50%),
+    radial-gradient(ellipse at 30% 70%,rgba(108,92,231,.06) 0%,transparent 40%),
+    radial-gradient(ellipse at 70% 60%,rgba(255,201,71,.04) 0%,transparent 40%);
+}
+.bg-grain{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ── stage ── */
+.stage{position:relative;z-index:1;text-align:center;perspective:800px}
+
+/* ── line ── */
+.anim-line{display:flex;justify-content:center;gap:4px;margin-bottom:8px}
+.anim-line.secondary{margin-top:20px}
+
+/* ── letter ── */
+.letter{
+  display:inline-block;font-size:clamp(3rem,8vw,6rem);font-weight:900;
+  line-height:1.1;opacity:0;will-change:transform,opacity,filter;
+}
+
+/* ── reveal techniques ── */
+.letter.fade-in{
+  opacity:0;
+  animation:letterFade .8s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes letterFade{0%{opacity:0}100%{opacity:1}}
+
+.letter.scale-in{
+  opacity:0;transform:scale(3);
+  animation:letterScale .7s cubic-bezier(.175,.885,.32,1.275) forwards;
+}
+@keyframes letterScale{0%{opacity:0;transform:scale(3)}100%{opacity:1;transform:scale(1)}}
+
+.letter.slide-up{
+  opacity:0;transform:translateY(80px);
+  animation:letterSlide .7s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes letterSlide{0%{opacity:0;transform:translateY(80px)}100%{opacity:1;transform:translateY(0)}}
+
+.letter.rotate-in{
+  opacity:0;transform:rotateX(90deg) translateY(20px);
+  animation:letterRotate .8s cubic-bezier(.23,1,.32,1) forwards;
+  transform-origin:center bottom;
+}
+@keyframes letterRotate{0%{opacity:0;transform:rotateX(90deg) translateY(20px)}100%{opacity:1;transform:rotateX(0) translateY(0)}}
+
+.letter.blur-in{
+  opacity:0;filter:blur(20px);transform:scale(1.5);
+  animation:letterBlur .9s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes letterBlur{0%{opacity:0;filter:blur(20px);transform:scale(1.5)}100%{opacity:1;filter:blur(0px);transform:scale(1)}}
+
+/* ── decorative line ── */
+.dec-line{
+  width:0;height:2px;margin:16px auto;
+  background:linear-gradient(90deg,transparent,var(--primary),var(--accent),transparent);
+  animation:lineGrow 1s .5s ease forwards;
+}
+@keyframes lineGrow{0%{width:0}100%{width:min(300px,60vw)}}
+
+/* ── subtitle ── */
+.subtitle{
+  font-size:clamp(.85rem,2vw,1.1rem);color:var(--muted);
+  letter-spacing:6px;text-transform:uppercase;
+  opacity:0;
+  animation:subtitleReveal .8s 3.5s ease forwards;
+}
+@keyframes subtitleReveal{
+  0%{opacity:0;transform:translateY(10px);letter-spacing:12px}
+  100%{opacity:1;transform:translateY(0);letter-spacing:6px}
+}
+
+/* ── accent colors per letter ── */
+.letter.l-accent{color:var(--accent)}
+.letter.l-primary{color:var(--primary)}
+.letter.l-accent2{color:var(--accent2)}
+.letter.l-text{color:var(--text)}
+
+/* ── flash overlay ── */
+.flash-overlay{
+  position:fixed;inset:0;z-index:5;background:var(--primary);
+  opacity:0;pointer-events:none;transition:opacity .1s;
+}
+.flash-overlay.active{opacity:.15}
+
+/* ── replay button ── */
+.replay-btn{
+  position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
+  z-index:10;background:rgba(26,26,46,.8);backdrop-filter:blur(8px);
+  border:1px solid var(--border);color:var(--muted);
+  padding:10px 28px;border-radius:50px;font-size:.85rem;font-weight:600;
+  cursor:pointer;transition:all .3s;letter-spacing:1px;opacity:0;
+  animation:fadeIn .5s 4.5s forwards;
+}
+.replay-btn:hover{border-color:var(--primary);color:var(--text);transform:translateX(-50%) translateY(-2px)}
+@keyframes fadeIn{to{opacity:1}}
+
+/* ── scene number ── */
+.scene-indicator{
+  position:fixed;top:28px;left:28px;z-index:10;
+  font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+  opacity:0;animation:fadeIn .5s 4s forwards;
+}
+.scene-dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--border);margin:0 3px;transition:background .3s;
+}
+.scene-dot.active{background:var(--primary)}
+
+@media(max-width:600px){
+  .letter{font-size:clamp(2rem,12vw,3.5rem)}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-grain"></div>
+<div class="flash-overlay" id="flash"></div>
+
+<div class="scene-indicator" id="sceneIndicator">
+  <span class="scene-dot active"></span>
+  <span class="scene-dot"></span>
+  <span class="scene-dot"></span>
+  <span class="scene-dot"></span>
+  <span class="scene-dot"></span>
+</div>
+
+<div class="stage" id="stage">
+  <!-- Filled by JS -->
+</div>
+
+<button class="replay-btn" id="replayBtn">↻ Replay Animation</button>
+
+<script>
+/* ══════════════════════════════════════
+   Logotype Animation Engine
+   ══════════════════════════════════════ */
+
+const stage = document.getElementById('stage');
+const flash = document.getElementById('flash');
+const replayBtn = document.getElementById('replayBtn');
+const sceneIndicator = document.getElementById('sceneIndicator');
+const sceneDots = sceneIndicator.querySelectorAll('.scene-dot');
+
+/* Animation sequences - each line is an array of {char, technique, delay, color} */
+const sequences = [
+  {
+    label: 'SCENE 01 — FADE',
+    lines: [
+      {
+        letters: 'CREATIVE'.split('').map((ch, i) => ({
+          char: ch,
+          technique: 'fade-in',
+          delay: i * 120,
+          color: i === 5 || i === 7 ? 'accent' : (i === 3 || i === 4 ? 'primary' : 'text')
+        }))
+      }
+    ],
+    subtitle: 'Design Studio',
+    startDelay: 200,
+    lineDelay: 800,
+    scene: 0
+  },
+  {
+    label: 'SCENE 02 — SCALE',
+    lines: [
+      {
+        letters: 'IMPACT'.split('').map((ch, i) => ({
+          char: ch,
+          technique: 'scale-in',
+          delay: i * 140,
+          color: i === 0 || i === 5 ? 'primary' : (i === 2 ? 'accent2' : 'text')
+        }))
+      }
+    ],
+    subtitle: 'Where Ideas Collide',
+    startDelay: 8000,
+    lineDelay: 800,
+    scene: 1
+  },
+  {
+    label: 'SCENE 03 — SLIDE',
+    lines: [
+      {
+        letters: 'VISION'.split('').map((ch, i) => ({
+          char: ch,
+          technique: 'slide-up',
+          delay: i * 130,
+          color: i === 0 ? 'accent' : (i === 4 ? 'primary' : 'text')
+        }))
+      }
+    ],
+    subtitle: 'See Beyond',
+    startDelay: 16000,
+    lineDelay: 800,
+    scene: 2
+  },
+  {
+    label: 'SCENE 04 — ROTATE',
+    lines: [
+      {
+        letters: 'MOTION'.split('').map((ch, i) => ({
+          char: ch,
+          technique: 'rotate-in',
+          delay: i * 150,
+          color: i === 1 ? 'accent2' : (i === 5 ? 'accent' : 'text')
+        }))
+      }
+    ],
+    subtitle: 'Never Static',
+    startDelay: 24000,
+    lineDelay: 800,
+    scene: 3
+  },
+  {
+    label: 'SCENE 05 — BLUR',
+    lines: [
+      {
+        letters: ['N','E','X','T',' ','←'].map((ch, i) => ({
+          char: ch === ' ' ? '\u00A0' : ch,
+          technique: 'blur-in',
+          delay: i * 160,
+          color: i === 0 ? 'primary' : (i === 3 ? 'accent' : (i === 5 ? 'accent2' : 'text'))
+        }))
+      }
+    ],
+    subtitle: 'The Future Is Now',
+    startDelay: 32000,
+    lineDelay: 800,
+    scene: 4
+  }
+];
+
+/* ── Render a sequence ── */
+function runSequence(seq) {
+  /* Clear stage */
+  stage.innerHTML = '';
+  stage.style.opacity = 0;
+  setTimeout(() => stage.style.opacity = 1, 50);
+
+  /* Update scene dots */
+  sceneDots.forEach((d, i) => d.classList.toggle('active', i <= seq.scene));
+
+  seq.lines.forEach((line, lineIdx) => {
+    const lineEl = document.createElement('div');
+    lineEl.className = 'anim-line' + (lineIdx > 0 ? ' secondary' : '');
+
+    line.letters.forEach((letterData, letterIdx) => {
+      const span = document.createElement('span');
+      span.className = `letter ${letterData.technique} l-${letterData.color}`;
+      span.textContent = letterData.char;
+      span.style.animationDelay = `${seq.startDelay + letterData.delay + lineIdx * seq.lineDelay}ms`;
+      lineEl.appendChild(span);
+
+      /* Flash on first letter of each line */
+      if(letterIdx === 0) {
+        setTimeout(() => {
+          flash.classList.add('active');
+          setTimeout(() => flash.classList.remove('active'), 80);
+        }, seq.startDelay + letterData.delay + lineIdx * seq.lineDelay);
+      }
+    });
+
+    stage.appendChild(lineEl);
+  });
+
+  /* Decorative line */
+  const line = document.createElement('div');
+  line.className = 'dec-line';
+  line.style.animationDelay = `${seq.startDelay + seq.lines[0].letters.length * 120}ms`;
+  stage.appendChild(line);
+
+  /* Subtitle */
+  const sub = document.createElement('div');
+  sub.className = 'subtitle';
+  sub.textContent = seq.subtitle;
+  stage.appendChild(sub);
+}
+
+/* ── Auto-play sequence ── */
+const autoSchedule = [
+  { delay: 0,    seqIdx: 0 },
+  { delay: 7500, seqIdx: 1 },
+  { delay: 15500, seqIdx: 2 },
+  { delay: 23500, seqIdx: 3 },
+  { delay: 31500, seqIdx: 4 }
+];
+
+let autoTimers = [];
+
+function autoPlay() {
+  /* Clear any existing timers */
+  autoTimers.forEach(clearTimeout);
+  autoTimers = [];
+
+  autoSchedule.forEach(({delay, seqIdx}) => {
+    const t = setTimeout(() => {
+      runSequence(sequences[seqIdx]);
+    }, delay);
+    autoTimers.push(t);
+  });
+}
+
+/* ── Manual play ── */
+function playAll() {
+  /* Reset scene */
+  stage.innerHTML = '';
+  stage.style.opacity = 1;
+
+  /* Reset all styles */
+  document.querySelectorAll('.letter').forEach(l => l.style.animation = 'none');
+
+  autoPlay();
+}
+
+/* ── Replay button ── */
+replayBtn.addEventListener('click', () => {
+  autoTimers.forEach(clearTimeout);
+  autoTimers = [];
+  stage.innerHTML = '';
+  stage.style.opacity = 1;
+
+  /* Quick reset */
+  requestAnimationFrame(() => {
+    autoSchedule.forEach(({delay, seqIdx}) => {
+      const t = setTimeout(() => {
+        runSequence(sequences[seqIdx]);
+      }, delay);
+      autoTimers.push(t);
+    });
+  });
+});
+
+/* ── Keyboard: 1-5 to jump to scene, R to replay ── */
+document.addEventListener('keydown', e => {
+  const num = parseInt(e.key);
+  if(num >= 1 && num <= 5) {
+    autoTimers.forEach(clearTimeout);
+    runSequence(sequences[num - 1]);
+  }
+  if(e.key === 'r' || e.key === 'R') {
+    replayBtn.click();
+  }
+});
+
+/* ── Start ── */
+autoPlay();
+</script>
+</body>
+</html>

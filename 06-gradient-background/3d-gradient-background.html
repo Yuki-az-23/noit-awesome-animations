@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  3D Gradient Background
+  Customizable animated mesh gradient that shifts colors in
+  3D space. Mouse position influences gradient direction.
+  Color controls/sliders for real-time customization.
+  Inspired by Awwwards "Customizable 3D Gradient Background".
+
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Gradient Background</title>
+<style>
+  /* ── Reset & Variables ─────────────────────────── */
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-text: #eaeaea;
+    --font-display: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+    /* Gradient color stops */
+    --g1: #e94560;
+    --g2: #0f3460;
+    --g3: #533483;
+    --g4: #16213e;
+    --g5: #11998e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-display);
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Canvas Layer ──────────────────────────────── */
+  #gradientCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  /* ── Overlay Content ───────────────────────────── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .overlay-content {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .overlay-title {
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 1rem;
+    color: white;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    mix-blend-mode: difference;
+  }
+
+  .overlay-subtitle {
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+    font-weight: 300;
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+    color: white;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+
+  /* ── Control Panel ─────────────────────────────── */
+  .control-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 20;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(15,15,26,0.6);
+    backdrop-filter: blur(12px);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    transition: all 0.3s ease;
+    pointer-events: all;
+  }
+
+  .control-toggle:hover {
+    background: rgba(233,69,96,0.2);
+    border-color: var(--color-primary);
+  }
+
+  .control-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100vh;
+    background: rgba(15,15,26,0.85);
+    backdrop-filter: blur(24px);
+    border-left: 1px solid rgba(255,255,255,0.08);
+    z-index: 15;
+    padding: 5rem 1.5rem 2rem;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    overflow-y: auto;
+    pointer-events: all;
+  }
+
+  .control-panel.open {
+    transform: translateX(0);
+  }
+
+  .control-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .control-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .color-value {
+    font-family: 'Courier New', monospace;
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+  }
+
+  .color-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .color-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .color-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Preset Buttons */
+  .presets-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .preset-btn {
+    padding: 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--color-text);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  .preset-btn:hover {
+    background: rgba(233,69,96,0.15);
+    border-color: var(--color-primary);
+  }
+
+  .preset-btn.active {
+    background: rgba(233,69,96,0.2);
+    border-color: var(--color-primary);
+  }
+
+  /* Speed/FPS info */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.8rem;
+  }
+
+  .info-label { opacity: 0.5; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .info-value { font-family: 'Courier New', monospace; font-size: 0.85rem; }
+
+  /* ── Mouse Indicator ───────────────────────────── */
+  .mouse-indicator {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.2rem;
+    background: rgba(15,15,26,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .mouse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+  }
+
+  /* ── Scrollbar ─────────────────────────────────── */
+  .control-panel::-webkit-scrollbar { width: 4px; }
+  .control-panel::-webkit-scrollbar-track { background: transparent; }
+  .control-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<canvas id="gradientCanvas"></canvas>
+
+<!-- Overlay -->
+<div class="overlay">
+  <div class="overlay-content">
+    <h1 class="overlay-title">3D Gradient</h1>
+    <p class="overlay-subtitle">Move your mouse to influence the gradient · Open settings to customize</p>
+  </div>
+</div>
+
+<!-- Controls -->
+<button class="control-toggle" id="toggleBtn" aria-label="Toggle settings">⚙</button>
+<div class="control-panel" id="controlPanel">
+  <!-- Color Controls -->
+  <div class="control-group">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Gradient Colors</div>
+
+    <div class="control-group">
+      <div class="control-label"><span>Color 1</span><span class="color-value" id="c1Val">#e94560</span></div>
+      <input type="range" class="color-slider" id="color1" min="0" max="360" value="348"
+        style="background:linear-gradient(to right,hsl(0,80%,60%),hsl(60,80%,60%),hsl(120,80%,60%),hsl(180,80%,60%),hsl(240,80%,60%),hsl(300,80%,60%),hsl(360,80%,60%))">
+    </div>
+
+    <div class="control-group">
+      <div class="control-label"><span>Color 2</span><span class="color-value" id="c2Val">#0f3460</span></div>
+      <input type="range" class="color-slider" id="color2" min="0" max="360" value="215"
+        style="background:linear-gradient(to right,hsl(0,80%,60%),hsl(60,80%,60%),hsl(120,80%,60%),hsl(180,80%,60%),hsl(240,80%,60%),hsl(300,80%,60%),hsl(360,80%,60%))">
+    </div>
+
+    <div class="control-group">
+      <div class="control-label"><span>Color 3</span><span class="color-value" id="c3Val">#533483</span></div>
+      <input type="range" class="color-slider" id="color3" min="0" max="360" value="275"
+        style="background:linear-gradient(to right,hsl(0,80%,60%),hsl(60,80%,60%),hsl(120,80%,60%),hsl(180,80%,60%),hsl(240,80%,60%),hsl(300,80%,60%),hsl(360,80%,60%))">
+    </div>
+
+    <div class="control-group">
+      <div class="control-label"><span>Color 4</span><span class="color-value" id="c4Val">#16213e</span></div>
+      <input type="range" class="color-slider" id="color4" min="0" max="360" value="220"
+        style="background:linear-gradient(to right,hsl(0,80%,60%),hsl(60,80%,60%),hsl(120,80%,60%),hsl(180,80%,60%),hsl(240,80%,60%),hsl(300,80%,60%),hsl(360,80%,60%))">
+    </div>
+
+    <div class="control-group">
+      <div class="control-label"><span>Color 5</span><span class="color-value" id="c5Val">#11998e</span></div>
+      <input type="range" class="color-slider" id="color5" min="0" max="360" value="170"
+        style="background:linear-gradient(to right,hsl(0,80%,60%),hsl(60,80%,60%),hsl(120,80%,60%),hsl(180,80%,60%),hsl(240,80%,60%),hsl(300,80%,60%),hsl(360,80%,60%))">
+    </div>
+  </div>
+
+  <!-- Animation Speed -->
+  <div class="control-group">
+    <div class="control-label"><span>Animation Speed</span><span class="color-value" id="speedVal">1.0x</span></div>
+    <input type="range" class="color-slider" id="speedControl" min="0" max="30" value="10"
+      style="background:linear-gradient(to right, var(--color-surface), var(--color-primary))">
+  </div>
+
+  <!-- Intensity -->
+  <div class="control-group">
+    <div class="control-label"><span>Mouse Influence</span><span class="color-value" id="influenceVal">50%</span></div>
+    <input type="range" class="color-slider" id="influenceControl" min="0" max="100" value="50"
+      style="background:linear-gradient(to right, var(--color-surface), var(--color-primary))">
+  </div>
+
+  <!-- Saturation -->
+  <div class="control-group">
+    <div class="control-label"><span>Saturation</span><span class="color-value" id="satVal">80%</span></div>
+    <input type="range" class="color-slider" id="satControl" min="20" max="100" value="80"
+      style="background:linear-gradient(to right, hsl(0,20%,50%),hsl(0,100%,60%))">
+  </div>
+
+  <!-- Presets -->
+  <div class="control-group">
+    <div class="control-label" style="margin-bottom:0.75rem;"><span>Presets</span></div>
+    <div class="presets-grid">
+      <button class="preset-btn active" data-preset="sunset">Sunset</button>
+      <button class="preset-btn" data-preset="ocean">Ocean</button>
+      <button class="preset-btn" data-preset="neon">Neon</button>
+      <button class="preset-btn" data-preset="forest">Forest</button>
+      <button class="preset-btn" data-preset="aurora">Aurora</button>
+      <button class="preset-btn" data-preset="lava">Lava</button>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="info-row">
+    <span class="info-label">FPS</span>
+    <span class="info-value" id="fpsDisplay">60</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Mouse X</span>
+    <span class="info-value" id="mouseXDisplay">0</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Mouse Y</span>
+    <span class="info-value" id="mouseYDisplay">0</span>
+  </div>
+</div>
+
+<!-- Mouse Indicator -->
+<div class="mouse-indicator">
+  <div class="mouse-dot"></div>
+  <span>Move mouse to influence gradient</span>
+</div>
+
+<script>
+/* ================================================================
+   3D Gradient Background – Core Logic
+   Canvas-based mesh gradient with 3D-style color interpolation.
+   Mouse position influences gradient direction and color mixing.
+   Real-time customization via color sliders and presets.
+   ================================================================ */
+
+const canvas = document.getElementById('gradientCanvas');
+const ctx = canvas.getContext('2d');
+
+// ── State ────────────────────────────────────────
+let width, height;
+let mouseX = 0.5, mouseY = 0.5; // normalized 0-1
+let targetMouseX = 0.5, targetMouseY = 0.5;
+let animSpeed = 1.0;
+let mouseInfluence = 0.5;
+let saturation = 0.8;
+let time = 0;
+let lastTime = 0;
+let fps = 60;
+let frameCount = 0;
+let fpsTimer = 0;
+
+// ── Color Configuration ──────────────────────────
+// Each gradient node has: hue, saturation, lightness, x, y, z position, phase
+let gradientNodes = [];
+const nodeCount = 8;
+
+function hslToRgb(h, s, l) {
+  h /= 360; s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function initNodes(hues) {
+  gradientNodes = [];
+  const positions = [
+    { x: 0.2, y: 0.2 },
+    { x: 0.8, y: 0.15 },
+    { x: 0.5, y: 0.5 },
+    { x: 0.1, y: 0.8 },
+    { x: 0.85, y: 0.75 },
+    { x: 0.35, y: 0.6 },
+    { x: 0.7, y: 0.4 },
+    { x: 0.5, y: 0.9 },
+  ];
+
+  for (let i = 0; i < nodeCount; i++) {
+    gradientNodes.push({
+      hue: hues[i % hues.length],
+      x: positions[i].x,
+      y: positions[i].y,
+      z: 0, // 3D depth offset
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.3 + Math.random() * 0.7,
+      radius: 0.3 + Math.random() * 0.3,
+      depthSpeed: 0.2 + Math.random() * 0.4,
+    });
+  }
+}
+
+// Default: Sunset
+initNodes([348, 215, 275, 220, 170, 30, 300, 190]);
+
+// ── Presets ───────────────────────────────────────
+const presets = {
+  sunset:  [348, 215, 275, 220, 170, 30, 300, 190],
+  ocean:   [190, 210, 230, 180, 250, 160, 200, 240],
+  neon:    [300, 180, 60, 330, 120, 280, 150, 350],
+  forest:  [120, 150, 90, 170, 40, 60, 140, 80],
+  aurora:  [160, 280, 200, 320, 100, 240, 180, 60],
+  lava:    [0, 30, 350, 20, 45, 10, 15, 40],
+};
+
+// ── Resize ────────────────────────────────────────
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  ctx.scale(dpr, dpr);
+}
+
+window.addEventListener('resize', resize);
+resize();
+
+// ── Mouse Tracking ────────────────────────────────
+document.addEventListener('mousemove', (e) => {
+  targetMouseX = e.clientX / width;
+  targetMouseY = e.clientY / height;
+  document.getElementById('mouseXDisplay').textContent = Math.round(e.clientX);
+  document.getElementById('mouseYDisplay').textContent = Math.round(e.clientY);
+});
+
+// Touch support
+document.addEventListener('touchmove', (e) => {
+  const touch = e.touches[0];
+  targetMouseX = touch.clientX / width;
+  targetMouseY = touch.clientY / height;
+}, { passive: true });
+
+// ── Render Loop ───────────────────────────────────
+function render(now) {
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+  time += dt * animSpeed;
+
+  // FPS
+  frameCount++;
+  fpsTimer += dt;
+  if (fpsTimer >= 0.5) {
+    fps = Math.round(frameCount / fpsTimer);
+    document.getElementById('fpsDisplay').textContent = fps;
+    frameCount = 0;
+    fpsTimer = 0;
+  }
+
+  // Smooth mouse tracking
+  mouseX += (targetMouseX - mouseX) * 0.05;
+  mouseY += (targetMouseY - mouseY) * 0.05;
+
+  // Clear
+  ctx.fillStyle = '#0f0f1a';
+  ctx.fillRect(0, 0, width, height);
+
+  // Update and render gradient nodes
+  for (let i = 0; i < gradientNodes.length; i++) {
+    const node = gradientNodes[i];
+
+    // Animate position with sine waves + mouse influence
+    const baseX = node.x;
+    const baseY = node.y;
+
+    const offsetX = Math.sin(time * node.speed * 0.5 + node.phase) * 0.15
+                  + Math.cos(time * node.speed * 0.3 + node.phase * 1.3) * 0.1;
+    const offsetY = Math.cos(time * node.speed * 0.4 + node.phase) * 0.15
+                  + Math.sin(time * node.speed * 0.2 + node.phase * 0.7) * 0.1;
+
+    // 3D depth (z-axis oscillation)
+    node.z = Math.sin(time * node.depthSpeed + node.phase * 2) * 0.3;
+
+    // Mouse influence
+    const mouseInflX = (mouseX - 0.5) * mouseInfluence * 0.15;
+    const mouseInflY = (mouseY - 0.5) * mouseInfluence * 0.15;
+
+    const px = (baseX + offsetX + mouseInflX) * width;
+    const py = (baseY + offsetY + mouseInflY) * height;
+
+    // Dynamic radius based on z-depth and time
+    const baseRadius = node.radius * Math.min(width, height);
+    const dynamicRadius = baseRadius * (1 + node.z * 0.3) * (0.8 + Math.sin(time * 0.5 + node.phase) * 0.2);
+
+    // Color with shift based on time and mouse
+    const hueShift = Math.sin(time * 0.2 + node.phase) * 15 + (mouseX - 0.5) * 10 * mouseInfluence;
+    const currentHue = (node.hue + hueShift + 360) % 360;
+    const currentLightness = 45 + node.z * 10 + (mouseY - 0.5) * 5 * mouseInfluence;
+
+    const [r, g, b] = hslToRgb(currentHue, saturation * 100, Math.max(20, Math.min(80, currentLightness)));
+
+    // Draw radial gradient blob
+    const gradient = ctx.createRadialGradient(px, py, 0, px, py, Math.max(1, dynamicRadius));
+    gradient.addColorStop(0, `rgba(${r},${g},${b},0.8)`);
+    gradient.addColorStop(0.4, `rgba(${r},${g},${b},0.35)`);
+    gradient.addColorStop(0.7, `rgba(${r},${g},${b},0.12)`);
+    gradient.addColorStop(1, `rgba(${r},${g},${b},0)`);
+
+    ctx.globalCompositeOperation = i === 0 ? 'source-over' : 'screen';
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // Add subtle vignette
+  ctx.globalCompositeOperation = 'multiply';
+  const vignette = ctx.createRadialGradient(
+    width/2, height/2, Math.min(width, height) * 0.2,
+    width/2, height/2, Math.max(width, height) * 0.8
+  );
+  vignette.addColorStop(0, 'rgba(255,255,255,1)');
+  vignette.addColorStop(1, 'rgba(40,40,60,1)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, width, height);
+
+  // Add noise-like grain
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.fillStyle = `rgba(255,255,255,0.02)`;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.globalCompositeOperation = 'source-over';
+
+  requestAnimationFrame(render);
+}
+
+requestAnimationFrame((now) => {
+  lastTime = now;
+  render(now);
+});
+
+// ── Controls ─────────────────────────────────────
+const toggleBtn = document.getElementById('toggleBtn');
+const panel = document.getElementById('controlPanel');
+
+toggleBtn.addEventListener('click', () => {
+  panel.classList.toggle('open');
+  toggleBtn.textContent = panel.classList.contains('open') ? '✕' : '⚙';
+});
+
+// Color sliders
+const colorSliders = ['color1','color2','color3','color4','color5'];
+const colorValEls = ['c1Val','c2Val','c3Val','c4Val','c5Val'];
+
+colorSliders.forEach((id, i) => {
+  const slider = document.getElementById(id);
+  slider.addEventListener('input', () => {
+    const hue = parseInt(slider.value);
+    gradientNodes[i].hue = hue;
+    const [r,g,b] = hslToRgb(hue, saturation * 100, 50);
+    const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+    document.getElementById(colorValEls[i]).textContent = hex;
+  });
+});
+
+// Speed control
+document.getElementById('speedControl').addEventListener('input', function() {
+  animSpeed = this.value / 10;
+  document.getElementById('speedVal').textContent = animSpeed.toFixed(1) + 'x';
+});
+
+// Influence control
+document.getElementById('influenceControl').addEventListener('input', function() {
+  mouseInfluence = this.value / 100;
+  document.getElementById('influenceVal').textContent = this.value + '%';
+});
+
+// Saturation control
+document.getElementById('satControl').addEventListener('input', function() {
+  saturation = this.value / 100;
+  document.getElementById('satVal').textContent = this.value + '%';
+});
+
+// Presets
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const preset = presets[btn.dataset.preset];
+    if (!preset) return;
+
+    preset.forEach((hue, i) => {
+      gradientNodes[i].hue = hue;
+
+      // Update slider
+      const slider = document.getElementById(colorSliders[i]);
+      slider.value = hue;
+
+      // Update display
+      const [r,g,b] = hslToRgb(hue, saturation * 100, 50);
+      const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+      document.getElementById(colorValEls[i]).textContent = hex;
+    });
+  });
+});
+
+// ── Resize on DPR change ─────────────────────────
+window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', resize);
+</script>
+</body>
+</html>

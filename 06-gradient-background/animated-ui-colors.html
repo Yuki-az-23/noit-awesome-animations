@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    Animated UI Elements and Changing Color Background
+    Inspired by "Animated UI Elements and Changing Color Background"
+    UI elements (buttons, cards, badges) change colors in sync with an animated background gradient.
+    The entire page color scheme shifts smoothly. Pure CSS + Vanilla JS. No external dependencies.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated UI Colors</title>
+  <style>
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --hue: 0;
+      --dynamic-primary: hsl(var(--hue), 85%, 58%);
+      --dynamic-secondary: hsl(calc(var(--hue) + 120), 85%, 58%);
+      --dynamic-accent: hsl(calc(var(--hue) + 240), 85%, 58%);
+      --dynamic-surface: hsla(var(--hue), 40%, 18%, 0.7);
+      --dynamic-glow: hsla(var(--hue), 80%, 50%, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 300vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated gradient background ── */
+    .gradient-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(
+        ellipse 80% 60% at 50% 50%,
+        var(--dynamic-surface) 0%,
+        transparent 70%
+      );
+      transition: background 0.3s ease;
+    }
+
+    .gradient-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+        circle 600px at var(--mx, 50%) var(--my, 50%),
+        hsla(var(--hue), 70%, 40%, 0.25) 0%,
+        transparent 100%
+      );
+      transition: background 0.1s;
+    }
+
+    .gradient-bg::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(
+        from 0deg at 50% 50%,
+        hsla(var(--hue), 60%, 30%, 0.15),
+        hsla(calc(var(--hue) + 90), 60%, 30%, 0.08),
+        hsla(calc(var(--hue) + 180), 60%, 30%, 0.15),
+        hsla(calc(var(--hue) + 270), 60%, 30%, 0.08),
+        hsla(var(--hue), 60%, 30%, 0.15)
+      );
+      animation: rotate-bg 20s linear infinite;
+      transform-origin: 50% 50%;
+    }
+
+    @keyframes rotate-bg {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Hue indicator ── */
+    .hue-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      z-index: 1000;
+      background: linear-gradient(90deg, 
+        hsl(0, 85%, 58%),
+        hsl(60, 85%, 58%),
+        hsl(120, 85%, 58%),
+        hsl(180, 85%, 58%),
+        hsl(240, 85%, 58%),
+        hsl(300, 85%, 58%),
+        hsl(360, 85%, 58%)
+      );
+    }
+
+    .hue-marker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 40px;
+      height: 4px;
+      background: white;
+      box-shadow: 0 0 10px white;
+      z-index: 1001;
+      transition: left 0.1s ease;
+      border-radius: 2px;
+    }
+
+    /* ── Sticky nav ── */
+    .nav {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: hsla(var(--hue), 30%, 10%, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid hsla(var(--hue), 50%, 40%, 0.2);
+    }
+
+    .nav-logo {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--dynamic-primary);
+      transition: color 0.3s;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #8892b0;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--dynamic-primary);
+    }
+
+    /* ── Section ── */
+    .section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 4rem;
+      position: relative;
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(
+        135deg,
+        var(--dynamic-primary),
+        var(--dynamic-secondary)
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all 0.3s;
+    }
+
+    .section-subtitle {
+      color: #5a6a80;
+      font-size: 1rem;
+      text-align: center;
+      margin-bottom: 3rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Buttons ── */
+    .buttons-showcase {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-bottom: 4rem;
+    }
+
+    .ui-btn {
+      padding: 0.85rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ui-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, hsla(0, 0%, 100%, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .ui-btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: var(--dynamic-primary);
+      color: white;
+      box-shadow: 0 4px 20px var(--dynamic-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px var(--dynamic-glow);
+    }
+
+    .btn-secondary {
+      background: var(--dynamic-secondary);
+      color: white;
+      box-shadow: 0 4px 20px hsla(calc(var(--hue) + 120), 80%, 50%, 0.3);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px hsla(calc(var(--hue) + 120), 80%, 50%, 0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--dynamic-primary);
+      border: 2px solid var(--dynamic-primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--dynamic-primary);
+      color: white;
+      transform: translateY(-3px);
+    }
+
+    .btn-ghost {
+      background: hsla(var(--hue), 30%, 20%, 0.5);
+      color: var(--dynamic-primary);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-ghost:hover {
+      background: hsla(var(--hue), 30%, 30%, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .btn-accent {
+      background: var(--dynamic-accent);
+      color: white;
+      box-shadow: 0 4px 20px hsla(calc(var(--hue) + 240), 80%, 50%, 0.3);
+    }
+
+    .btn-accent:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 30px hsla(calc(var(--hue) + 240), 80%, 50%, 0.4);
+    }
+
+    /* ── Cards ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1000px;
+      width: 100%;
+      margin-bottom: 4rem;
+    }
+
+    .ui-card {
+      background: var(--dynamic-surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid hsla(var(--hue), 50%, 40%, 0.15);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ui-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--dynamic-primary), var(--dynamic-secondary));
+      transition: height 0.3s;
+    }
+
+    .ui-card:hover {
+      transform: translateY(-6px);
+      border-color: hsla(var(--hue), 50%, 50%, 0.3);
+      box-shadow: 0 20px 60px hsla(var(--hue), 50%, 30%, 0.2);
+    }
+
+    .ui-card:hover::before {
+      height: 4px;
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: hsla(var(--hue), 60%, 50%, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      transition: background 0.3s;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--dynamic-primary);
+      transition: color 0.3s;
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: #8892b0;
+      line-height: 1.6;
+    }
+
+    .card-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 1rem;
+    }
+
+    .badge-primary {
+      background: hsla(var(--hue), 60%, 50%, 0.15);
+      color: var(--dynamic-primary);
+      border: 1px solid hsla(var(--hue), 60%, 50%, 0.3);
+    }
+
+    .badge-secondary {
+      background: hsla(calc(var(--hue) + 120), 60%, 50%, 0.15);
+      color: var(--dynamic-secondary);
+      border: 1px solid hsla(calc(var(--hue) + 120), 60%, 50%, 0.3);
+    }
+
+    .badge-accent {
+      background: hsla(calc(var(--hue) + 240), 60%, 50%, 0.15);
+      color: var(--dynamic-accent);
+      border: 1px solid hsla(calc(var(--hue) + 240), 60%, 50%, 0.3);
+    }
+
+    /* ── Badges showcase ── */
+    .badges-showcase {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 4rem;
+    }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 2rem;
+      background: var(--dynamic-surface);
+      border-radius: 16px;
+      border: 1px solid hsla(var(--hue), 50%, 40%, 0.1);
+      transition: all 0.3s;
+    }
+
+    .stat-item:hover {
+      border-color: hsla(var(--hue), 50%, 50%, 0.3);
+      transform: scale(1.03);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--dynamic-primary);
+      transition: color 0.3s;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #5a6a80;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Toggle showcase ── */
+    .toggles-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toggle-label {
+      font-size: 0.9rem;
+      color: #8892b0;
+    }
+
+    .toggle {
+      width: 50px;
+      height: 26px;
+      background: hsla(var(--hue), 20%, 20%, 0.8);
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid hsla(var(--hue), 50%, 40%, 0.2);
+      transition: all 0.3s;
+    }
+
+    .toggle.active {
+      background: var(--dynamic-primary);
+      border-color: var(--dynamic-primary);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .toggle.active::after {
+      transform: translateX(24px);
+    }
+
+    /* ── Progress bars ── */
+    .progress-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 500px;
+      width: 100%;
+      margin-bottom: 3rem;
+    }
+
+    .progress-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .progress-label span:first-child { color: #8892b0; }
+    .progress-label span:last-child { color: var(--dynamic-primary); }
+
+    .progress-track {
+      height: 8px;
+      background: hsla(var(--hue), 20%, 15%, 0.8);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--dynamic-primary), var(--dynamic-secondary));
+      transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #3a4a5e;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="gradient-bg" id="gradientBg"></div>
+  <div class="hue-strip"></div>
+  <div class="hue-marker" id="hueMarker"></div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-logo">ColorShift</div>
+    <ul class="nav-links">
+      <li><a href="#buttons">Buttons</a></li>
+      <li><a href="#cards">Cards</a></li>
+      <li><a href="#stats">Stats</a></li>
+      <li><a href="#progress">Progress</a></li>
+    </ul>
+  </nav>
+
+  <!-- Section: Hero -->
+  <section class="section">
+    <h1 class="section-title">Living Color System</h1>
+    <p class="section-subtitle">Scroll to shift the entire palette</p>
+    <div class="badges-showcase">
+      <span class="card-badge badge-primary">Dynamic</span>
+      <span class="card-badge badge-secondary">Responsive</span>
+      <span class="card-badge badge-accent">Adaptive</span>
+    </div>
+  </section>
+
+  <!-- Section: Buttons -->
+  <section class="section" id="buttons">
+    <h2 class="section-title">Interactive Buttons</h2>
+    <p class="section-subtitle">Colors morph with scroll position</p>
+    <div class="buttons-showcase">
+      <button class="ui-btn btn-primary">Primary Action</button>
+      <button class="ui-btn btn-secondary">Secondary</button>
+      <button class="ui-btn btn-accent">Accent</button>
+      <button class="ui-btn btn-outline">Outline</button>
+      <button class="ui-btn btn-ghost">Ghost</button>
+    </div>
+    <div class="toggles-row">
+      <div class="toggle-container">
+        <span class="toggle-label">Dark Mode</span>
+        <div class="toggle active" data-toggle></div>
+      </div>
+      <div class="toggle-container">
+        <span class="toggle-label">Animations</span>
+        <div class="toggle active" data-toggle></div>
+      </div>
+      <div class="toggle-container">
+        <span class="toggle-label">Notifications</span>
+        <div class="toggle" data-toggle></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Cards -->
+  <section class="section" id="cards">
+    <h2 class="section-title">Adaptive Cards</h2>
+    <p class="section-subtitle">Every element shifts in harmony</p>
+    <div class="cards-grid">
+      <div class="ui-card">
+        <div class="card-icon">🎨</div>
+        <div class="card-title">Design Tokens</div>
+        <div class="card-desc">Colors, spacing, and typography all shift dynamically based on the current hue value.</div>
+        <span class="card-badge badge-primary">Design</span>
+      </div>
+      <div class="ui-card">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Performance</div>
+        <div class="card-desc">CSS custom properties enable smooth transitions without JavaScript repaints.</div>
+        <span class="card-badge badge-secondary">Speed</span>
+      </div>
+      <div class="ui-card">
+        <div class="card-icon">🔒</div>
+        <div class="card-title">Consistency</div>
+        <div class="card-desc">All elements share the same color source, ensuring visual harmony across the interface.</div>
+        <span class="card-badge badge-accent">System</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Stats -->
+  <section class="section" id="stats">
+    <h2 class="section-title">Dynamic Statistics</h2>
+    <p class="section-subtitle">Numbers that shift with the spectrum</p>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number" data-count="360">0</div>
+        <div class="stat-label">Hue Range</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" data-count="3">0</div>
+        <div class="stat-label">Color Channels</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" data-count="24">0</div>
+        <div class="stat-label">FPS Smooth</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" data-count="0">0</div>
+        <div class="stat-label">Dependencies</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Progress -->
+  <section class="section" id="progress">
+    <h2 class="section-title">Gradient Progress</h2>
+    <p class="section-subtitle">Bars that fill and flow</p>
+    <div class="progress-bars">
+      <div class="progress-item">
+        <div class="progress-label"><span>Design System</span><span>85%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:85%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Animation Library</span><span>72%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:72%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Component Kit</span><span>58%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:58%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Documentation</span><span>94%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:94%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Animated UI Colors — Pure CSS + JS — Scroll to shift the palette</p>
+  </footer>
+
+  <script>
+    // ── Scroll-driven Hue Rotation ──
+    const root = document.documentElement;
+    const hueMarker = document.getElementById('hueMarker');
+
+    function updateHue() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? scrollTop / docHeight : 0;
+      const hue = Math.round(pct * 360);
+
+      root.style.setProperty('--hue', hue);
+      hueMarker.style.left = `calc(${pct * 100}% - 20px)`;
+    }
+
+    window.addEventListener('scroll', updateHue, { passive: true });
+    updateHue();
+
+    // ── Mouse-driven gradient follow ──
+    const gradientBg = document.getElementById('gradientBg');
+
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
+      gradientBg.style.setProperty('--mx', x + '%');
+      gradientBg.style.setProperty('--my', y + '%');
+    });
+
+    // ── Toggle switches ──
+    document.querySelectorAll('[data-toggle]').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        toggle.classList.toggle('active');
+      });
+    });
+
+    // ── Counter animation ──
+    const statNumbers = document.querySelectorAll('[data-count]');
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.count, 10);
+          let current = 0;
+          const duration = 1500;
+          const start = performance.now();
+
+          function animate(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            current = Math.round(eased * target);
+            el.textContent = current;
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          }
+
+          requestAnimationFrame(animate);
+          counterObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    statNumbers.forEach(el => counterObserver.observe(el));
+
+    // ── Card hover ripple ──
+    document.querySelectorAll('.ui-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--ripple-x', x + 'px');
+        card.style.setProperty('--ripple-y', y + 'px');
+      });
+    });
+
+    // ── Smooth section reveal ──
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.ui-card, .stat-item, .progress-item').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+      revealObserver.observe(el);
+    });
+
+    // ── Animate progress bars on scroll ──
+    const progressObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const fill = entry.target.querySelector('.progress-fill');
+          if (fill) {
+            const width = fill.style.width;
+            fill.style.width = '0%';
+            setTimeout(() => {
+              fill.style.width = width;
+            }, 200);
+          }
+          progressObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.progress-item').forEach(el => {
+      progressObserver.observe(el);
+    });
+  </script>
+</body>
+</html>

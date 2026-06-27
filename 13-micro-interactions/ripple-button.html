@@ -1,0 +1,443 @@
+<!--
+  ============================================================
+  Ripple Button – 8 Unique Click Ripple Variants
+  Part of: CSS+JS Animations Library / 13-micro-interactions
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ripple Button – 8 Variants</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --color-bg:#0f0f1a;
+    --color-surface:#16213e;
+    --color-primary:#e94560;
+    --color-primary-light:#ff6b81;
+    --color-accent:#0f3460;
+    --color-text:#eaeaea;
+    --color-text-muted:#7f8c9b;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--color-bg);
+    color:var(--color-text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:40px 20px;
+  }
+  h1{
+    font-size:2rem;font-weight:700;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:8px;text-align:center;
+  }
+  .subtitle{color:var(--color-text-muted);margin-bottom:40px;font-size:.95rem;text-align:center}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:24px;
+    max-width:640px;
+    width:100%;
+  }
+  .card{
+    background:var(--color-surface);
+    border-radius:16px;
+    padding:32px 24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+    box-shadow:0 4px 20px rgba(0,0,0,.3);
+    transition:transform .25s ease,box-shadow .25s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.45)}
+
+  .card-label{
+    font-size:.75rem;font-weight:600;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--color-primary);opacity:.8;
+  }
+
+  /* ── Shared Ripple Button Base ── */
+  .ripple-btn{
+    position:relative;
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:180px;height:48px;
+    border:none;border-radius:12px;
+    font-size:.95rem;font-weight:600;
+    color:#fff;cursor:pointer;
+    overflow:hidden;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    transition:transform .15s ease,box-shadow .2s ease;
+    -webkit-user-select:none;user-select:none;
+  }
+  .ripple-btn:hover{box-shadow:0 4px 20px rgba(233,69,96,.4)}
+  .ripple-btn:active{transform:scale(.96)}
+
+  /* ── 1. Center Burst ── */
+  .ripple-btn--burst .burst-ring{
+    position:absolute;border-radius:50%;
+    border:2px solid rgba(255,255,255,.6);
+    pointer-events:none;
+    animation:burstRing .6s ease-out forwards;
+  }
+  @keyframes burstRing{
+    0%{width:0;height:0;opacity:1}
+    100%{width:200px;height:200px;opacity:0}
+  }
+  .ripple-btn--burst .burst-dot{
+    position:absolute;width:8px;height:8px;
+    background:#fff;border-radius:50%;pointer-events:none;
+    animation:burstDot .45s ease-out forwards;
+  }
+  @keyframes burstDot{
+    0%{opacity:1;transform:scale(1)}
+    50%{opacity:.6}
+    100%{opacity:0;transform:scale(4)}
+  }
+
+  /* ── 2. Ripple Wave ── */
+  .ripple-btn--wave .wave-circle{
+    position:absolute;border-radius:50%;
+    background:rgba(255,255,255,.25);
+    pointer-events:none;
+    animation:waveExpand .7s ease-out forwards;
+  }
+  @keyframes waveExpand{
+    0%{width:0;height:0;opacity:1}
+    100%{width:260px;height:260px;opacity:0}
+  }
+
+  /* ── 3. Particle Explosion ── */
+  .ripple-btn--particle .particle{
+    position:absolute;width:5px;height:5px;
+    background:#fff;border-radius:50%;pointer-events:none;
+    animation:particleFly .55s ease-out forwards;
+  }
+  @keyframes particleFly{
+    0%{opacity:1;transform:translate(0,0) scale(1)}
+    100%{opacity:0;transform:translate(var(--px),var(--py)) scale(.2)}
+  }
+
+  /* ── 4. Glow Pulse ── */
+  .ripple-btn--glow{overflow:visible}
+  .ripple-btn--glow .glow-ring{
+    position:absolute;border-radius:50%;
+    pointer-events:none;
+    animation:glowPulse .65s ease-out forwards;
+    box-shadow:0 0 8px var(--color-primary),0 0 30px rgba(233,69,96,.4);
+  }
+  @keyframes glowPulse{
+    0%{width:10px;height:10px;opacity:1;background:rgba(233,69,96,.5)}
+    100%{width:180px;height:180px;opacity:0;background:rgba(233,69,96,0)}
+  }
+
+  /* ── 5. Border Trace ── */
+  .ripple-btn--border{
+    background:transparent;
+    border:2px solid var(--color-primary);
+    color:var(--color-primary);
+  }
+  .ripple-btn--border .border-trace{
+    position:absolute;inset:0;
+    border-radius:inherit;
+    border:2px solid transparent;pointer-events:none;
+  }
+  .ripple-btn--border .border-trace svg{
+    width:100%;height:100%;
+    stroke:var(--color-primary-light);stroke-width:2;fill:none;
+  }
+  .ripple-btn--border .trace-path{
+    stroke-dasharray:560;stroke-dashoffset:560;
+    animation:traceDraw .8s ease forwards;
+  }
+  @keyframes traceDraw{
+    to{stroke-dashoffset:0}
+  }
+  .ripple-btn--border .fill-bg{
+    position:absolute;inset:0;border-radius:inherit;
+    background:var(--color-primary);
+    animation:fillIn .4s .3s ease forwards;
+    opacity:0;pointer-events:none;
+  }
+  @keyframes fillIn{to{opacity:1}}
+  .ripple-btn--border.btn-filled{background:var(--color-primary);color:#fff}
+  .ripple-btn--border .btn-text{
+    position:relative;z-index:2;
+    transition:color .3s ease;
+  }
+
+  /* ── 6. Shrink Bounce ── */
+  .ripple-btn--shrink{transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease}
+  .ripple-btn--shrink.shrunk{transform:scale(.85)}
+  .ripple-btn--shrink .bounce-ring{
+    position:absolute;border-radius:50%;
+    border:2px solid rgba(255,255,255,.4);
+    pointer-events:none;
+    animation:bounceRing .5s ease-out forwards;
+  }
+  @keyframes bounceRing{
+    0%{width:0;height:0;opacity:1}
+    70%{width:160px;height:160px;opacity:.4}
+    100%{width:180px;height:180px;opacity:0}
+  }
+
+  /* ── 7. Fill Sweep ── */
+  .ripple-btn--sweep{background:var(--color-primary);overflow:hidden}
+  .ripple-btn--sweep .sweep-fill{
+    position:absolute;top:0;left:0;width:100%;height:100%;
+    background:var(--color-primary-light);
+    transform:scaleX(0);transform-origin:left center;
+    pointer-events:none;
+    animation:sweepIn .5s ease forwards;
+  }
+  @keyframes sweepIn{
+    0%{transform:scaleX(0)}
+    50%{transform:scaleX(1)}
+    100%{transform:scaleX(0);transform-origin:right center}
+  }
+
+  /* ── 8. Gradient Ripple ── */
+  .ripple-btn--gradient .grad-ripple{
+    position:absolute;border-radius:50%;pointer-events:none;
+    animation:gradRipple .65s ease-out forwards;
+  }
+  @keyframes gradRipple{
+    0%{width:0;height:0;opacity:.9}
+    100%{width:220px;height:220px;opacity:0}
+  }
+</style>
+</head>
+<body>
+
+<h1>Ripple Button Effects</h1>
+<p class="subtitle">8 unique click ripple variants · Click each button</p>
+
+<div class="grid">
+  <!-- 1. Center Burst -->
+  <div class="card">
+    <span class="card-label">Center Burst</span>
+    <button class="ripple-btn ripple-btn--burst" data-variant="burst">Click Me</button>
+  </div>
+
+  <!-- 2. Ripple Wave -->
+  <div class="card">
+    <span class="card-label">Ripple Wave</span>
+    <button class="ripple-btn ripple-btn--wave" data-variant="wave">Click Me</button>
+  </div>
+
+  <!-- 3. Particle Explosion -->
+  <div class="card">
+    <span class="card-label">Particle Explosion</span>
+    <button class="ripple-btn ripple-btn--particle" data-variant="particle">Click Me</button>
+  </div>
+
+  <!-- 4. Glow Pulse -->
+  <div class="card">
+    <span class="card-label">Glow Pulse</span>
+    <button class="ripple-btn ripple-btn--glow" data-variant="glow">Click Me</button>
+  </div>
+
+  <!-- 5. Border Trace -->
+  <div class="card">
+    <span class="card-label">Border Trace</span>
+    <button class="ripple-btn ripple-btn--border" data-variant="border">
+      <span class="btn-text">Click Me</span>
+    </button>
+  </div>
+
+  <!-- 6. Shrink Bounce -->
+  <div class="card">
+    <span class="card-label">Shrink Bounce</span>
+    <button class="ripple-btn ripple-btn--shrink" data-variant="shrink">Click Me</button>
+  </div>
+
+  <!-- 7. Fill Sweep -->
+  <div class="card">
+    <span class="card-label">Fill Sweep</span>
+    <button class="ripple-btn ripple-btn--sweep" data-variant="sweep">Click Me</button>
+  </div>
+
+  <!-- 8. Gradient Ripple -->
+  <div class="card">
+    <span class="card-label">Gradient Ripple</span>
+    <button class="ripple-btn ripple-btn--gradient" data-variant="gradient">Click Me</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const btns = document.querySelectorAll('.ripple-btn');
+
+  /* ── Center Burst ── */
+  function burstEffect(e, btn){
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    // rings
+    for(let i=0;i<2;i++){
+      const ring = document.createElement('span');
+      ring.className = 'burst-ring';
+      ring.style.left = x +'px'; ring.style.top = y +'px';
+      ring.style.transform = 'translate(-50%,-50%)';
+      ring.style.animationDelay = (i*0.12)+'s';
+      btn.appendChild(ring);
+      ring.addEventListener('animationend',()=>ring.remove());
+    }
+    // burst dot
+    const dot = document.createElement('span');
+    dot.className = 'burst-dot';
+    dot.style.left = x+'px'; dot.style.top = y+'px';
+    dot.style.transform = 'translate(-50%,-50%)';
+    btn.appendChild(dot);
+    dot.addEventListener('animationend',()=>dot.remove());
+  }
+
+  /* ── Ripple Wave ── */
+  function waveEffect(e, btn){
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    for(let i=0;i<3;i++){
+      const wave = document.createElement('span');
+      wave.className = 'wave-circle';
+      wave.style.left = x+'px'; wave.style.top = y+'px';
+      wave.style.transform = 'translate(-50%,-50%)';
+      wave.style.animationDelay = (i*0.1)+'s';
+      btn.appendChild(wave);
+      wave.addEventListener('animationend',()=>wave.remove());
+    }
+  }
+
+  /* ── Particle Explosion ── */
+  function particleEffect(e, btn){
+    const rect = btn.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    for(let i=0;i<12;i++){
+      const p = document.createElement('span');
+      p.className = 'particle';
+      p.style.left = cx+'px'; p.style.top = cy+'px';
+      const angle = (Math.PI*2/12)*i + (Math.random()-.5)*.5;
+      const dist = 25+Math.random()*35;
+      p.style.setProperty('--px',(Math.cos(angle)*dist)+'px');
+      p.style.setProperty('--py',(Math.sin(angle)*dist)+'px');
+      p.style.animationDelay = (Math.random()*0.1)+'s';
+      p.style.background = Math.random()>.5?'#fff':'var(--color-primary-light)';
+      btn.appendChild(p);
+      p.addEventListener('animationend',()=>p.remove());
+    }
+  }
+
+  /* ── Glow Pulse ── */
+  function glowEffect(e, btn){
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const glow = document.createElement('span');
+    glow.className = 'glow-ring';
+    glow.style.left = x+'px'; glow.style.top = y+'px';
+    glow.style.transform = 'translate(-50%,-50%)';
+    btn.appendChild(glow);
+    glow.addEventListener('animationend',()=>glow.remove());
+  }
+
+  /* ── Border Trace ── */
+  function borderEffect(e, btn){
+    if(btn.classList.contains('btn-filled')){
+      btn.classList.remove('btn-filled');
+      const old = btn.querySelector('.fill-bg');
+      if(old) old.remove();
+      const oldTrace = btn.querySelector('.border-trace');
+      if(oldTrace) oldTrace.parentElement.remove();
+      return;
+    }
+    // Create trace SVG
+    const wrap = document.createElement('span');
+    wrap.className = 'border-trace';
+    wrap.innerHTML = `<svg viewBox="0 0 180 48" preserveAspectRatio="none">
+      <rect x="1" y="1" width="178" height="46" rx="11" class="trace-path"/>
+    </svg>`;
+    btn.appendChild(wrap);
+    setTimeout(()=>{
+      wrap.remove();
+      const fill = document.createElement('span');
+      fill.className = 'fill-bg';
+      btn.appendChild(fill);
+      btn.classList.add('btn-filled');
+      fill.addEventListener('animationend',()=>{});
+    },800);
+  }
+
+  /* ── Shrink Bounce ── */
+  function shrinkEffect(e, btn){
+    btn.classList.add('shrunk');
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    for(let i=0;i<2;i++){
+      const ring = document.createElement('span');
+      ring.className = 'bounce-ring';
+      ring.style.left = x+'px'; ring.style.top = y+'px';
+      ring.style.transform = 'translate(-50%,-50%)';
+      ring.style.animationDelay = (i*0.08)+'s';
+      btn.appendChild(ring);
+      ring.addEventListener('animationend',()=>ring.remove());
+    }
+    setTimeout(()=>btn.classList.remove('shrunk'),150);
+  }
+
+  /* ── Fill Sweep ── */
+  function sweepEffect(e, btn){
+    const sweep = document.createElement('span');
+    sweep.className = 'sweep-fill';
+    btn.appendChild(sweep);
+    sweep.addEventListener('animationend',()=>sweep.remove());
+  }
+
+  /* ── Gradient Ripple ── */
+  function gradientEffect(e, btn){
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const colors = ['#e94560','#ff6b81','#7c3aed','#f472b6','#fbbf24'];
+    for(let i=0;i<2;i++){
+      const r = document.createElement('span');
+      r.className = 'grad-ripple';
+      r.style.left = x+'px'; r.style.top = y+'px';
+      r.style.transform = 'translate(-50%,-50%)';
+      r.style.background = `radial-gradient(circle,${colors[i%colors.length]} 0%,transparent 70%)`;
+      r.style.animationDelay = (i*0.12)+'s';
+      btn.appendChild(r);
+      r.addEventListener('animationend',()=>r.remove());
+    }
+  }
+
+  const effects = {
+    burst: burstEffect,
+    wave: waveEffect,
+    particle: particleEffect,
+    glow: glowEffect,
+    border: borderEffect,
+    shrink: shrinkEffect,
+    sweep: sweepEffect,
+    gradient: gradientEffect,
+  };
+
+  btns.forEach(btn=>{
+    btn.addEventListener('click', e => {
+      const variant = btn.dataset.variant;
+      if(effects[variant]) effects[variant](e, btn);
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!--
+  button-micro-hover.html
+  8 Button Micro-Hover Effects — Pure CSS + Vanilla JS
+  Magnetic pull, ripple, glow pulse, border draw, text shift,
+  scale bounce, fill sweep, and neon flicker.
+  No external libraries.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Button Micro-Hover Effects</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .page-header {
+    text-align: center;
+    padding: 60px 20px 20px;
+  }
+  .page-header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .page-header p {
+    color: var(--color-muted);
+    font-size: 1.05rem;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 50px;
+    max-width: 1100px;
+    margin: 50px auto 80px;
+    padding: 0 24px;
+  }
+
+  .btn-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .btn-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  /* Shared button base */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 36px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(.23,1,.32,1);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* ========================================
+     1. Magnetic Pull
+  ======================================== */
+  .btn-magnetic {
+    background: linear-gradient(135deg, var(--color-primary), #c92a45);
+    color: #fff;
+    will-change: transform;
+  }
+
+  /* ========================================
+     2. Ripple
+  ======================================== */
+  .btn-ripple {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-ripple .ripple-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(233,69,96,0.35);
+    transform: scale(0);
+    animation: rippleAnim 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* ========================================
+     3. Glow Pulse
+  ======================================== */
+  .btn-glow {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #fff;
+    box-shadow: 0 0 0 0 rgba(233,69,96,0);
+    animation: none;
+  }
+  .btn-glow:hover {
+    animation: glowPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%   { box-shadow: 0 0 5px 0 rgba(233,69,96,0.4), 0 0 15px 0 rgba(233,69,96,0.2); }
+    50%  { box-shadow: 0 0 20px 5px rgba(233,69,96,0.6), 0 0 40px 10px rgba(83,52,131,0.3); }
+    100% { box-shadow: 0 0 5px 0 rgba(233,69,96,0.4), 0 0 15px 0 rgba(233,69,96,0.2); }
+  }
+
+  /* ========================================
+     4. Border Draw
+  ======================================== */
+  .btn-border-draw {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid transparent;
+    position: relative;
+  }
+  .btn-border-draw::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    border: 2px solid var(--color-primary);
+    clip-path: polygon(
+      0 0, 0 0, 0 0,
+      100% 0, 100% 0, 100% 0,
+      100% 100%, 100% 100%, 100% 100%,
+      0 100%, 0 100%, 0 100%
+    );
+    transition: clip-path 0.5s cubic-bezier(.77,0,.18,1);
+  }
+  .btn-border-draw:hover::before {
+    clip-path: polygon(
+      0 0, 50% 0, 100% 0,
+      100% 0, 100% 50%, 100% 100%,
+      100% 100%, 50% 100%, 0 100%,
+      0 100%, 0 50%, 0 0
+    );
+  }
+  .btn-border-draw:hover {
+    background: rgba(233,69,96,0.08);
+  }
+
+  /* ========================================
+     5. Text Shift
+  ======================================== */
+  .btn-text-shift {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+  .btn-text-shift .btn-text-main,
+  .btn-text-shift .btn-text-hover {
+    display: block;
+    transition: transform 0.35s cubic-bezier(.23,1,.32,1), opacity 0.35s ease;
+  }
+  .btn-text-shift .btn-text-hover {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 100%);
+    opacity: 0;
+    color: var(--color-primary);
+  }
+  .btn-text-shift .btn-text-main {
+    position: relative;
+  }
+  .btn-text-shift:hover .btn-text-main {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  .btn-text-shift:hover .btn-text-hover {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+
+  /* ========================================
+     6. Scale Bounce
+  ======================================== */
+  .btn-scale-bounce {
+    background: linear-gradient(135deg, #0f3460, #0a2647);
+    color: var(--color-text);
+    border: 1px solid rgba(255,255,255,0.1);
+    transform-origin: center;
+  }
+  .btn-scale-bounce:hover {
+    animation: scaleBounce 0.5s cubic-bezier(.36,.07,.19,.97);
+    background: linear-gradient(135deg, #0f3460, #1a4a78);
+  }
+  @keyframes scaleBounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.18); }
+    50%  { transform: scale(0.95); }
+    70%  { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  /* ========================================
+     7. Fill Sweep
+  ======================================== */
+  .btn-fill-sweep {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    z-index: 1;
+  }
+  .btn-fill-sweep::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--color-primary);
+    z-index: -1;
+    transition: left 0.4s cubic-bezier(.23,1,.32,1);
+    border-radius: 8px;
+  }
+  .btn-fill-sweep:hover::before {
+    left: 0;
+  }
+  .btn-fill-sweep:hover {
+    color: #fff;
+  }
+
+  /* ========================================
+     8. Neon Flicker
+  ======================================== */
+  .btn-neon {
+    background: transparent;
+    color: #0ff;
+    border: 1px solid #0ff;
+    text-shadow: 0 0 8px rgba(0,255,255,0.5), 0 0 20px rgba(0,255,255,0.3);
+    box-shadow: 0 0 8px rgba(0,255,255,0.3), inset 0 0 8px rgba(0,255,255,0.1);
+  }
+  .btn-neon:hover {
+    animation: neonFlicker 0.15s ease-in-out 3, neonGlow 1.2s ease-in-out infinite 0.5s;
+  }
+  @keyframes neonFlicker {
+    0%   { opacity: 1; }
+    25%  { opacity: 0.6; }
+    50%  { opacity: 1; }
+    75%  { opacity: 0.8; }
+    100% { opacity: 1; }
+  }
+  @keyframes neonGlow {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(0,255,255,0.3), inset 0 0 8px rgba(0,255,255,0.1), 0 0 30px rgba(0,255,255,0.2);
+      text-shadow: 0 0 8px rgba(0,255,255,0.5), 0 0 30px rgba(0,255,255,0.4);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(0,255,255,0.6), inset 0 0 15px rgba(0,255,255,0.2), 0 0 60px rgba(0,255,255,0.4);
+      text-shadow: 0 0 15px rgba(0,255,255,0.8), 0 0 50px rgba(0,255,255,0.6);
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Button Micro-Hover Effects</h1>
+  <p>Eight unique button hover micro-animations — hover each button to see magnetic pull, ripple, glow pulse, and more.</p>
+</header>
+
+<div class="buttons-grid">
+
+  <!-- 1. Magnetic Pull -->
+  <div class="btn-cell">
+    <span class="btn-label">1 — Magnetic Pull</span>
+    <button class="btn btn-magnetic" data-magnetic>Magnetic Pull</button>
+  </div>
+
+  <!-- 2. Ripple -->
+  <div class="btn-cell">
+    <span class="btn-label">2 — Ripple</span>
+    <button class="btn btn-ripple" data-ripple>Ripple Effect</button>
+  </div>
+
+  <!-- 3. Glow Pulse -->
+  <div class="btn-cell">
+    <span class="btn-label">3 — Glow Pulse</span>
+    <button class="btn btn-glow">Glow Pulse</button>
+  </div>
+
+  <!-- 4. Border Draw -->
+  <div class="btn-cell">
+    <span class="btn-label">4 — Border Draw</span>
+    <button class="btn btn-border-draw">Border Draw</button>
+  </div>
+
+  <!-- 5. Text Shift -->
+  <div class="btn-cell">
+    <span class="btn-label">5 — Text Shift</span>
+    <button class="btn btn-text-shift">
+      <span class="btn-text-main">Hover Me</span>
+      <span class="btn-text-hover">Shifted!</span>
+    </button>
+  </div>
+
+  <!-- 6. Scale Bounce -->
+  <div class="btn-cell">
+    <span class="btn-label">6 — Scale Bounce</span>
+    <button class="btn btn-scale-bounce">Scale Bounce</button>
+  </div>
+
+  <!-- 7. Fill Sweep -->
+  <div class="btn-cell">
+    <span class="btn-label">7 — Fill Sweep</span>
+    <button class="btn btn-fill-sweep">Fill Sweep</button>
+  </div>
+
+  <!-- 8. Neon Flicker -->
+  <div class="btn-cell">
+    <span class="btn-label">8 — Neon Flicker</span>
+    <button class="btn btn-neon">Neon Flicker</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ======================================
+     1. Magnetic Pull
+  ====================================== */
+  document.querySelectorAll('[data-magnetic]').forEach(function (btn) {
+    var strength = 0.35;
+
+    btn.addEventListener('mousemove', function (e) {
+      var rect = btn.getBoundingClientRect();
+      var x = e.clientX - rect.left - rect.width / 2;
+      var y = e.clientY - rect.top - rect.height / 2;
+      btn.style.transform = 'translate(' + (x * strength) + 'px, ' + (y * strength) + 'px)';
+    });
+
+    btn.addEventListener('mouseleave', function () {
+      btn.style.transition = 'transform 0.4s cubic-bezier(.23,1,.32,1)';
+      btn.style.transform = 'translate(0, 0)';
+      setTimeout(function () { btn.style.transition = ''; }, 400);
+    });
+
+    btn.addEventListener('mouseenter', function () {
+      btn.style.transition = 'none';
+    });
+  });
+
+  /* ======================================
+     2. Ripple
+  ====================================== */
+  document.querySelectorAll('[data-ripple]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      var rect = btn.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+      var size = Math.max(rect.width, rect.height) * 2;
+
+      var circle = document.createElement('span');
+      circle.className = 'ripple-circle';
+      circle.style.width = circle.style.height = size + 'px';
+      circle.style.left = (x - size / 2) + 'px';
+      circle.style.top = (y - size / 2) + 'px';
+      btn.appendChild(circle);
+
+      circle.addEventListener('animationend', function () {
+        circle.remove();
+      });
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

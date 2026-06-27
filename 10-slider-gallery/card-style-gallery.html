@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    Card Style Gallery — 80s Inspiration
+    Inspired by "Card Style Gallery & 80s inspiration"
+    Retro 80s-styled gallery with neon borders, scanline effects, grid layout.
+    Hover reveals with 80s aesthetic. Pure CSS + Vanilla JS. No external dependencies.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Card Style Gallery — 80s</title>
+  <style>
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --neon-pink: #ff2d95;
+      --neon-blue: #00d4ff;
+      --neon-purple: #b829dd;
+      --neon-yellow: #ffe600;
+      --neon-green: #39ff14;
+      --neon-orange: #ff6b35;
+      --scanline-opacity: 0.04;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ── Scanline overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(0, 0, 0, var(--scanline-opacity)) 1px,
+        rgba(0, 0, 0, var(--scanline-opacity)) 2px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── CRT vignette ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(15, 15, 26, 0.7) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── Retro grid background ── */
+    .retro-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      perspective: 400px;
+      overflow: hidden;
+    }
+
+    .retro-grid::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: -50%;
+      width: 200%;
+      height: 80%;
+      background:
+        linear-gradient(rgba(255, 45, 149, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 45, 149, 0.06) 1px, transparent 1px);
+      background-size: 60px 60px;
+      transform: rotateX(60deg);
+      transform-origin: bottom;
+      animation: grid-scroll 8s linear infinite;
+    }
+
+    .retro-grid::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40%;
+      background: linear-gradient(180deg, 
+        rgba(184, 41, 221, 0.1) 0%,
+        rgba(255, 45, 149, 0.05) 50%,
+        transparent 100%
+      );
+    }
+
+    @keyframes grid-scroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 60px; }
+    }
+
+    /* ── Sun burst ── */
+    .sun-burst {
+      position: fixed;
+      bottom: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(180deg, var(--neon-pink), var(--neon-purple), var(--neon-blue));
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      opacity: 0.08;
+      z-index: -1;
+      animation: sun-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes sun-pulse {
+      0%, 100% { opacity: 0.06; transform: translateX(-50%) scale(1); }
+      50% { opacity: 0.12; transform: translateX(-50%) scale(1.05); }
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 4rem 2rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      background: linear-gradient(180deg, var(--neon-pink), var(--neon-purple), var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      position: relative;
+      animation: title-glow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes title-glow {
+      0% { filter: brightness(1) drop-shadow(0 0 0px transparent); }
+      100% { filter: brightness(1.1) drop-shadow(0 0 20px rgba(255, 45, 149, 0.3)); }
+    }
+
+    .header-sub {
+      font-size: 0.9rem;
+      color: var(--neon-blue);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1.5rem 2rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1.5rem;
+      border: 1px solid rgba(255, 45, 149, 0.3);
+      background: transparent;
+      color: #8892b0;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.3s;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--neon-pink);
+      color: white;
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 20px rgba(255, 45, 149, 0.3);
+    }
+
+    /* ── Gallery Grid ── */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── Gallery Card ── */
+    .gallery-card {
+      position: relative;
+      background: var(--color-surface);
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    }
+
+    .gallery-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px solid transparent;
+      border-image: linear-gradient(
+        135deg,
+        var(--card-neon, var(--neon-pink)),
+        transparent 40%,
+        transparent 60%,
+        var(--card-neon-secondary, var(--neon-blue))
+      ) 1;
+      z-index: 2;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+
+    .gallery-card:hover::before {
+      opacity: 1;
+    }
+
+    .gallery-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 
+        0 0 30px rgba(255, 45, 149, 0.2),
+        0 0 60px rgba(0, 212, 255, 0.1),
+        0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-image {
+      width: 100%;
+      height: 220px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-image-bg {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      position: relative;
+    }
+
+    /* Retro gradient backgrounds for each card */
+    .card-image-bg.neon-sunset {
+      background: linear-gradient(135deg, #1a0030, #e94560, #ff6b35, #ffe600);
+    }
+    .card-image-bg.synthwave {
+      background: linear-gradient(180deg, #0f0f2e, #b829dd, #ff2d95, #ff6b35);
+    }
+    .card-image-bg.cyber-blue {
+      background: linear-gradient(135deg, #001133, #00d4ff, #39ff14);
+    }
+    .card-image-bg.neon-pink {
+      background: linear-gradient(135deg, #1a0020, #ff2d95, #b829dd);
+    }
+    .card-image-bg.reto-orange {
+      background: linear-gradient(180deg, #1a0a00, #ff6b35, #ffe600);
+    }
+    .card-image-bg.matrix {
+      background: linear-gradient(135deg, #001a00, #39ff14, #00d4ff);
+    }
+
+    /* Scanline on card image */
+    .card-image::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* Hover overlay */
+    .card-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 15, 26, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.4s;
+      z-index: 3;
+      backdrop-filter: blur(5px);
+    }
+
+    .gallery-card:hover .card-overlay {
+      opacity: 1;
+    }
+
+    .card-overlay-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+      color: var(--neon-pink);
+      text-shadow: 0 0 10px rgba(255, 45, 149, 0.5);
+    }
+
+    .card-overlay-sub {
+      font-size: 0.8rem;
+      color: var(--neon-blue);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .card-overlay-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1.5rem;
+      background: transparent;
+      border: 1px solid var(--neon-pink);
+      color: var(--neon-pink);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      transition: all 0.3s;
+      clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+    }
+
+    .card-overlay-btn:hover {
+      background: var(--neon-pink);
+      color: white;
+      box-shadow: 0 0 20px rgba(255, 45, 149, 0.5);
+    }
+
+    /* ── Card content area ── */
+    .card-content {
+      padding: 1.25rem 1.5rem;
+      position: relative;
+    }
+
+    .card-tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-tag.pink { color: var(--neon-pink); border-color: var(--neon-pink); }
+    .card-tag.blue { color: var(--neon-blue); border-color: var(--neon-blue); }
+    .card-tag.purple { color: var(--neon-purple); border-color: var(--neon-purple); }
+    .card-tag.green { color: var(--neon-green); border-color: var(--neon-green); }
+    .card-tag.yellow { color: var(--neon-yellow); border-color: var(--neon-yellow); }
+    .card-tag.orange { color: var(--neon-orange); border-color: var(--neon-orange); }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      color: var(--color-text);
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: #5a6a80;
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      border-top: 1px solid rgba(255, 45, 149, 0.1);
+    }
+
+    .card-date {
+      font-size: 0.7rem;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-likes {
+      font-size: 0.75rem;
+      color: var(--neon-pink);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .card-likes:hover {
+      text-shadow: 0 0 10px rgba(255, 45, 149, 0.5);
+    }
+
+    /* ── Corner accents ── */
+    .corner-accent {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      z-index: 4;
+    }
+
+    .corner-accent.tl {
+      top: 0; left: 0;
+      border-top: 2px solid var(--neon-pink);
+      border-left: 2px solid var(--neon-pink);
+    }
+    .corner-accent.tr {
+      top: 0; right: 0;
+      border-top: 2px solid var(--neon-blue);
+      border-right: 2px solid var(--neon-blue);
+    }
+    .corner-accent.bl {
+      bottom: 0; left: 0;
+      border-bottom: 2px solid var(--neon-purple);
+      border-left: 2px solid var(--neon-purple);
+    }
+    .corner-accent.br {
+      bottom: 0; right: 0;
+      border-bottom: 2px solid var(--neon-green);
+      border-right: 2px solid var(--neon-green);
+    }
+
+    /* ── Flicker animation ── */
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      41% { opacity: 1; }
+      42% { opacity: 0.8; }
+      43% { opacity: 1; }
+      45% { opacity: 0.4; }
+      46% { opacity: 1; }
+    }
+
+    .flicker {
+      animation: flicker 4s infinite;
+    }
+
+    /* ── Neon underline ── */
+    .neon-line {
+      height: 1px;
+      background: linear-gradient(90deg, 
+        transparent, 
+        var(--neon-pink), 
+        var(--neon-purple), 
+        var(--neon-blue), 
+        transparent
+      );
+      margin: 2rem auto;
+      max-width: 600px;
+      animation: neonline-glow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes neonline-glow {
+      0% { opacity: 0.4; box-shadow: 0 0 5px rgba(255, 45, 149, 0.2); }
+      100% { opacity: 1; box-shadow: 0 0 15px rgba(255, 45, 149, 0.5); }
+    }
+
+    /* ── Footer ── */
+    .gallery-footer {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #3a4a5e;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .gallery-footer .footer-line {
+      font-family: 'Courier New', monospace;
+      color: var(--neon-pink);
+      opacity: 0.5;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="retro-grid"></div>
+  <div class="sun-burst"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <h1 class="flicker">NEON GALLERY</h1>
+    <p class="header-sub">Curated collection — 1980s aesthetic</p>
+  </header>
+
+  <div class="neon-line"></div>
+
+  <!-- Filter Bar -->
+  <nav class="filter-bar">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="digital">Digital</button>
+    <button class="filter-btn" data-filter="retro">Retro</button>
+    <button class="filter-btn" data-filter="abstract">Abstract</button>
+    <button class="filter-btn" data-filter="scifi">Sci-Fi</button>
+  </nav>
+
+  <div class="neon-line"></div>
+
+  <!-- Gallery Grid -->
+  <main class="gallery-grid" id="gallery">
+    <!-- Card 1 -->
+    <article class="gallery-card" data-category="digital">
+      <div class="corner-accent tl"></div>
+      <div class="corner-accent tr"></div>
+      <div class="corner-accent bl"></div>
+      <div class="corner-accent br"></div>
+      <div class="card-image">
+        <div class="card-image-bg neon-sunset">🌅</div>
+        <div class="card-overlay">
+          <div class="card-overlay-title">Sunset Protocol</div>
+          <div class="card-overlay-sub">Digital — 2024</div>
+          <button class="card-overlay-btn">View Project</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <span class="card-tag pink">Digital</span>
+        <h3 class="card-title">Sunset Protocol</h3>
+        <p class="card-desc">Neon gradients cascading through digital horizons — a chromatic odyssey.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">MAR 2024</span>
+        <span class="card-likes">♥ 2.4k</span>
+      </div>
+    </article>
+
+    <!-- Card 2 -->
+    <article class="gallery-card" data-category="retro">
+      <div class="corner-accent tl"></div>
+      <div class="corner-accent tr"></div>
+      <div class="corner-accent bl"></div>
+      <div class="corner-accent br"></div>
+      <div class="card-image">
+        <div class="card-image-bg synthwave">🎹</div>
+        <div class="card-overlay">
+          <div class="card-overlay-title">Synthwave Dreams</div>
+          <div class="card-overlay-sub">Retro — 2024</div>
+          <button class="card-overlay-btn">View Project</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <span class="card-tag purple">Retro</span>
+        <h3 class="card-title">Synthwave Dreams</h3>
+        <p class="card-desc">Retrowave aesthetics meet modern design in this musical journey.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">FEB 2024</span>
+        <span class="card-likes">♥ 1.8k</span>
+      </div>
+    </article>
+
+    <!-- Card 3 -->
+    <article class="gallery-card" data-category="scifi">
+      <div class="corner-accent tl"></div>
+      <div class="corner-accent tr"></div>
+      <div class="corner-accent bl"></div>
+      <div class="corner-accent br"></div>
+      <div class="card-image">
+        <div class="card-image-bg cyber-blue">🔮</div>
+        <div class="card-overlay">
+          <div class="card-overlay-title">Cyber Oracle</div>
+          <div class="card-overlay-sub">Sci-Fi — 2024</div>
+          <button class="card-overlay-btn">View Project</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <span class="card-tag blue">Sci-Fi</span>
+        <h3 class="card-title">Cyber Oracle</h3>
+        <p class="card-desc">Predictive interfaces from a future that never was — or is yet to come.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">JAN 2024</span>
+        <span class="card-likes">♥ 3.1k</span>
+      </div>
+    </article>
+
+    <!-- Card 4 -->
+    <article class="gallery-card" data-category="abstract">
+      <div class="corner-accent tl"></div>
+      <div class="corner-accent tr"></div>
+      <div class="corner-accent bl"></div>
+      <div class="corner-accent br"></div>
+      <div class="card-image">
+        <div class="card-image-bg neon-pink">🌸</div>
+        <div class="card-overlay">
+          <div class="card-overlay-title">Neon Bloom</div>
+          <div class="card-overlay-sub">Abstract — 2024</div>
+          <button class="card-overlay-btn">View Project</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <span class="card-tag pink">Abstract</span>
+        <h3 class="card-title">Neon Bloom</h3>
+        <p class="card-desc">Organic forms dissolve into pure chromatic energy at the speed of light.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">DEC 2023</span>
+        <span class="card-likes">♥ 4.2k</span>
+      </div>
+    </article>
+
+    <!-- Card 5 -->
+    <article class="gallery-card" data-category="retro">
+      <div class="corner-accent tl"></div>
+      <div class="corner-accent tr"></div>
+      <div class="corner-accent bl"></div>
+      <div class="corner-accent br"></div>
+      <div class="card-image">
+        <div class="card-image-bg reto-orange">🕹️</div>
+        <div class="card-overlay">
+          <div class="card-overlay-title">Arcade Fire</div>
+          <div class="card-overlay-sub">Retro — 2023</div>
+          <button class="card-overlay-btn">View Project</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <span class="card-tag orange">Retro</span>
+        <h3 class="card-title">Arcade Fire</h3>
+        <p class="card-desc">Insert coin — press start — the cabinet glows like a dream you once had.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">NOV 2023</span>
+        <span class="card-likes">♥ 5.7k</span>
+      </div>
+    </article>
+
+    <!-- Card 6 -->
+    <article class="gallery-card" data-category="digital">
+      <div class="corner-accent tl"></div>
+      <div class="corner-accent tr"></div>
+      <div class="corner-accent bl"></div>
+      <div class="corner-accent br"></div>
+      <div class="card-image">
+        <div class="card-image-bg matrix">🟩</div>
+        <div class="card-overlay">
+          <div class="card-overlay-title">Matrix Rain</div>
+          <div class="card-overlay-sub">Digital — 2023</div>
+          <button class="card-overlay-btn">View Project</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <span class="card-tag green">Digital</span>
+        <h3 class="card-title">Matrix Rain</h3>
+        <p class="card-desc">Green phosphor streams cascade through terminal windows into infinity.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">OCT 2023</span>
+        <span class="card-likes">♥ 8.9k</span>
+      </div>
+    </article>
+  </main>
+
+  <div class="neon-line"></div>
+
+  <footer class="gallery-footer">
+    <p>— END OF TRANSMISSION —</p>
+    <p class="footer-line" style="margin-top:0.5rem;">NEON_GALLERY v1.984 // CSS + JS</p>
+  </footer>
+
+  <script>
+    // ── Filter functionality ──
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.gallery-card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+
+        cards.forEach((card, i) => {
+          const show = filter === 'all' || card.dataset.category === filter;
+          card.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+          card.style.transitionDelay = show ? (i * 50) + 'ms' : '0ms';
+
+          if (show) {
+            card.style.display = '';
+            requestAnimationFrame(() => {
+              card.style.opacity = '1';
+              card.style.transform = 'scale(1)';
+            });
+          } else {
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              if (!card.classList.contains('filtered-out')) return;
+              card.style.display = 'none';
+            }, 400);
+          }
+        });
+
+        // Mark filtered state
+        cards.forEach(card => {
+          const show = filter === 'all' || card.dataset.category === filter;
+          if (show) {
+            card.classList.remove('filtered-out');
+          } else {
+            card.classList.add('filtered-out');
+          }
+        });
+      });
+    });
+
+    // ── Scroll reveal ──
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, index * 100);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    cards.forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(40px)';
+      card.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+      revealObserver.observe(card);
+    });
+
+    // ── Card hover tracking line ──
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--track-x', x + 'px');
+        card.style.setProperty('--track-y', y + 'px');
+      });
+
+      // Like button
+      const likeBtn = card.querySelector('.card-likes');
+      if (likeBtn) {
+        likeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const match = likeBtn.textContent.match(/♥\s*([\d.]+)(k)/);
+          if (match) {
+            let val = parseFloat(match[1]) + 0.1;
+            val = Math.round(val * 10) / 10;
+            likeBtn.textContent = '♥ ' + val + match[2];
+          }
+          likeBtn.style.transform = 'scale(1.3)';
+          setTimeout(() => {
+            likeBtn.style.transform = 'scale(1)';
+          }, 200);
+        });
+      }
+    });
+
+    // ── Subtle parallax on header ──
+    const header = document.querySelector('.header');
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY;
+      header.style.transform = `translateY(${y * 0.3}px)`;
+      header.style.opacity = Math.max(1 - y / 300, 0);
+    }, { passive: true });
+  </script>
+</body>
+</html>

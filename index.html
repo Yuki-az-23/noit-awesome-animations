@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS & JS Animations Library — 71 Pure Demos</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #16213e;
+    --surface-light: #1a1a2e;
+    --primary: #e94560;
+    --secondary: #0f3460;
+    --accent: #533483;
+    --text: #eaeaea;
+    --text-muted: #a0a0b0;
+    --border: rgba(255,255,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .hero {
+    text-align: center;
+    padding: 6rem 2rem 3rem;
+    background: radial-gradient(ellipse at 50% 0%, rgba(233,69,96,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(83,52,131,0.08) 0%, transparent 50%);
+  }
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--primary), #ff6b6b, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.75rem;
+    animation: fadeUp 0.8s ease-out;
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 640px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.7;
+    animation: fadeUp 0.8s 0.15s ease-out both;
+  }
+  .badges {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.3s ease-out both;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .badge .num { color: var(--primary); font-weight: 700; }
+  .search-box {
+    max-width: 500px;
+    margin: 1.5rem auto 0;
+    position: relative;
+    animation: fadeUp 0.8s 0.4s ease-out both;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 0.75rem 1.25rem 0.75rem 2.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .search-box input:focus { border-color: var(--primary); }
+  .search-box input::placeholder { color: var(--text-muted); }
+  .search-box::before {
+    content: '⌕';
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+  }
+  .categories {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .category { animation: fadeUp 0.6s ease-out both; }
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .category-num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(233,69,96,0.12);
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .category-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .category-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.9rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(233,69,96,0.12);
+    border-color: rgba(233,69,96,0.25);
+  }
+  .card-preview {
+    height: 130px;
+    background: var(--surface-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+  .card-body { padding: 0.75rem 1rem 1rem; }
+  .card-body h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+  }
+  .card-body p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+  .card-tags {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .card-tag {
+    font-size: 0.6rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 4px;
+    background: rgba(233,69,96,0.1);
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+  footer a { color: var(--primary); text-decoration: underline; }
+  .hidden { display: none !important; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>CSS & JS Animations</h1>
+  <p>A curated library of <strong>71 pure CSS + JS animation patterns</strong> inspired by the best on Awwwards. No frameworks, no dependencies.</p>
+  <div class="badges">
+    <span class="badge"><span class="num">71</span> Demos</span>
+    <span class="badge"><span class="num">14</span> Categories</span>
+    <span class="badge">Pure CSS + JS</span>
+    <span class="badge">Zero Deps</span>
+  </div>
+  <div class="search-box">
+    <input type="text" id="search" placeholder="Search animations..." autocomplete="off">
+  </div>
+</div>
+
+<div class="categories" id="categories">
+
+<!-- 01 Scroll Animations (10) -->
+<div class="category" data-category="01-scroll-animations">
+<div class="category-header">
+  <span class="category-num">01</span><h2 class="category-title">Scroll Animations</h2>
+  <span class="category-subtitle">10 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="01-scroll-animations/scroll-reveal.html" data-tags="IntersectionObserver stagger fade">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#0f3460)"><span>👁️</span></div>
+    <div class="card-body"><h3>Scroll Reveal</h3><p>Elements fade in and slide up when scrolled into view</p>
+    <div class="card-tags"><span class="card-tag">reveal</span><span class="card-tag">stagger</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-parallax.html" data-tags="parallax lerp depth layers">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>🏔️</span></div>
+    <div class="card-body"><h3>Scroll Parallax</h3><p>Multi-layer parallax with different depths and lerp smoothing</p>
+    <div class="card-tags"><span class="card-tag">parallax</span><span class="card-tag">lerp</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-horizontal.html" data-tags="horizontal pin gallery">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#e94560)"><span>↔️</span></div>
+    <div class="card-body"><h3>Horizontal Scroll</h3><p>Vertical scroll transforms into horizontal gallery movement</p>
+    <div class="card-tags"><span class="card-tag">horizontal</span><span class="card-tag">pin</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-progress.html" data-tags="progress circle bar SVG">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#ff6b6b)"><span>📊</span></div>
+    <div class="card-body"><h3>Scroll Progress</h3><p>Circle progress, progress bar, and section markers</p>
+    <div class="card-tags"><span class="card-tag">progress</span><span class="card-tag">SVG</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-triggered-3d.html" data-tags="3D perspective rotate tilt">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#533483)"><span>🎲</span></div>
+    <div class="card-body"><h3>Scroll Triggered 3D</h3><p>3D elements that rotate and transform based on scroll position</p>
+    <div class="card-tags"><span class="card-tag">3D</span><span class="card-tag">perspective</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-backgrounds.html" data-tags="background gradient sections blend">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#16213e)"><span>🎨</span></div>
+    <div class="card-body"><h3>Scroll Backgrounds</h3><p>Backgrounds that shift and blend as you scroll through sections</p>
+    <div class="card-tags"><span class="card-tag">gradient</span><span class="card-tag">sections</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/staggered-scroll-reveal.html" data-tags="stagger grid list cascade">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#0f3460)"><span>✨</span></div>
+    <div class="card-body"><h3>Staggered Scroll Reveal</h3><p>Elements reveal with cascading staggered timing patterns</p>
+    <div class="card-tags"><span class="card-tag">stagger</span><span class="card-tag">grid</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-underwater.html" data-tags="underwater bubbles particles canvas">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0a1628,#0f3460)"><span>🌊</span></div>
+    <div class="card-body"><h3>Scroll Underwater</h3><p>Underwater-themed scroll with bubbles, fish, and depth effects</p>
+    <div class="card-tags"><span class="card-tag">canvas</span><span class="card-tag">particles</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/scroll-illustration.html" data-tags="illustration story scene parallax">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a3d2e,#0f3460)"><span>🎭</span></div>
+    <div class="card-body"><h3>Scroll Illustration</h3><p>Storybook scene that comes to life as you scroll through chapters</p>
+    <div class="card-tags"><span class="card-tag">illustration</span><span class="card-tag">story</span></div></div>
+  </a>
+  <a class="card" href="01-scroll-animations/ascii-scroll-animation.html" data-tags="ASCII retro terminal matrix">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0a0a0a,#1a3a1a)"><span>🖥️</span></div>
+    <div class="card-body"><h3>ASCII Scroll Animation</h3><p>Retro terminal aesthetic with ASCII art that morphs on scroll</p>
+    <div class="card-tags"><span class="card-tag">ASCII</span><span class="card-tag">retro</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 02 Hover Animations (8) -->
+<div class="category" data-category="02-hover-animations">
+<div class="category-header">
+  <span class="category-num">02</span><h2 class="category-title">Hover Animations</h2>
+  <span class="category-subtitle">8 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="02-hover-animations/card-hover-3d.html" data-tags="3D tilt glare perspective">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#e94560)"><span>🃏</span></div>
+    <div class="card-body"><h3>Card Hover 3D</h3><p>3D tilt effect with glare following cursor position</p>
+    <div class="card-tags"><span class="card-tag">3D tilt</span><span class="card-tag">glare</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/image-reveal-hover.html" data-tags="clip-path mask reveal circle">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#533483)"><span>🖼️</span></div>
+    <div class="card-body"><h3>Image Reveal Hover</h3><p>Image masks reveal on hover: circle, diagonal, slide</p>
+    <div class="card-tags"><span class="card-tag">clip-path</span><span class="card-tag">mask</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/link-hover-effects.html" data-tags="link text underline scramble">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>🔗</span></div>
+    <div class="card-body"><h3>Link Hover Effects</h3><p>8 link hover animations: underline, slide, scramble, stagger</p>
+    <div class="card-tags"><span class="card-tag">8 effects</span><span class="card-tag">text</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/button-micro-hover.html" data-tags="button magnetic ripple glow neon">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#ff6b6b)"><span>🔘</span></div>
+    <div class="card-body"><h3>Button Micro Hover</h3><p>8 button hover effects: magnetic, ripple, glow, neon flicker</p>
+    <div class="card-tags"><span class="card-tag">8 effects</span><span class="card-tag">buttons</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/circle-hover-expand.html" data-tags="circle expand cursor clip-path">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#16213e)"><span>⭕</span></div>
+    <div class="card-body"><h3>Circle Hover Expand</h3><p>Circle clip-path expands from cursor revealing content</p>
+    <div class="card-tags"><span class="card-tag">circle</span><span class="card-tag">clip-path</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/skew-deformation.html" data-tags="skew perspective 3D tilt">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#e94560)"><span>📐</span></div>
+    <div class="card-body"><h3>Skew Deformation</h3><p>Content cards that skew and deform on hover with perspective</p>
+    <div class="card-tags"><span class="card-tag">skew</span><span class="card-tag">3D</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/animated-hover-menu.html" data-tags="menu overlay hover underline">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>📋</span></div>
+    <div class="card-body"><h3>Animated Hover Menu</h3><p>5 creative menu hover effects: underline draw, slide, fill</p>
+    <div class="card-tags"><span class="card-tag">menu</span><span class="card-tag">5 effects</span></div></div>
+  </a>
+  <a class="card" href="02-hover-animations/trail-effect-cursor.html" data-tags="cursor trail comet particle ring">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#533483)"><span>✦</span></div>
+    <div class="card-body"><h3>Trail Effect Cursor</h3><p>3 cursor trail modes: comet, particle burst, expanding rings</p>
+    <div class="card-tags"><span class="card-tag">cursor</span><span class="card-tag">3 modes</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 03 Text Animations (8) -->
+<div class="category" data-category="03-text-animations">
+<div class="category-header">
+  <span class="category-num">03</span><h2 class="category-title">Text Animations</h2>
+  <span class="category-subtitle">8 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="03-text-animations/kinetic-type.html" data-tags="kinetic stagger split characters">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#533483)"><span>⚡</span></div>
+    <div class="card-body"><h3>Kinetic Type</h3><p>Words split into characters, animate with stagger and scale</p>
+    <div class="card-tags"><span class="card-tag">kinetic</span><span class="card-tag">stagger</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/text-morphing.html" data-tags="SVG filter morph turbulence">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#0f3460)"><span>✨</span></div>
+    <div class="card-body"><h3>Text Morphing</h3><p>Word morphing using SVG feTurbulence + feDisplacementMap</p>
+    <div class="card-tags"><span class="card-tag">SVG filter</span><span class="card-tag">morph</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/variable-font-animate.html" data-tags="variable font weight width slant">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#16213e)"><span>🔤</span></div>
+    <div class="card-body"><h3>Variable Font Animate</h3><p>Simulated variable font axes: weight, width, slant, sizing</p>
+    <div class="card-tags"><span class="card-tag">variable font</span><span class="card-tag">6 demos</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/spacing-line-animation.html" data-tags="spacing letter-height rhythm">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#e94560)"><span>📏</span></div>
+    <div class="card-body"><h3>Spacing Line Animation</h3><p>Letter-spacing and line-height animations with timing functions</p>
+    <div class="card-tags"><span class="card-tag">spacing</span><span class="card-tag">timing</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/colourful-text.html" data-tags="gradient marquee rainbow color">
+    <div class="card-preview" style="background:linear-gradient(135deg,#ff6b6b,#533483)"><span>🌈</span></div>
+    <div class="card-body"><h3>Colourful Text</h3><p>Animated gradient fills, color cycling, marquee, and glitch</p>
+    <div class="card-tags"><span class="card-tag">gradient</span><span class="card-tag">8 effects</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/text-path-animation.html" data-tags="SVG path curve sine wave circle">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>〰️</span></div>
+    <div class="card-body"><h3>Text Path Animation</h3><p>Text following SVG paths: sine wave, circle, and bezier curves</p>
+    <div class="card-tags"><span class="card-tag">SVG path</span><span class="card-tag">5 demos</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/leon-sans-animation.html" data-tags="particles text assemble wave">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#0f3460)"><span>🔬</span></div>
+    <div class="card-body"><h3>Leon Sans Animation</h3><p>Particle-based text that assembles, waves, ripples, and explodes</p>
+    <div class="card-tags"><span class="card-tag">particles</span><span class="card-tag">5 effects</span></div></div>
+  </a>
+  <a class="card" href="03-text-animations/intro-logotype-animation.html" data-tags="logotype cinematic reveal stagger">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#e94560)"><span>🎬</span></div>
+    <div class="card-body"><h3>Intro Logotype Animation</h3><p>Cinematic 5-scene logo reveal with different letter techniques</p>
+    <div class="card-tags"><span class="card-tag">cinematic</span><span class="card-tag">5 scenes</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 04 Transitions & Page (4) -->
+<div class="category" data-category="04-transitions-page">
+<div class="category-header">
+  <span class="category-num">04</span><h2 class="category-title">Transitions & Page</h2>
+  <span class="category-subtitle">4 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="04-transitions-page/shape-transition.html" data-tags="clip-path circle diamond blob">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#e94560)"><span>🔷</span></div>
+    <div class="card-body"><h3>Shape Transition</h3><p>Circle, diamond, diagonal wipe & organic blob transitions</p>
+    <div class="card-tags"><span class="card-tag">clip-path</span><span class="card-tag">4 types</span></div></div>
+  </a>
+  <a class="card" href="04-transitions-page/random-shapes-transition.html" data-tags="random shapes geometric fly">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#e94560)"><span>🎲</span></div>
+    <div class="card-body"><h3>Random Shapes Transition</h3><p>Random geometric shapes fly across as section overlays</p>
+    <div class="card-tags"><span class="card-tag">random</span><span class="card-tag">shapes</span></div></div>
+  </a>
+  <a class="card" href="04-transitions-page/welcome-transition.html" data-tags="splash cinematic split reveal">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>🎬</span></div>
+    <div class="card-body"><h3>Welcome Transition</h3><p>Cinematic splash with logo, text reveal, and split exit</p>
+    <div class="card-tags"><span class="card-tag">splash</span><span class="card-tag">cinematic</span></div></div>
+  </a>
+  <a class="card" href="04-transitions-page/diagonal-crossing.html" data-tags="diagonal stripe wipe crossing">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#e94560)"><span>↗️</span></div>
+    <div class="card-body"><h3>Diagonal Crossing</h3><p>Diagonal stripe wipe transitions between sections</p>
+    <div class="card-tags"><span class="card-tag">diagonal</span><span class="card-tag">wipe</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 05 Morphing & Shape (3) -->
+<div class="category" data-category="05-morphing-shape">
+<div class="category-header">
+  <span class="category-num">05</span><h2 class="category-title">Morphing & Shape</h2>
+  <span class="category-subtitle">3 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="05-morphing-shape/svg-morph-slider.html" data-tags="SVG morph blob slider mask">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#ff6b6b)"><span>🎭</span></div>
+    <div class="card-body"><h3>SVG Morph Slider</h3><p>Image slider with morphing SVG blob mask transitions</p>
+    <div class="card-tags"><span class="card-tag">SVG</span><span class="card-tag">morph</span></div></div>
+  </a>
+  <a class="card" href="05-morphing-shape/mask-circle-reveal.html" data-tags="circle mask reveal click">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#0f3460)"><span>⭕</span></div>
+    <div class="card-body"><h3>Mask Circle Reveal</h3><p>Click-to-reveal with expanding circle masks and easing styles</p>
+    <div class="card-tags"><span class="card-tag">clip-path</span><span class="card-tag">interactive</span></div></div>
+  </a>
+  <a class="card" href="05-morphing-shape/liquid-scroll-animation.html" data-tags="liquid blob scroll morph canvas">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#533483)"><span>💧</span></div>
+    <div class="card-body"><h3>Liquid Scroll Animation</h3><p>Scroll-driven liquid blob morphing with smooth interpolation</p>
+    <div class="card-tags"><span class="card-tag">liquid</span><span class="card-tag">scroll</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 06 Gradient Background (3) -->
+<div class="category" data-category="06-gradient-background">
+<div class="category-header">
+  <span class="category-num">06</span><h2 class="category-title">Gradient Background</h2>
+  <span class="category-subtitle">3 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="06-gradient-background/3d-gradient-background.html" data-tags="3D mesh gradient interactive canvas">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#533483,#0f3460)"><span>🌈</span></div>
+    <div class="card-body"><h3>3D Gradient Background</h3><p>Customizable animated mesh gradient reacting to mouse position</p>
+    <div class="card-tags"><span class="card-tag">canvas</span><span class="card-tag">interactive</span></div></div>
+  </a>
+  <a class="card" href="06-gradient-background/animated-gradient-cards.html" data-tags="gradient border cards flowing">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>🃏</span></div>
+    <div class="card-body"><h3>Animated Gradient Cards</h3><p>Cards with continuously flowing animated gradient borders</p>
+    <div class="card-tags"><span class="card-tag">gradient</span><span class="card-tag">border</span></div></div>
+  </a>
+  <a class="card" href="06-gradient-background/animated-ui-colors.html" data-tags="UI elements color shift sync">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#533483)"><span>🎨</span></div>
+    <div class="card-body"><h3>Animated UI Colors</h3><p>UI elements change colors in sync with animated background gradient</p>
+    <div class="card-tags"><span class="card-tag">color shift</span><span class="card-tag">UI</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 07 Menu & Navigation (4) -->
+<div class="category" data-category="07-menu-navigation">
+<div class="category-header">
+  <span class="category-num">07</span><h2 class="category-title">Menu & Navigation</h2>
+  <span class="category-subtitle">4 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="07-menu-navigation/overlay-menu.html" data-tags="overlay fullscreen stagger blur">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#533483)"><span>📋</span></div>
+    <div class="card-body"><h3>Overlay Menu</h3><p>Full-screen overlay with staggered item animations and blur</p>
+    <div class="card-tags"><span class="card-tag">overlay</span><span class="card-tag">stagger</span></div></div>
+  </a>
+  <a class="card" href="07-menu-navigation/hamburger-morph.html" data-tags="hamburger morph X arrow plus">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#e94560)"><span>☰</span></div>
+    <div class="card-body"><h3>Hamburger Morph</h3><p>Icon morphs into X, arrow, plus, and back-arrow states</p>
+    <div class="card-tags"><span class="card-tag">morph</span><span class="card-tag">4 states</span></div></div>
+  </a>
+  <a class="card" href="07-menu-navigation/dot-navigation.html" data-tags="dots pill sections scroll">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#ff6b6b)"><span>⚫</span></div>
+    <div class="card-body"><h3>Dot Navigation</h3><p>Pill indicator slides between section dots with elastic easing</p>
+    <div class="card-tags"><span class="card-tag">dots</span><span class="card-tag">scroll</span></div></div>
+  </a>
+  <a class="card" href="07-menu-navigation/typography-nav-animation.html" data-tags="typography large text morph magnetic">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>Aa</span></div>
+    <div class="card-body"><h3>Typography Nav Animation</h3><p>Large typography navigation with staggered reveal and magnetic hover</p>
+    <div class="card-tags"><span class="card-tag">typography</span><span class="card-tag">stagger</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 08 Hero Animations (3) -->
+<div class="category" data-category="08-hero-animations">
+<div class="category-header">
+  <span class="category-num">08</span><h2 class="category-title">Hero Animations</h2>
+  <span class="category-subtitle">3 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="08-hero-animations/hero-zoom-scroll.html" data-tags="zoom parallax hero scroll">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>🔍</span></div>
+    <div class="card-body"><h3>Hero Zoom Scroll</h3><p>Hero image zooms out on scroll with text fading at different rates</p>
+    <div class="card-tags"><span class="card-tag">zoom</span><span class="card-tag">parallax</span></div></div>
+  </a>
+  <a class="card" href="08-hero-animations/hero-reveal-split.html" data-tags="split reveal character stagger">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#e94560)"><span>↔️</span></div>
+    <div class="card-body"><h3>Hero Reveal Split</h3><p>Two halves slide apart revealing hero, character-by-character text</p>
+    <div class="card-tags"><span class="card-tag">split</span><span class="card-tag">reveal</span></div></div>
+  </a>
+  <a class="card" href="08-hero-animations/hero-cinematic.html" data-tags="cinematic typewriter parallax floating">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#16213e)"><span>🎬</span></div>
+    <div class="card-body"><h3>Hero Cinematic</h3><p>Cinematic hero with typewriter text, floating parallax elements</p>
+    <div class="card-tags"><span class="card-tag">cinematic</span><span class="card-tag">typewriter</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 09 Loader & Preloader (3) -->
+<div class="category" data-category="09-loader-preloader">
+<div class="category-header">
+  <span class="category-num">09</span><h2 class="category-title">Loader & Preloader</h2>
+  <span class="category-subtitle">3 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="09-loader-preloader/preloader-creative.html" data-tags="loaders morphing blob liquid pulse">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#0f3460)"><span>⏳</span></div>
+    <div class="card-body"><h3>Creative Preloaders</h3><p>6 loader styles: morphing blob, liquid fill, pulsing rings, text counter</p>
+    <div class="card-tags"><span class="card-tag">6 styles</span><span class="card-tag">loaders</span></div></div>
+  </a>
+  <a class="card" href="09-loader-preloader/loading-bar-progress.html" data-tags="progress bar circular segmented">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>📈</span></div>
+    <div class="card-body"><h3>Loading Bar Progress</h3><p>4 progress styles: thin bar, thick bar, circular ring, segmented</p>
+    <div class="card-tags"><span class="card-tag">4 styles</span><span class="card-tag">progress</span></div></div>
+  </a>
+  <a class="card" href="09-loader-preloader/3d-folding-loader.html" data-tags="3D fold box opening reveal">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#1a1a3e)"><span>📦</span></div>
+    <div class="card-body"><h3>3D Folding Loader</h3><p>Loader that folds/unfolds in 3D like a box revealing the page</p>
+    <div class="card-tags"><span class="card-tag">3D</span><span class="card-tag">fold</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 10 Slider & Gallery (5) -->
+<div class="category" data-category="10-slider-gallery">
+<div class="category-header">
+  <span class="category-num">10</span><h2 class="category-title">Slider & Gallery</h2>
+  <span class="category-subtitle">5 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="10-slider-gallery/3d-carousel.html" data-tags="3D carousel cylinder perspective">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#533483)"><span>🎠</span></div>
+    <div class="card-body"><h3>3D Carousel</h3><p>8 cards in a 3D cylinder with auto-rotate and drag/swipe</p>
+    <div class="card-tags"><span class="card-tag">3D</span><span class="card-tag">carousel</span></div></div>
+  </a>
+  <a class="card" href="10-slider-gallery/lateral-slider.html" data-tags="lateral momentum drag swipe">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#0f3460)"><span>↔️</span></div>
+    <div class="card-body"><h3>Lateral Slider</h3><p>Momentum-based lateral content slider with smooth easing</p>
+    <div class="card-tags"><span class="card-tag">slider</span><span class="card-tag">momentum</span></div></div>
+  </a>
+  <a class="card" href="10-slider-gallery/morphing-mask-slider.html" data-tags="morph SVG mask blob slider">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>🎭</span></div>
+    <div class="card-body"><h3>Morphing Mask Slider</h3><p>Image slider with morphing SVG blob mask transitions</p>
+    <div class="card-tags"><span class="card-tag">SVG mask</span><span class="card-tag">morph</span></div></div>
+  </a>
+  <a class="card" href="10-slider-gallery/infinite-product-slider.html" data-tags="infinite product 3D depth center">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#533483)"><span>🛍️</span></div>
+    <div class="card-body"><h3>Infinite Product Slider</h3><p>Infinite 3D product carousel with depth and scale effects</p>
+    <div class="card-tags"><span class="card-tag">3D</span><span class="card-tag">infinite</span></div></div>
+  </a>
+  <a class="card" href="10-slider-gallery/card-style-gallery.html" data-tags="80s retro neon gallery scanlines">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#e94560)"><span>🕹️</span></div>
+    <div class="card-body"><h3>Card Style Gallery</h3><p>Retro 80s gallery with neon borders, scanlines, and CRT effects</p>
+    <div class="card-tags"><span class="card-tag">80s</span><span class="card-tag">neon</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 11 Cursor Interactions (3) -->
+<div class="category" data-category="11-cursor-interactions">
+<div class="category-header">
+  <span class="category-num">11</span><h2 class="category-title">Cursor Interactions</h2>
+  <span class="category-subtitle">3 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="11-cursor-interactions/cursor-trail.html" data-tags="trail dots comet lines canvas">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#533483)"><span>✦</span></div>
+    <div class="card-body"><h3>Cursor Trail</h3><p>3 trail styles: classic dots, gradient comet, connection lines</p>
+    <div class="card-tags"><span class="card-tag">3 styles</span><span class="card-tag">canvas</span></div></div>
+  </a>
+  <a class="card" href="11-cursor-interactions/cursor-magnetic.html" data-tags="magnetic pull cursor ring">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#e94560)"><span>🧲</span></div>
+    <div class="card-body"><h3>Cursor Magnetic</h3><p>Elements pull toward cursor with magnetic effect + custom cursor ring</p>
+    <div class="card-tags"><span class="card-tag">magnetic</span><span class="card-tag">interactive</span></div></div>
+  </a>
+  <a class="card" href="11-cursor-interactions/hero-font-cursor.html" data-tags="font text cursor glow colorful">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#533483)"><span>🔤</span></div>
+    <div class="card-body"><h3>Hero Font Cursor</h3><p>Large text reacting to cursor — magnetic pull, wave, and scatter modes</p>
+    <div class="card-tags"><span class="card-tag">font</span><span class="card-tag">3 modes</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 12 3D Effects (3) -->
+<div class="category" data-category="12-3d-effects">
+<div class="category-header">
+  <span class="category-num">12</span><h2 class="category-title">3D Effects</h2>
+  <span class="category-subtitle">3 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="12-3d-effects/3d-fold-layout.html" data-tags="fold paper card book accordion">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#1a1a3e)"><span>📐</span></div>
+    <div class="card-body"><h3>3D Fold Layout</h3><p>Paper fold effects: card flip, book, accordion, paper plane</p>
+    <div class="card-tags"><span class="card-tag">4 types</span><span class="card-tag">perspective</span></div></div>
+  </a>
+  <a class="card" href="12-3d-effects/perspective-distortion.html" data-tags="perspective distortion 3D grid mouse">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>🔮</span></div>
+    <div class="card-body"><h3>Perspective Distortion</h3><p>Grid of cards distorting in 3D based on mouse/scroll position</p>
+    <div class="card-tags"><span class="card-tag">3D</span><span class="card-tag">distortion</span></div></div>
+  </a>
+  <a class="card" href="12-3d-effects/desktop-mobile-morph.html" data-tags="device morph desktop mobile 3D">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#16213e)"><span>📱</span></div>
+    <div class="card-body"><h3>Desktop to Mobile Morph</h3><p>Device frame morphing from desktop monitor to mobile phone</p>
+    <div class="card-tags"><span class="card-tag">morph</span><span class="card-tag">device</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 13 Micro-Interactions (8) -->
+<div class="category" data-category="13-micro-interactions">
+<div class="category-header">
+  <span class="category-num">13</span><h2 class="category-title">Micro-Interactions</h2>
+  <span class="category-subtitle">8 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="13-micro-interactions/fancy-tab-bar.html" data-tags="tabs morph indicator navigation">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#e94560)"><span>📑</span></div>
+    <div class="card-body"><h3>Fancy Tab Bar</h3><p>Animated tab indicator that morphs between shapes per tab</p>
+    <div class="card-tags"><span class="card-tag">tabs</span><span class="card-tag">morph</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/ripple-button.html" data-tags="ripple button click burst glow">
+    <div class="card-preview" style="background:linear-gradient(135deg,#e94560,#ff6b6b)"><span>💧</span></div>
+    <div class="card-body"><h3>Ripple Button</h3><p>8 button click effects: burst, particle, glow, border trace</p>
+    <div class="card-tags"><span class="card-tag">8 effects</span><span class="card-tag">buttons</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/animated-quiz.html" data-tags="quiz gamified progress confetti">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#0f3460)"><span>❓</span></div>
+    <div class="card-body"><h3>Animated Quiz</h3><p>Gamified quiz with progress, slide transitions, confetti</p>
+    <div class="card-tags"><span class="card-tag">quiz</span><span class="card-tag">gamified</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/toggle-switches.html" data-tags="toggle switch elastic bounce glow">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#533483)"><span>🔘</span></div>
+    <div class="card-body"><h3>Toggle Switches</h3><p>8 creative toggles: elastic, fill, morphing, glow, liquid</p>
+    <div class="card-tags"><span class="card-tag">8 styles</span><span class="card-tag">toggles</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/animated-quiz-ladybug.html" data-tags="quiz ladybug playful confetti walk">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a3d1a,#0f3460)"><span>🐞</span></div>
+    <div class="card-body"><h3>Animated Quiz Ladybug</h3><p>Playful quiz with walking ladybug progress, celebration confetti</p>
+    <div class="card-tags"><span class="card-tag">playful</span><span class="card-tag">8 questions</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/pricing-plan-animation.html" data-tags="pricing cards toggle monthly yearly">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#533483)"><span>💰</span></div>
+    <div class="card-body"><h3>Pricing Plan Animation</h3><p>Animated pricing cards with monthly/yearly toggle and hover lift</p>
+    <div class="card-tags"><span class="card-tag">pricing</span><span class="card-tag">toggle</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/bandit-scroll-leaderboard.html" data-tags="leaderboard score streak rank">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>🏆</span></div>
+    <div class="card-body"><h3>Bandit Scroll Leaderboard</h3><p>Animated leaderboard with score count-up, streak bars, rank shifts</p>
+    <div class="card-tags"><span class="card-tag">leaderboard</span><span class="card-tag">gamified</span></div></div>
+  </a>
+  <a class="card" href="13-micro-interactions/marquee-scrolling-text.html" data-tags="marquee infinite scroll text gradient">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#ff6b6b)"><span>📜</span></div>
+    <div class="card-body"><h3>Marquee Scrolling Text</h3><p>6+ rows of infinite marquee with varied speeds and gradients</p>
+    <div class="card-tags"><span class="card-tag">marquee</span><span class="card-tag">6 rows</span></div></div>
+  </a>
+</div>
+</div>
+
+<!-- 14 SVG Animations (6) -->
+<div class="category" data-category="14-svg-animations">
+<div class="category-header">
+  <span class="category-num">14</span><h2 class="category-title">SVG Animations</h2>
+  <span class="category-subtitle">6 demos</span>
+</div>
+<div class="cards">
+  <a class="card" href="14-svg-animations/svg-path-drawing.html" data-tags="SVG path draw stroke-dasharray">
+    <div class="card-preview" style="background:linear-gradient(135deg,#1a1a3e,#e94560)"><span>✏️</span></div>
+    <div class="card-body"><h3>SVG Path Drawing</h3><p>6 SVG illustrations that draw themselves on scroll</p>
+    <div class="card-tags"><span class="card-tag">6 shapes</span><span class="card-tag">line draw</span></div></div>
+  </a>
+  <a class="card" href="14-svg-animations/svg-mask-transition.html" data-tags="SVG mask circle diamond star blob">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#ff6b6b)"><span>🎭</span></div>
+    <div class="card-body"><h3>SVG Mask Transition</h3><p>4 mask types: circle expand, diamond, star burst, organic blob</p>
+    <div class="card-tags"><span class="card-tag">4 masks</span><span class="card-tag">reveal</span></div></div>
+  </a>
+  <a class="card" href="14-svg-animations/svg-morphing-animation.html" data-tags="SVG morph shape circle star heart">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#e94560)"><span>🔄</span></div>
+    <div class="card-body"><h3>SVG Morphing Animation</h3><p>SVG shapes morphing between 7 forms with path interpolation</p>
+    <div class="card-tags"><span class="card-tag">7 shapes</span><span class="card-tag">morph</span></div></div>
+  </a>
+  <a class="card" href="14-svg-animations/lottie-morphing-scroll.html" data-tags="Lottie scroll morph SVG keyframes">
+    <div class="card-preview" style="background:linear-gradient(135deg,#16213e,#533483)"><span>🎬</span></div>
+    <div class="card-body"><h3>Lottie-Style Morphing Scroll</h3><p>Scroll-driven SVG morphing with 6 keyframe shapes</p>
+    <div class="card-tags"><span class="card-tag">scroll</span><span class="card-tag">6 keyframes</span></div></div>
+  </a>
+  <a class="card" href="14-svg-animations/animated-shape-transition.html" data-tags="shape transition clip-path morph spring">
+    <div class="card-preview" style="background:linear-gradient(135deg,#533483,#1a1a3e)"><span>🔷</span></div>
+    <div class="card-body"><h3>Animated Shape Transition</h3><p>10 geometric shapes morphing via clip-path with spring easing</p>
+    <div class="card-tags"><span class="card-tag">10 shapes</span><span class="card-tag">3D tilt</span></div></div>
+  </a>
+  <a class="card" href="14-svg-animations/bouncing-line-animation.html" data-tags="elastic line bounce canvas wave">
+    <div class="card-preview" style="background:linear-gradient(135deg,#0f3460,#16213e)"><span>〰️</span></div>
+    <div class="card-body"><h3>Bouncing Line Animation</h3><p>Elastic lines that bounce and snap with 4 animation modes</p>
+    <div class="card-tags"><span class="card-tag">4 modes</span><span class="card-tag">canvas</span></div></div>
+  </a>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <p>Inspired by <a href="https://www.awwwards.com/awwwards/collections/css-js-animations/" target="_blank">Awwwards CSS & JS Animations Collection</a></p>
+  <p style="margin-top:0.5rem;">71 animations · 14 categories · 0 dependencies · Pure CSS + JS</p>
+</footer>
+
+<script>
+// Search filter
+const search = document.getElementById('search');
+const cards = document.querySelectorAll('.card');
+const categories = document.querySelectorAll('.category');
+
+search.addEventListener('input', () => {
+  const q = search.value.toLowerCase().trim();
+  categories.forEach(cat => {
+    const catCards = cat.querySelectorAll('.card');
+    let visible = 0;
+    catCards.forEach(card => {
+      const h3 = card.querySelector('h3').textContent.toLowerCase();
+      const p = card.querySelector('p').textContent.toLowerCase();
+      const tags = card.dataset.tags || '';
+      const match = !q || h3.includes(q) || p.includes(q) || tags.includes(q);
+      card.classList.toggle('hidden', !match);
+      if (match) visible++;
+    });
+    cat.classList.toggle('hidden', visible === 0);
+    cat.querySelector('.category-subtitle').textContent = visible + ' of ' + catCards.length;
+  });
+});
+</script>
+
+</body>
+</html>

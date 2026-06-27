@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  MORPHING MASK SLIDER - SVG Blob Transition Slider
+  ============================================================
+  4 Slides with morphing blob/splash SVG mask transitions
+  between each. The mask morphs from one organic shape to
+  another as slides change, creating a liquid reveal effect.
+  Pure CSS + Vanilla JS | No Dependencies
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morphing Mask Slider - CSS/JS Animations</title>
+<style>
+  /* ========== ROOT & RESET ========== */
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-secondary: #533483;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-text-dim: #8892a4;
+    --radius: 16px;
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-duration: 0.9s;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ========== HEADER ========== */
+  .slider-header {
+    text-align: center;
+    padding: 24px 20px 8px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .slider-header h1 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a, var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .slider-header p {
+    color: var(--color-text-dim);
+    font-size: 0.82rem;
+    margin-top: 4px;
+  }
+
+  /* ========== SLIDER CONTAINER ========== */
+  .slider-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ========== SLIDES ========== */
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s var(--ease-smooth);
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .slide.leaving {
+    opacity: 0;
+  }
+
+  .slide-inner {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    max-width: 960px;
+    width: 100%;
+    padding: 20px 40px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.6s var(--ease-smooth) 0.2s, opacity 0.6s var(--ease-smooth) 0.2s;
+  }
+  .slide.active .slide-inner {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .slide-visual {
+    flex-shrink: 0;
+    width: 300px;
+    height: 340px;
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+  }
+  .slide-visual-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+  }
+  .slide-visual-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.2), transparent);
+  }
+  .slide-visual-number {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    z-index: 2;
+    font-size: 3rem;
+    font-weight: 800;
+    opacity: 0.25;
+    color: #fff;
+  }
+
+  .slide-content {
+    flex: 1;
+  }
+  .slide-content .slide-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    background: rgba(233,69,96,0.15);
+    color: var(--color-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 14px;
+  }
+  .slide-content h2 {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .slide-content p {
+    font-size: 0.92rem;
+    color: var(--color-text-dim);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .slide-content .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--color-primary), #d13350);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .slide-content .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(233,69,96,0.4);
+  }
+
+  /* ========== MORPHING MASK OVERLAY ========== */
+  .morph-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .morph-overlay svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ========== NAVIGATION ========== */
+  .nav-wrapper {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 16px 20px 24px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .nav-arrows {
+    display: flex;
+    gap: 10px;
+  }
+  .nav-arrows button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    background: rgba(22,33,62,0.9);
+    color: var(--color-text);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .nav-arrows button:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    transform: scale(1.08);
+  }
+
+  .nav-dots {
+    display: flex;
+    gap: 10px;
+  }
+  .nav-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+  }
+  .nav-dots .dot.active {
+    background: var(--color-primary);
+    transform: scale(1.3);
+    box-shadow: 0 0 12px rgba(233,69,96,0.5);
+  }
+  .nav-dots .dot:hover:not(.active) {
+    background: rgba(255,255,255,0.4);
+  }
+
+  /* ========== PROGRESS ========== */
+  .slide-progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    z-index: 100;
+    transition: width 0.5s var(--ease-smooth);
+  }
+
+  /* ========== BACKGROUND DECORATION ========== */
+  .bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(100px);
+    opacity: 0.06;
+    transition: transform 1s var(--ease-smooth);
+  }
+  .bg-orb-1 {
+    width: 600px; height: 600px;
+    background: var(--color-primary);
+    top: -200px; right: -150px;
+  }
+  .bg-orb-2 {
+    width: 500px; height: 500px;
+    background: var(--color-secondary);
+    bottom: -200px; left: -150px;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 700px) {
+    .slide-visual {
+      width: 200px;
+      height: 240px;
+    }
+    .slide-inner {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="slide-progress" id="slideProgress"></div>
+
+<!-- ==================== HEADER ==================== -->
+<header class="slider-header">
+  <h1>Morphing Mask Slider</h1>
+  <p>Blob/splash SVG mask transitions between slides</p>
+</header>
+
+<!-- ==================== SLIDER ==================== -->
+<div class="slider-container" id="sliderContainer">
+
+  <!-- Morphing mask SVG overlay -->
+  <div class="morph-overlay" id="morphOverlay">
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" id="morphSvg">
+      <defs>
+        <linearGradient id="maskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#e94560"/>
+          <stop offset="100%" stop-color="#533483"/>
+        </linearGradient>
+      </defs>
+      <!-- The morphing blob path that acts as a wipe/mask -->
+      <path id="morphPath" fill="url(#maskGrad)" opacity="0.85"/>
+    </svg>
+  </div>
+
+  <!-- Slides will be injected by JS -->
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<nav class="nav-wrapper">
+  <div class="nav-arrows">
+    <button id="prevBtn">◀</button>
+  </div>
+  <div class="nav-dots" id="dots"></div>
+  <div class="nav-arrows">
+    <button id="nextBtn">▶</button>
+  </div>
+</nav>
+
+<!-- ==================== JS ==================== -->
+<script>
+(function() {
+  'use strict';
+
+  // === SLIDE DATA ===
+  const slideData = [
+    {
+      tag: 'Digital Art',
+      title: 'Where Pixels Meet Paint',
+      desc: 'Organic forms dissolve into one another, creating a liquid flow of visual storytelling that transcends traditional slide transitions.',
+      cta: 'View Gallery',
+      gradient: 'linear-gradient(135deg, #0f3460, #533483)',
+      color: '#533483',
+      number: '01'
+    },
+    {
+      tag: 'Architecture',
+      title: 'Structural Fluidity',
+      desc: 'Buildings breathe and morph as the mask reshapes reality, revealing new perspectives through an ever-changing lens of creative motion.',
+      cta: 'Explore',
+      gradient: 'linear-gradient(135deg, #e94560, #533483)',
+      color: '#e94560',
+      number: '02'
+    },
+    {
+      tag: 'Nature',
+      title: 'Organic Transformations',
+      desc: 'Natural patterns emerge and dissolve — like water finding its path. The mask reveals each scene as if nature itself is painting.',
+      cta: 'Discover',
+      gradient: 'linear-gradient(135deg, #16213e, #0f3460)',
+      color: '#0f3460',
+      number: '03'
+    },
+    {
+      tag: 'Abstract',
+      title: 'Beyond the Visible',
+      desc: 'Push past conventional transitions into a realm where shapes breathe, grow, and transform — an immersive experience of fluid motion.',
+      cta: 'Experience',
+      gradient: 'linear-gradient(135deg, #533483, #e94560)',
+      color: '#ff6b8a',
+      number: '04'
+    }
+  ];
+
+  const TOTAL = slideData.length;
+  const container = document.getElementById('sliderContainer');
+  const morphPath = document.getElementById('morphPath');
+  const morphOverlay = document.getElementById('morphOverlay');
+  const dotsContainer = document.getElementById('dots');
+  const progressEl = document.getElementById('slideProgress');
+
+  let currentIndex = 0;
+  let isTransitioning = false;
+
+  // === MORPHING BLOB PATHS ===
+  // Each is a closed organic blob shape defined as an SVG path
+  // We interpolate between them for the transition
+  // These are purposely different organic shapes for interesting morphing
+  
+  const blobShapes = [
+    // Shape 0: Large rounded blob (reveal all — "no mask" state)
+    'M960,540 C960,270 1920,0 1920,0 C1920,0 1920,540 1920,1080 C1920,1080 1920,1080 960,1080 C0,1080 0,1080 0,540 C0,0 0,0 960,540 Z',
+    // Shape 1: Small circle centered (mask closed)
+    'M1060,540 C1060,486 1014,440 960,440 C906,440 860,486 860,540 C860,594 906,640 960,640 C1014,640 1060,594 1060,540 Z',
+    // Shape 2: Organic blob (expanding)
+    'M1100,400 C1200,200 1600,100 1920,200 L1920,1080 L0,1080 C0,1080 0,800 200,650 C400,500 600,700 800,600 C1000,500 950,300 1100,400 Z',
+    // Shape 3: Diagonal splash
+    'M1920,0 L1920,1080 C1600,900 1300,1000 1000,800 C700,600 500,300 200,400 C-100,500 0,200 0,0 Z',
+    // Shape 4: Expanding circle splash
+    'M960,540 C1200,300 1600,100 1920,200 L1920,1080 L0,1080 C0,800 200,600 400,400 C600,200 720,780 960,540 Z',
+    // Shape 5: Full screen (entirely filled)
+    'M0,0 C0,0 1920,0 1920,0 C1920,0 1920,540 1920,1080 C1920,1080 960,1080 0,1080 C0,1080 0,540 0,0 Z'
+  ];
+
+  // === BUILD SLIDES ===
+  slideData.forEach((s, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide' + (i === 0 ? ' active' : '');
+    slide.innerHTML = `
+      <div class="slide-inner">
+        <div class="slide-visual">
+          <div class="slide-visual-bg" style="background: ${s.gradient};"></div>
+          <div class="slide-visual-overlay"></div>
+          <span class="slide-visual-number">${s.number}</span>
+        </div>
+        <div class="slide-content">
+          <span class="slide-tag">${s.tag}</span>
+          <h2>${s.title}</h2>
+          <p>${s.desc}</p>
+          <button class="cta-btn">${s.cta} →</button>
+        </div>
+      </div>
+    `;
+    container.insertBefore(slide, morphOverlay);
+  });
+
+  const slides = container.querySelectorAll('.slide');
+
+  // Build dots
+  slideData.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  });
+  const dots = dotsContainer.querySelectorAll('.dot');
+
+  // === PATH INTERPOLATION ===
+  // Parse SVG path commands into arrays of numbers for interpolation
+  function parsePathData(pathStr) {
+    // Extract all number groups from the path
+    const commands = [];
+    const regex = /([A-Za-z])|([+-]?(?:\d+\.?\d*|\.\d+))/g;
+    let match;
+    let currentCmd = null;
+    let currentArgs = [];
+
+    while ((match = regex.exec(pathStr)) !== null) {
+      if (match[1]) {
+        // It's a command letter
+        if (currentCmd !== null) {
+          commands.push({ cmd: currentCmd, args: currentArgs });
+        }
+        currentCmd = match[1];
+        currentArgs = [];
+      } else if (match[2] !== undefined) {
+        currentArgs.push(parseFloat(match[2]));
+      }
+    }
+    if (currentCmd !== null) {
+      commands.push({ cmd: currentCmd, args: currentArgs });
+    }
+    return commands;
+  }
+
+  function interpolatePaths(from, to, t) {
+    const fromCmds = parsePathData(from);
+    const toCmds = parsePathData(to);
+    let result = '';
+    
+    for (let i = 0; i < fromCmds.length; i++) {
+      const fc = fromCmds[i];
+      const tc = toCmds[i] || fc;
+      const cmdChar = t < 0.5 ? fc.cmd : tc.cmd;
+      result += cmdChar;
+      const maxLen = Math.max(fc.args.length, tc.args.length);
+      for (let j = 0; j < maxLen; j++) {
+        const a = j < fc.args.length ? fc.args[j] : fc.args[fc.args.length - 1];
+        const b = j < tc.args.length ? tc.args[j] : tc.args[tc.args.length - 1];
+        result += (a + (b - a) * t).toFixed(1) + (j < maxLen - 1 ? ',' : '');
+      }
+      result += ' ';
+    }
+    return result;
+  }
+
+  // === TRANSITION MASK ===
+  let transitionFrame = null;
+
+  function transitionTo(newIndex) {
+    if (isTransitioning || newIndex === currentIndex) return;
+    isTransitioning = true;
+
+    const oldIndex = currentIndex;
+    const oldSlide = slides[oldIndex];
+    const newSlide = slides[newIndex];
+
+    // Determine a random blob shape for the transition
+    const transitionBlobs = [blobShapes[2], blobShapes[3], blobShapes[4]];
+    const randomBlob = transitionBlobs[Math.floor(Math.random() * transitionBlobs.length)];
+    const fullScreen = blobShapes[5];
+
+    // Phase 1: Expand blob mask to reveal (0 → 0.5)
+    // Phase 2: New slide is now visible, collapse mask (0.5 → 1)
+
+    // Show new slide underneath the mask
+    newSlide.classList.add('active');
+    morphOverlay.style.display = 'block';
+
+    const duration = 900; // ms
+    const startTime = performance.now();
+
+    // Colors for the morph overlay based on the incoming slide
+    const slideColor = slideData[newIndex].color;
+
+    function animateMask(timestamp) {
+      const elapsed = timestamp - startTime;
+      let progress = Math.min(elapsed / duration, 1);
+      // Ease in-out quad
+      progress = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+      let pathData;
+      let opacity;
+
+      if (progress < 0.5) {
+        // Expanding: from small circle to splash shape
+        const t = progress * 2; // 0→1
+        pathData = interpolatePaths(blobShapes[1], randomBlob, t);
+        opacity = 0.85;
+      } else {
+        // Contracting: from splash to full screen reveal (mask disappears)
+        const t = (progress - 0.5) * 2; // 0→1
+        pathData = interpolatePaths(randomBlob, fullScreen, t);
+        opacity = 0.85 * (1 - t);
+      }
+
+      morphPath.setAttribute('d', pathData);
+      morphOverlay.style.opacity = 1;
+
+      if (progress < 1) {
+        transitionFrame = requestAnimationFrame(animateMask);
+      } else {
+        // Done
+        morphOverlay.style.display = 'none';
+        oldSlide.classList.remove('active');
+        currentIndex = newIndex;
+        isTransitioning = false;
+        updateActiveStates();
+      }
+    }
+
+    transitionFrame = requestAnimationFrame(animateMask);
+  }
+
+  function updateActiveStates() {
+    slides.forEach((s, i) => {
+      if (i === currentIndex) {
+        s.classList.add('active');
+      } else {
+        s.classList.remove('active');
+      }
+    });
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+    progressEl.style.width = ((currentIndex + 1) / TOTAL * 100) + '%';
+  }
+
+  function goTo(index) {
+    if (isTransitioning) return;
+    if (index < 0) index = TOTAL - 1;
+    if (index >= TOTAL) index = 0;
+    transitionTo(index);
+  }
+
+  // Controls
+  document.getElementById('prevBtn').addEventListener('click', () => goTo(currentIndex - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => goTo(currentIndex + 1));
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goTo(currentIndex - 1);
+    if (e.key === 'ArrowRight') goTo(currentIndex + 1);
+  });
+
+  // Touch/Swipe
+  let touchStartX = 0;
+  container.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  container.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx > 0) goTo(currentIndex - 1);
+      else goTo(currentIndex + 1);
+    }
+  });
+
+  // Auto-play
+  let autoInterval = setInterval(() => goTo(currentIndex + 1), 5000);
+  container.addEventListener('mouseenter', () => clearInterval(autoInterval));
+  container.addEventListener('mouseleave', () => {
+    clearInterval(autoInterval);
+    autoInterval = setInterval(() => goTo(currentIndex + 1), 5000);
+  });
+
+  // Init
+  morphOverlay.style.display = 'none';
+  progressEl.style.width = (1 / TOTAL * 100) + '%';
+  updateActiveStates();
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Infinite Product Slider with 3D Effect
+  Inspired by "Infinite carousel with 3D effect"
+  and "Sofi pod showcase".
+  Infinite product slider that loops seamlessly with 3D depth.
+  Product cards scale and shift in z-depth as they pass through center.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinite Product Slider</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+    --color-warm: #ff6b35;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .slider-header {
+    padding: 2rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+
+  .slider-header .logo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .slider-header .logo span { color: var(--color-primary); }
+
+  .slider-header .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .slider-header .nav-links a {
+    color: var(--color-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+
+  .slider-header .nav-links a:hover { color: var(--color-primary); }
+
+  /* Main slider area */
+  .slider-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    perspective: 1200px;
+    overflow: hidden;
+  }
+
+  /* Background gradient that follows active card */
+  .slider-bg-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.15;
+    transition: background 0.8s ease;
+    pointer-events: none;
+  }
+
+  /* Card track */
+  .slider-track {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    transform-style: preserve-3d;
+  }
+
+  /* Product card */
+  .product-card {
+    position: absolute;
+    width: 320px;
+    height: 440px;
+    border-radius: 20px;
+    background: var(--color-surface);
+    overflow: hidden;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.6s ease,
+                box-shadow 0.6s ease;
+    cursor: pointer;
+    will-change: transform, opacity;
+  }
+
+  .product-card:hover .card-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 240px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-image .product-icon {
+    font-size: 5rem;
+    opacity: 0.9;
+    transition: transform 0.4s ease;
+  }
+
+  .product-card:hover .product-icon {
+    transform: scale(1.1) translateY(-5px);
+  }
+
+  /* Gradient backgrounds for each card */
+  .card-gradient {
+    position: absolute;
+    inset: 0;
+    opacity: 0.9;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+    position: relative;
+  }
+
+  .card-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  .card-cta {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .card-cta .arrow {
+    display: inline-block;
+    transition: transform 0.3s;
+  }
+
+  .product-card:hover .card-cta .arrow { transform: translateX(4px); }
+
+  /* Controls */
+  .slider-controls {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    z-index: 20;
+  }
+
+  .slider-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s, transform 0.3s;
+    font-size: 1.2rem;
+  }
+
+  .slider-btn:hover {
+    background: rgba(233,69,96,0.15);
+    border-color: var(--color-primary);
+    transform: scale(1.1);
+  }
+
+  .slider-dots {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .slider-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+
+  .slider-dot.active {
+    background: var(--color-primary);
+    width: 24px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(233,69,96,0.4);
+  }
+
+  /* Counter */
+  .slider-counter {
+    position: absolute;
+    bottom: 3rem;
+    right: 3rem;
+    z-index: 20;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .slider-counter .current {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-text);
+  }
+
+  /* Drag hint */
+  .drag-hint {
+    position: absolute;
+    bottom: 3rem;
+    left: 3rem;
+    z-index: 20;
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: hintPulse 2s ease-in-out infinite;
+  }
+
+  .drag-hint .line {
+    width: 30px;
+    height: 1px;
+    background: var(--color-muted);
+    animation: lineSlide 2s ease-in-out infinite;
+  }
+
+  @keyframes hintPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+  @keyframes lineSlide { 0%,100% { transform: scaleX(1); } 50% { transform: scaleX(1.5); } }
+
+  /* Reflection */
+  .slider-reflection {
+    position: absolute;
+    bottom: -60px;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(to bottom, rgba(15,15,26,0), rgba(15,15,26,1));
+    pointer-events: none;
+    z-index: 15;
+  }
+</style>
+</head>
+<body>
+
+<header class="slider-header">
+  <div class="logo">Pod<span>Studio</span></div>
+  <ul class="nav-links">
+    <li><a href="#">Products</a></li>
+    <li><a href="#">About</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</header>
+
+<div class="slider-wrapper" id="sliderWrapper">
+  <div class="slider-bg-glow" id="bgGlow"></div>
+
+  <div class="slider-track" id="sliderTrack">
+    <!-- Cards are created by JS -->
+  </div>
+
+  <div class="slider-controls">
+    <button class="slider-btn" id="prevBtn">&#8592;</button>
+    <div class="slider-dots" id="sliderDots"></div>
+    <button class="slider-btn" id="nextBtn">&#8594;</button>
+  </div>
+
+  <div class="slider-counter">
+    <span class="current" id="counterCurrent">01</span>
+    <span> / </span>
+    <span id="counterTotal">06</span>
+  </div>
+
+  <div class="drag-hint">
+    <div class="line"></div>
+    Drag or click to explore
+  </div>
+
+  <div class="slider-reflection"></div>
+</div>
+
+<script>
+(function() {
+  const products = [
+    {
+      title: 'Aura Headphones',
+      category: 'Audio',
+      desc: 'Immersive spatial audio with adaptive noise cancellation.',
+      gradient: 'linear-gradient(135deg, #e94560, #533483)',
+      icon: '🎧'
+    },
+    {
+      title: 'Nova Watch',
+      category: 'Wearable',
+      desc: 'Smart health companion with always-on AMOLED display.',
+      gradient: 'linear-gradient(135deg, #0f3460, #533483)',
+      icon: '⌚'
+    },
+    {
+      title: 'Echo Speaker',
+      category: 'Smart Home',
+      desc: 'Room-filling sound with intelligent voice integration.',
+      gradient: 'linear-gradient(135deg, #ff6b35, #e94560)',
+      icon: '🔊'
+    },
+    {
+      title: 'Flux Charger',
+      category: 'Power',
+      desc: 'Wireless charging pad with 3-device simultaneous support.',
+      gradient: 'linear-gradient(135deg, #533483, #e94560)',
+      icon: '🔋'
+    },
+    {
+      title: 'Zen Tablet',
+      category: 'Computing',
+      desc: 'Ultra-thin creative tablet with pen precision and vision display.',
+      gradient: 'linear-gradient(135deg, #16213e, #0f3460)',
+      icon: '📱'
+    },
+    {
+      title: 'Pulse Earbuds',
+      category: 'Audio',
+      desc: 'True wireless with heart-rate monitoring and 36hr battery.',
+      gradient: 'linear-gradient(135deg, #e94560, #ff6b35)',
+      icon: '🎶'
+    }
+  ];
+
+  const track = document.getElementById('sliderTrack');
+  const dotsContainer = document.getElementById('sliderDots');
+  const bgGlow = document.getElementById('bgGlow');
+  const counterCurrent = document.getElementById('counterCurrent');
+  const counterTotal = document.getElementById('counterTotal');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const totalCards = products.length;
+  counterTotal.textContent = '0' + totalCards;
+
+  let activeIndex = 0;
+  let isAnimating = false;
+
+  // Create cards
+  products.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.classList.add('product-card');
+    card.dataset.index = i;
+
+    card.innerHTML = `
+      <div class="card-image">
+        <div class="card-gradient" style="background: ${p.gradient};"></div>
+        <div class="product-icon">${p.icon}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-category">${p.category}</div>
+        <div class="card-title">${p.title}</div>
+        <div class="card-desc">${p.desc}</div>
+        <div class="card-cta">Learn more <span class="arrow">&rarr;</span></div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      if (i !== activeIndex) goToSlide(i);
+    });
+
+    track.appendChild(card);
+
+    // Create dots
+    const dot = document.createElement('div');
+    dot.classList.add('slider-dot');
+    if (i === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
+
+  const cards = document.querySelectorAll('.product-card');
+  const dots = document.querySelectorAll('.slider-dot');
+
+  function positionCards() {
+    const centerX = window.innerWidth / 2;
+    const cardWidth = 320;
+    const gap = 360;
+
+    cards.forEach((card, i) => {
+      let diff = i - activeIndex;
+
+      // Infinite loop normalization
+      if (diff > totalCards / 2) diff -= totalCards;
+      if (diff < -totalCards / 2) diff += totalCards;
+
+      const x = centerX + diff * gap - cardWidth / 2;
+      const absDiff = Math.abs(diff);
+      const zIndex = 10 - absDiff;
+      const scale = absDiff === 0 ? 1 : Math.max(0.7, 1 - absDiff * 0.15);
+      const translateY = absDiff === 0 ? 0 : absDiff * 15;
+      const translateZ = absDiff === 0 ? 50 : -absDiff * 50;
+      const opacity = absDiff <= 2 ? Math.max(0.3, 1 - absDiff * 0.35) : 0;
+      const rotateY = diff * -8;
+
+      card.style.left = x + 'px';
+      card.style.top = '50%';
+      card.style.transform = `translateY(-50%) translateY(${translateY}px) scale(${scale}) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
+      card.style.opacity = opacity;
+      card.style.zIndex = zIndex;
+      card.style.filter = absDiff === 0 ? 'brightness(1)' : `brightness(${0.6 + 0.4 * (1 - absDiff * 0.2)})`;
+    });
+
+    // Update glow color
+    bgGlow.style.background = products[activeIndex].gradient.split(',')[0].replace('linear-gradient(135deg', 'radial-gradient(circle');
+    bgGlow.style.left = '50%';
+    bgGlow.style.top = '50%';
+    bgGlow.style.transform = 'translate(-50%, -50%)';
+
+    // Update counter
+    counterCurrent.textContent = (activeIndex + 1).toString().padStart(2, '0');
+
+    // Update dots
+    dots.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+  }
+
+  function goToSlide(index) {
+    if (isAnimating) return;
+    isAnimating = true;
+    activeIndex = ((index % totalCards) + totalCards) % totalCards;
+    positionCards();
+    setTimeout(() => { isAnimating = false; }, 600);
+  }
+
+  prevBtn.addEventListener('click', () => goToSlide(activeIndex - 1));
+  nextBtn.addEventListener('click', () => goToSlide(activeIndex + 1));
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goToSlide(activeIndex - 1);
+    if (e.key === 'ArrowRight') goToSlide(activeIndex + 1);
+  });
+
+  // Touch/mouse drag
+  let dragStartX = 0;
+  let isDragging = false;
+  const sliderWrapper = document.getElementById('sliderWrapper');
+
+  sliderWrapper.addEventListener('mousedown', (e) => {
+    dragStartX = e.clientX;
+    isDragging = true;
+  });
+
+  sliderWrapper.addEventListener('mousemove', (e) => {
+    // Could add live drag tracking here
+  });
+
+  sliderWrapper.addEventListener('mouseup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    const diff = e.clientX - dragStartX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goToSlide(activeIndex - 1);
+      else goToSlide(activeIndex + 1);
+    }
+  });
+
+  // Touch
+  let touchStartX = 0;
+  sliderWrapper.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  sliderWrapper.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goToSlide(activeIndex + 1);
+      else goToSlide(activeIndex - 1);
+    }
+  });
+
+  // Auto-play
+  let autoPlayInterval;
+  function startAutoPlay() {
+    autoPlayInterval = setInterval(() => {
+      goToSlide(activeIndex + 1);
+    }, 4000);
+  }
+  function stopAutoPlay() {
+    clearInterval(autoPlayInterval);
+  }
+
+  // Pause on hover
+  sliderWrapper.addEventListener('mouseenter', stopAutoPlay);
+  sliderWrapper.addEventListener('mouseleave', startAutoPlay);
+
+  positionCards();
+  startAutoPlay();
+
+  // Reposition on resize
+  window.addEventListener('resize', positionCards);
+})();
+</script>
+</body>
+</html>

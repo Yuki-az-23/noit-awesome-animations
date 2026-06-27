@@ -1,0 +1,370 @@
+<!--
+  ============================================================
+  Fancy Tab Bar – Animated Indicator with Morph Effect
+  Part of: CSS+JS Animations Library / 13-micro-interactions
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fancy Tab Bar – Morphing Indicator</title>
+<style>
+  /* ── Reset & Custom Properties ── */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --color-bg:#0f0f1a;
+    --color-surface:#16213e;
+    --color-primary:#e94560;
+    --color-primary-light:#ff6b81;
+    --color-text:#eaeaea;
+    --color-text-muted:#7f8c9b;
+    --color-border:#1e2d4a;
+    --tab-bar-height:72px;
+    --ease-spring:cubic-bezier(.34,1.56,.64,1);
+    --ease-smooth:cubic-bezier(.4,0,.2,1);
+  }
+  html{font-size:16px}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--color-bg);
+    color:var(--color-text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  /* ── Page Header ── */
+  .page-header{
+    text-align:center;
+    margin-bottom:48px;
+  }
+  .page-header h1{
+    font-size:2rem;
+    font-weight:700;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .page-header p{
+    color:var(--color-text-muted);
+    margin-top:8px;
+    font-size:.95rem;
+  }
+
+  /* ── Tab Bar Container ── */
+  .tab-bar-wrapper{
+    position:relative;
+    width:100%;
+    max-width:560px;
+  }
+  .tab-bar{
+    display:flex;
+    background:var(--color-surface);
+    border-radius:20px;
+    padding:6px;
+    position:relative;
+    box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  /* ── Morphing Indicator ── */
+  .tab-indicator{
+    position:absolute;
+    top:6px;
+    height:calc(100% - 12px);
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    border-radius:16px;
+    transition:left .5s var(--ease-spring),
+               width .5s var(--ease-spring),
+               border-radius .35s var(--ease-smooth);
+    z-index:1;
+    box-shadow:0 4px 16px rgba(233,69,96,.4);
+  }
+  .tab-indicator::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+    pointer-events:none;
+  }
+  /* Morph states – indicator changes shape per tab */
+  .tab-bar[data-morph="pill"] .tab-indicator{border-radius:16px}
+  .tab-bar[data-morph="round"] .tab-indicator{border-radius:50%}
+  .tab-bar[data-morph="sharp"] .tab-indicator{border-radius:6px}
+  .tab-bar[data-morph="skew"] .tab-indicator{border-radius:6px 24px 24px 6px;transform:skewX(-4deg)}
+  .tab-bar[data-morph="blob"] .tab-indicator{border-radius:30% 70% 70% 30%/30% 30% 70% 70%}
+
+  /* ── Tab Items ── */
+  .tab-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:12px 8px;
+    cursor:pointer;
+    position:relative;
+    z-index:2;
+    transition:transform .25s var(--ease-spring);
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  .tab-item:hover{transform:translateY(-2px)}
+  .tab-item:active{transform:scale(.93)}
+
+  /* Tab Icon */
+  .tab-icon{
+    width:26px;
+    height:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--color-text-muted);
+    transition:color .3s var(--ease-smooth),transform .4s var(--ease-spring);
+  }
+  .tab-icon svg{
+    width:100%;
+    height:100%;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .tab-item.active .tab-icon{
+    color:#fff;
+    transform:scale(1.15) translateY(-1px);
+  }
+
+  /* Tab Label */
+  .tab-label{
+    font-size:.7rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:var(--color-text-muted);
+    transition:color .3s var(--ease-smooth);
+  }
+  .tab-item.active .tab-label{color:#fff}
+
+  /* ── Content Panels ── */
+  .tab-content-area{
+    margin-top:32px;
+    width:100%;
+    max-width:560px;
+    min-height:180px;
+    position:relative;
+  }
+  .tab-panel{
+    position:absolute;
+    inset:0;
+    background:var(--color-surface);
+    border-radius:16px;
+    padding:28px 32px;
+    opacity:0;
+    transform:translateY(16px) scale(.97);
+    transition:opacity .4s var(--ease-smooth),transform .4s var(--ease-smooth);
+    pointer-events:none;
+  }
+  .tab-panel.active{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    pointer-events:auto;
+  }
+  .tab-panel h2{
+    font-size:1.25rem;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .tab-panel p{
+    color:var(--color-text-muted);
+    line-height:1.6;
+    font-size:.92rem;
+  }
+
+  /* ── Morph Label ── */
+  .morph-label{
+    text-align:center;
+    margin-top:24px;
+    font-size:.82rem;
+    color:var(--color-text-muted);
+    letter-spacing:.3px;
+  }
+  .morph-label span{
+    color:var(--color-primary);
+    font-weight:600;
+  }
+
+  /* ── Bubble particles on switch ── */
+  .bubble{
+    position:absolute;
+    width:6px;height:6px;
+    background:var(--color-primary);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:3;
+    animation:bubblePop .55s var(--ease-spring) forwards;
+  }
+  @keyframes bubblePop{
+    0%{opacity:1;transform:scale(0) translate(0,0)}
+    60%{opacity:1;transform:scale(1.2) translate(var(--bx),var(--by))}
+    100%{opacity:0;transform:scale(.3) translate(var(--bx),calc(var(--by) - 14px))}
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Fancy Tab Bar</h1>
+  <p>Animated indicator morphs shape per tab</p>
+</div>
+
+<div class="tab-bar-wrapper">
+  <div class="tab-bar" id="tabBar" data-morph="pill">
+    <div class="tab-indicator" id="indicator"></div>
+
+    <!-- Home -->
+    <div class="tab-item active" data-index="0" data-morph="pill">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/></svg>
+      </div>
+      <span class="tab-label">Home</span>
+    </div>
+
+    <!-- Search -->
+    <div class="tab-item" data-index="1" data-morph="round">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      </div>
+      <span class="tab-label">Search</span>
+    </div>
+
+    <!-- Likes -->
+    <div class="tab-item" data-index="2" data-morph="sharp">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+      <span class="tab-label">Likes</span>
+    </div>
+
+    <!-- Messages -->
+    <div class="tab-item" data-index="3" data-morph="skew">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <span class="tab-label">Chat</span>
+    </div>
+
+    <!-- Profile -->
+    <div class="tab-item" data-index="4" data-morph="blob">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/></svg>
+      </div>
+      <span class="tab-label">Profile</span>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content-area" id="contentArea">
+  <div class="tab-panel active" data-panel="0">
+    <h2>🏠 Home</h2>
+    <p>Welcome back! Your feed is live. Indicator morphs into a <strong>pill</strong> shape — smooth and classic.</p>
+  </div>
+  <div class="tab-panel" data-panel="1">
+    <h2>🔍 Search</h2>
+    <p>Discover new content. The indicator becomes a <strong>round pill</strong> — like a search lens.</p>
+  </div>
+  <div class="tab-panel" data-panel="2">
+    <h2>❤️ Likes</h2>
+    <p>Your favorites live here. Indicator turns <strong>sharp-edged</strong> — strong and decisive.</p>
+  </div>
+  <div class="tab-panel" data-panel="3">
+    <h2>💬 Chat</h2>
+    <p>Conversations that matter. Indicator <strong>skews sideways</strong> — just like text bubbles.</p>
+  </div>
+  <div class="tab-panel" data-panel="4">
+    <h2>👤 Profile</h2>
+    <p>Your space, your rules. Indicator morphs into an <strong>organic blob</strong> — like a face, unique.</p>
+  </div>
+</div>
+
+<div class="morph-label" id="morphLabel">
+  Current morph: <span>pill</span>
+</div>
+
+<script>
+(function(){
+  const tabBar   = document.getElementById('tabBar');
+  const indicator = document.getElementById('indicator');
+  const tabs      = tabBar.querySelectorAll('.tab-item');
+  const panels    = document.querySelectorAll('.tab-panel');
+  const morphLbl  = document.getElementById('morphLabel').querySelector('span');
+
+  function moveIndicator(tab){
+    const barRect = tabBar.getBoundingClientRect();
+    const tabRect = tab.getBoundingClientRect();
+    const left    = tabRect.left - barRect.left;
+    const width   = tabRect.width;
+
+    indicator.style.left  = left + 'px';
+    indicator.style.width = width + 'px';
+  }
+
+  function spawnBubbles(tab){
+    const tabRect = tab.getBoundingClientRect();
+    const barRect = tabBar.getBoundingClientRect();
+    const cx = tabRect.left - barRect.left + tabRect.width/2;
+    const cy = tabRect.top  - barRect.top  + tabRect.height/2;
+
+    for(let i=0;i<6;i++){
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      const angle = (Math.PI*2/6)*i + Math.random()*.4;
+      const dist  = 18 + Math.random()*12;
+      b.style.cssText = `left:${cx}px;top:${cy}px;--bx:${Math.cos(angle)*dist}px;--by:${Math.sin(angle)*dist}px;width:${4+Math.random()*4}px;height:${4+Math.random()*4}px`;
+      tabBar.appendChild(b);
+      b.addEventListener('animationend',()=>b.remove());
+    }
+  }
+
+  function setActive(index){
+    const tab = tabs[index];
+    tabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    moveIndicator(tab);
+    spawnBubbles(tab);
+
+    // Morph shape
+    const morph = tab.dataset.morph;
+    tabBar.dataset.morph = morph;
+    // Reset skew transform for non-skew morphs
+    if(morph !== 'skew') indicator.style.transform = '';
+    morphLbl.textContent = morph;
+
+    // Panels
+    panels.forEach(p=>p.classList.remove('active'));
+    document.querySelector(`.tab-panel[data-panel="${index}"]`).classList.add('active');
+  }
+
+  tabs.forEach((t,i)=>{
+    t.addEventListener('click',()=>setActive(i));
+  });
+
+  // Initial positioning
+  requestAnimationFrame(()=>moveIndicator(tabs[0]));
+  window.addEventListener('resize',()=>{
+    const active = tabBar.querySelector('.tab-item.active') || tabs[0];
+    moveIndicator(active);
+  });
+})();
+</script>
+</body>
+</html>

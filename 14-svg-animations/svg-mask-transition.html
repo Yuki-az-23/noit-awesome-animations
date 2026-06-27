@@ -1,0 +1,470 @@
+<!--
+  ============================================================
+  SVG Mask Transitions – Content Reveals Through Animated Masks
+  Part of: CSS+JS Animations Library / 14-svg-animations
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Mask Transitions</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --color-bg:#0f0f1a;
+    --color-surface:#16213e;
+    --color-primary:#e94560;
+    --color-primary-light:#ff6b81;
+    --color-accent:#0f3460;
+    --color-text:#eaeaea;
+    --color-text-muted:#7f8c9b;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--color-bg);color:var(--color-text);
+    min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;padding:50px 20px;
+  }
+  h1{
+    font-size:2rem;font-weight:700;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:8px;text-align:center;
+  }
+  .subtitle{color:var(--color-text-muted);font-size:.95rem;margin-bottom:48px;text-align:center;}
+
+  .transitions-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:28px;max-width:800px;width:100%;
+  }
+
+  .transition-card{
+    background:var(--color-surface);
+    border-radius:20px;overflow:hidden;
+    box-shadow:0 4px 24px rgba(0,0,0,.3);
+    position:relative;
+  }
+
+  .transition-card .trigger-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;
+    background:rgba(15,52,96,.5);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+
+  .trigger-bar .card-label{
+    font-size:.75rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--color-primary);
+  }
+
+  .trigger-btn{
+    padding:8px 20px;
+    background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));
+    border:none;border-radius:10px;
+    color:#fff;font-size:.8rem;font-weight:700;
+    cursor:pointer;
+    transition:transform .15s ease,box-shadow .2s ease;
+  }
+  .trigger-btn:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(233,69,96,.4)}
+  .trigger-btn:active{transform:scale(.95)}
+
+  /* ── Mask Viewport ── */
+  .mask-viewport{
+    position:relative;
+    width:100%;height:280px;
+    overflow:hidden;
+    background:#0a0a14;
+  }
+
+  /* Hidden content behind mask */
+  .mask-content{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:24px;text-align:center;
+    opacity:0;
+    transition:opacity .4s ease .3s;
+  }
+  .mask-content.visible{opacity:1}
+
+  .mask-content h2{
+    font-size:1.4rem;font-weight:700;margin-bottom:8px;
+  }
+  .mask-content p{
+    font-size:.9rem;color:rgba(255,255,255,.8);line-height:1.6;max-width:260px;
+  }
+  .mask-content .emoji-icon{
+    font-size:2.4rem;margin-bottom:12px;
+  }
+
+  /* Background content (what you see before reveal) */
+  .mask-bg-content{
+    position:absolute;inset:0;
+    background:linear-gradient(135deg,#16213e,#0f3460);
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .3s ease;
+  }
+  .mask-bg-content.hidden{opacity:0}
+
+  .mask-bg-content .placeholder-icon{
+    font-size:3rem;opacity:.3;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{transform:scale(1);opacity:.3}
+    50%{transform:scale(1.1);opacity:.5}
+  }
+
+  /* ── SVG Overlay for Masks ── */
+  .mask-svg{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    z-index:10;pointer-events:none;
+  }
+
+  /* ── 1. Circle Expand ── */
+  .circle-mask-shape{
+    fill:white;
+    transform-origin:center center;
+    transform:scale(0);
+    transition:transform .8s cubic-bezier(.4,0,.2,1);
+  }
+  .circle-mask-shape.expanded{transform:scale(1)}
+
+  /* ── 2. Diamond Rotate ── */
+  .diamond-mask-shape{
+    fill:white;
+    transform-origin:center center;
+    transform:scale(0) rotate(45deg);
+    transition:transform .8s cubic-bezier(.4,0,.2,1);
+  }
+  .diamond-mask-shape.expanded{transform:scale(1) rotate(0deg)}
+
+  /* ── 3. Star Burst ── */
+  .star-mask-shape{
+    fill:white;
+    transform-origin:center center;
+    transform:scale(0);
+    opacity:0;
+    transition:transform .6s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;
+  }
+  .star-mask-shape.expanded{
+    transform:scale(1);
+    opacity:1;
+  }
+
+  /* ── 4. Organic Blob ── */
+  .blob-mask-shape{
+    fill:white;
+    transform-origin:center center;
+    transform:scale(0);
+    transition:transform .9s cubic-bezier(.4,0,.2,1), border-radius .5s ease;
+  }
+  .blob-mask-shape.expanded{transform:scale(1)}
+
+  /* ── Auto-play indicator ── */
+  .auto-play-badge{
+    position:absolute;top:12px;right:12px;
+    padding:4px 10px;border-radius:12px;
+    background:rgba(233,69,96,.2);
+    color:var(--color-primary);
+    font-size:.65rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:1px;
+    z-index:5;pointer-events:none;
+    animation:badgePulse 2s ease-in-out infinite;
+  }
+  @keyframes badgePulse{
+    0%,100%{opacity:.7}50%{opacity:1}
+  }
+
+  /* ── Page-level auto-progress bar ── */
+  .auto-progress{
+    position:absolute;bottom:0;left:0;height:3px;
+    background:var(--color-primary);
+    border-radius:0 2px 2px 0;
+    z-index:5;
+    transition:width .05s linear;
+  }
+</style>
+</head>
+<body>
+
+<h1>SVG Mask Transitions</h1>
+<p class="subtitle">Content revealed through animated SVG masks · Click or auto-play</p>
+
+<div class="transitions-grid">
+
+  <!-- 1. Circle Expand -->
+  <div class="transition-card" id="card-circle">
+    <div class="trigger-bar">
+      <span class="card-label">1 · Circle Expand</span>
+      <button class="trigger-btn" data-action="toggle" data-target="circle">Reveal</button>
+    </div>
+    <span class="auto-play-badge">Auto</span>
+    <div class="mask-viewport">
+      <div class="mask-bg-content"><span class="placeholder-icon">👁️</span></div>
+      <div class="mask-content" id="content-circle">
+        <span class="emoji-icon">✨</span>
+        <h2>Circle Reveal</h2>
+        <p>Content emerges from a single point expanding outward in a perfect circle.</p>
+      </div>
+      <svg class="mask-svg" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <mask id="mask-circle">
+            <rect width="400" height="280" fill="black"/>
+            <circle class="circle-mask-shape" id="circle-shape" cx="200" cy="140" r="200"/>
+          </mask>
+        </defs>
+        <rect width="400" height="280" fill="white" mask="url(#mask-circle)"/>
+      </svg>
+      <div class="auto-progress" id="progress-circle" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- 2. Diamond Rotate -->
+  <div class="transition-card" id="card-diamond">
+    <div class="trigger-bar">
+      <span class="card-label">2 · Diamond Rotate</span>
+      <button class="trigger-btn" data-action="toggle" data-target="diamond">Reveal</button>
+    </div>
+    <span class="auto-play-badge">Auto</span>
+    <div class="mask-viewport">
+      <div class="mask-bg-content"><span class="placeholder-icon">◆</span></div>
+      <div class="mask-content" id="content-diamond">
+        <span class="emoji-icon">💎</span>
+        <h2>Diamond Rotate</h2>
+        <p>A diamond shape rotates into view as it expands, creating a dynamic geometric reveal.</p>
+      </div>
+      <svg class="mask-svg" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <mask id="mask-diamond">
+            <rect width="400" height="280" fill="black"/>
+            <rect class="diamond-mask-shape" id="diamond-shape"
+              x="-100" y="-100" width="600" height="600"
+              transform-origin="200 140"/>
+          </mask>
+        </defs>
+        <rect width="400" height="280" fill="white" mask="url(#mask-diamond)"/>
+      </svg>
+      <div class="auto-progress" id="progress-diamond" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- 3. Star Burst -->
+  <div class="transition-card" id="card-starburst">
+    <div class="trigger-bar">
+      <span class="card-label">3 · Star Burst</span>
+      <button class="trigger-btn" data-action="toggle" data-target="starburst">Reveal</button>
+    </div>
+    <span class="auto-play-badge">Auto</span>
+    <div class="mask-viewport">
+      <div class="mask-bg-content"><span class="placeholder-icon">★</span></div>
+      <div class="mask-content" id="content-starburst">
+        <span class="emoji-icon">🌟</span>
+        <h2>Star Burst</h2>
+        <p>A multi-pointed star bursts open to reveal content in a dramatic, explosive transition.</p>
+      </div>
+      <svg class="mask-svg" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <mask id="mask-starburst">
+            <rect width="400" height="280" fill="black"/>
+            <polygon class="star-mask-shape" id="starburst-shape"
+              points=""/>
+          </mask>
+        </defs>
+        <rect width="400" height="280" fill="white" mask="url(#mask-starburst)"/>
+      </svg>
+      <div class="auto-progress" id="progress-starburst" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- 4. Organic Blob -->
+  <div class="transition-card" id="card-blob">
+    <div class="trigger-bar">
+      <span class="card-label">4 · Organic Blob</span>
+      <button class="trigger-btn" data-action="toggle" data-target="blob">Reveal</button>
+    </div>
+    <span class="auto-play-badge">Auto</span>
+    <div class="mask-viewport">
+      <div class="mask-bg-content"><span class="placeholder-icon">🫧</span></div>
+      <div class="mask-content" id="content-blob">
+        <span class="emoji-icon">🎨</span>
+        <h2>Organic Blob</h2>
+        <p>A fluid, organic shape morphs and expands to reveal content with natural motion.</p>
+      </div>
+      <svg class="mask-svg" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <mask id="mask-blob">
+            <rect width="400" height="280" fill="black"/>
+            <path class="blob-mask-shape" id="blob-shape"
+              d=""/>
+          </mask>
+        </defs>
+        <rect width="400" height="280" fill="white" mask="url(#mask-blob)"/>
+      </svg>
+      <div class="auto-progress" id="progress-blob" style="width:0%"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const state = {
+    circle: false,
+    diamond: false,
+    starburst: false,
+    blob: false,
+  };
+
+  // ── Generate star points ──
+  function starPoints(cx, cy, outerR, innerR, points){
+    let path = '';
+    for(let i=0; i<points*2; i++){
+      const r = i%2===0 ? outerR : innerR;
+      const angle = (Math.PI/points)*i - Math.PI/2;
+      const x = cx + r*Math.cos(angle);
+      const y = cy + r*Math.sin(angle);
+      path += (i===0?'':',') + x.toFixed(1)+' '+y.toFixed(1);
+    }
+    return path;
+  }
+
+  // ── Generate organic blob path ──
+  function blobPath(cx, cy, rx, ry){
+    const pts = 8;
+    let d = '';
+    for(let i=0; i<pts; i++){
+      const angle = (2*Math.PI/pts)*i;
+      const jitterX = (Math.random()-.5)*rx*0.3;
+      const jitterY = (Math.random()-.5)*ry*0.3;
+      const x = cx + (rx+jitterX)*Math.cos(angle);
+      const y = cy + (ry+jitterY)*Math.sin(angle);
+      if(i===0) d += `M${x.toFixed(1)},${y.toFixed(1)}`;
+      else d += ` Q${(cx + rx*0.5*Math.cos(angle - Math.PI/pts)).toFixed(1)},${(cy + ry*0.5*Math.sin(angle - Math.PI/pts)).toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
+    }
+    d += ' Z';
+    return d;
+  }
+
+  // ── Initialize dynamic shapes ──
+  function initShapes(){
+    // Star burst - 12-pointed star
+    document.getElementById('starburst-shape').setAttribute('points',
+      starPoints(200, 140, 220, 100, 12)
+    );
+
+    // Blob
+    regenerateBlob();
+  }
+
+  let currentBlob = '';
+  function regenerateBlob(){
+    currentBlob = blobPath(200, 140, 200, 140);
+    document.getElementById('blob-shape').setAttribute('d', currentBlob);
+  }
+
+  // ── Toggle transition ──
+  function toggle(type){
+    state[type] = !state[type];
+    const isRevealed = state[type];
+
+    const bgContent = document.querySelector(`#card-${type} .mask-bg-content`);
+    const content = document.getElementById(`content-${type}`);
+    const shape = document.getElementById(`${type}-shape`);
+    const progress = document.getElementById(`progress-${type}`);
+    const btn = document.querySelector(`[data-target="${type}"]`);
+
+    if(isRevealed){
+      bgContent.classList.add('hidden');
+      content.classList.add('visible');
+      shape.classList.add('expanded');
+      btn.textContent = 'Hide';
+      // Animate progress
+      animateProgress(progress, 0, 100, 800);
+    } else {
+      bgContent.classList.remove('hidden');
+      content.classList.remove('visible');
+      shape.classList.remove('expanded');
+      btn.textContent = 'Reveal';
+      animateProgress(progress, 100, 0, 500);
+    }
+  }
+
+  function animateProgress(el, from, to, duration){
+    const startTime = performance.now();
+    function tick(now){
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const val = from + (to - from) * t;
+      el.style.width = val + '%';
+      if(t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ── Button clicks ──
+  document.querySelectorAll('[data-action="toggle"]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const type = btn.dataset.target;
+      toggle(type);
+      // Reset auto-play for this card
+      clearInterval(autoIntervals[type]);
+      startAutoPlay(type);
+    });
+  });
+
+  // ── Auto-play ──
+  const autoIntervals = {};
+  const delays = { circle:5000, diamond:5500, starburst:6000, blob:6500 };
+
+  function startAutoPlay(type){
+    let elapsed = 0;
+    autoIntervals[type] = setInterval(()=>{
+      elapsed += 100;
+      if(elapsed >= delays[type]){
+        toggle(type);
+        // If revealed, wait then hide
+        setTimeout(()=>{
+          if(state[type]) toggle(type);
+          elapsed = 0;
+        }, 2500);
+      }
+    }, 100);
+  }
+
+  // ── Init ──
+  initShapes();
+
+  // Auto-play each card with staggered start
+  const types = ['circle','diamond','starburst','blob'];
+  types.forEach((type, i)=>{
+    setTimeout(()=>{
+      toggle(type); // Initial reveal
+      setTimeout(()=>{
+        if(state[type]) toggle(type); // Hide
+        startAutoPlay(type);
+      }, 2200);
+    }, 800 + i * 600);
+  });
+
+  // Regenerate blob on each cycle
+  setInterval(()=>{
+    regenerateBlob();
+    // Update the expanded state too
+    if(state.blob){
+      const shape = document.getElementById('blob-shape');
+      shape.classList.remove('expanded');
+      void shape.getBoundingClientRect();
+      shape.classList.add('expanded');
+    }
+  }, 8000);
+
+})();
+</script>
+</body>
+</html>

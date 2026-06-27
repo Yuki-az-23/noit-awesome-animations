@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Hero Font & Cursor Interaction
+  Inspired by "Hero Font and Cursor Interaction
+  with Colorful Effects".
+  Large hero text that reacts to cursor position —
+  letters shift colors, sizes, or positions relative
+  to cursor. Colorful glow effects around cursor area.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero Font Cursor Interaction</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Cursor glow */
+  .cursor-glow {
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+    mix-blend-mode: screen;
+  }
+
+  .cursor-glow-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(233,69,96,0.15) 0%, rgba(83,52,131,0.08) 30%, transparent 70%);
+    filter: blur(30px);
+  }
+
+  /* Custom cursor dot */
+  .cursor-dot {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px rgba(233,69,96,0.5);
+    transition: transform 0.1s ease;
+  }
+
+  /* Hero container */
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .hero-text {
+    text-align: center;
+    position: relative;
+    padding: 0 2rem;
+  }
+
+  /* Letter styling */
+  .hero-letter {
+    display: inline-block;
+    font-size: clamp(4rem, 12vw, 10rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.1;
+    transition: transform 0.15s ease-out, color 0.2s ease, text-shadow 0.2s ease;
+    will-change: transform, color;
+    cursor: default;
+    user-select: none;
+  }
+
+  .hero-letter.space {
+    width: 0.3em;
+  }
+
+  /* Second line */
+  .hero-line-2 {
+    display: block;
+  }
+
+  .hero-line-2 .hero-letter {
+    font-size: clamp(4rem, 12vw, 10rem);
+    background: linear-gradient(135deg, #e94560, #ff6b35, #533483, #0f3460);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* Subtitle */
+  .hero-subtitle {
+    margin-top: 2rem;
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    color: var(--color-muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 1s forwards;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Decorative elements */
+  .deco-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(233,69,96,0.1);
+    pointer-events: none;
+    animation: decoSpin 30s linear infinite;
+  }
+
+  @keyframes decoSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  .deco-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(233,69,96,0.2), transparent);
+    pointer-events: none;
+  }
+
+  /* Bottom info */
+  .bottom-info {
+    position: absolute;
+    bottom: 2rem;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 3rem;
+    z-index: 10;
+  }
+
+  .bottom-info span {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Color palette indicator */
+  .color-palette {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 1.5s forwards;
+  }
+
+  .color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 2px solid transparent;
+  }
+
+  .color-swatch:hover {
+    transform: scale(1.3);
+  }
+
+  .color-swatch.active {
+    border-color: white;
+    box-shadow: 0 0 15px currentColor;
+  }
+
+  /* Mode label */
+  .mode-label {
+    position: fixed;
+    top: 2rem;
+    left: 2rem;
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 1.2s forwards;
+  }
+
+  .mode-label .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Instruction */
+  .instruction {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 2s forwards;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .instruction .mouse-icon {
+    width: 18px;
+    height: 28px;
+    border: 2px solid var(--color-muted);
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .instruction .mouse-icon::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 6px;
+    background: var(--color-primary);
+    border-radius: 1px;
+    animation: scrollDot 1.5s ease-in-out infinite;
+  }
+
+  @keyframes scrollDot {
+    0%, 100% { opacity: 0; top: 5px; }
+    50% { opacity: 1; top: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow">
+  <div class="cursor-glow-inner"></div>
+</div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<div class="mode-label">
+  <span class="dot"></span>
+  <span id="modeName">Magnetic</span>
+</div>
+
+<div class="color-palette" id="colorPalette">
+  <div class="color-swatch active" style="background:#e94560;" data-colors='["#e94560","#ff6b35","#533483","#0f3460"]' onclick="setColorTheme(this)"></div>
+  <div class="color-swatch" style="background:#00d2ff;" data-colors='["#00d2ff","#7b2ff7","#ff0099","#00ff87"]' onclick="setColorTheme(this)"></div>
+  <div class="color-swatch" style="background:#f7971e;" data-colors='["#f7971e","#ffd200","#ff6b35","#e94560"]' onclick="setColorTheme(this)"></div>
+  <div class="color-swatch" style="background:#a8ff78;" data-colors='["#a8ff78","#78ffd6","#00d2ff","#533483"]' onclick="setColorTheme(this)"></div>
+</div>
+
+<section class="hero" id="hero">
+  <!-- Decorative rings -->
+  <div class="deco-ring" style="width:500px; height:500px; top:calc(50% - 250px); left:calc(50% - 250px);"></div>
+  <div class="deco-ring" style="width:350px; height:350px; top:calc(50% - 175px); left:calc(50% - 175px); animation-direction:reverse; animation-duration:20s;"></div>
+  <div class="deco-ring" style="width:200px; height:200px; top:calc(50% - 100px); left:calc(50% - 100px); animation-duration:15s;"></div>
+
+  <!-- Decorative lines -->
+  <div class="deco-line" style="width:300px; top:20%; left:5%; transform: rotate(-15deg);"></div>
+  <div class="deco-line" style="width:200px; bottom:25%; right:8%; transform: rotate(20deg);"></div>
+
+  <div class="hero-text" id="heroText">
+    <div class="hero-line-1" id="heroLine1"></div>
+    <div class="hero-line-2 hero-line-grad" id="heroLine2"></div>
+    <p class="hero-subtitle">Move your cursor across the letters — watch them react</p>
+  </div>
+</section>
+
+<div class="bottom-info">
+  <span>Interactive Typography</span>
+  <span>2025</span>
+</div>
+
+<div class="instruction">
+  <div class="mouse-icon"></div>
+  Move cursor to interact
+</div>
+
+<script>
+(function() {
+  const cursorDot = document.getElementById('cursorDot');
+  const cursorGlow = document.getElementById('cursorGlow');
+  const heroLine1 = document.getElementById('heroLine1');
+  const heroLine2 = document.getElementById('heroLine2');
+  const modeName = document.getElementById('modeName');
+
+  const line1Text = 'CURSOR';
+  const line2Text = 'EFFECTS';
+
+  let activeColors = ['#e94560', '#ff6b35', '#533483', '#0f3460'];
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let interactionMode = 'magnetic'; // magnetic, wave, scatter
+
+  // Create letter elements
+  function createLetters(text, container, isGradient) {
+    container.innerHTML = '';
+    text.split('').forEach((char, i) => {
+      const span = document.createElement('span');
+      span.classList.add('hero-letter');
+      if (char === ' ') {
+        span.classList.add('space');
+        span.innerHTML = '&nbsp;';
+      } else {
+        span.textContent = char;
+      }
+      span.dataset.index = i;
+      span.dataset.originalX = '0';
+      span.dataset.originalY = '0';
+      container.appendChild(span);
+    });
+  }
+
+  createLetters(line1Text, heroLine1, false);
+  createLetters(line2Text, heroLine2, true);
+
+  // Store original positions
+  const allLetters = document.querySelectorAll('.hero-letter');
+  let originalPositions = [];
+
+  function cachePositions() {
+    originalPositions = [];
+    allLetters.forEach((letter, i) => {
+      const rect = letter.getBoundingClientRect();
+      originalPositions.push({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        el: letter,
+        origFontSize: parseFloat(getComputedStyle(letter).fontSize)
+      });
+    });
+  }
+
+  // Wait for fonts to load then cache
+  setTimeout(cachePositions, 100);
+  window.addEventListener('resize', () => setTimeout(cachePositions, 100));
+
+  // Mouse tracking
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
+    // Move cursor elements
+    cursorDot.style.left = mouseX + 'px';
+    cursorDot.style.top = mouseY + 'px';
+    cursorGlow.style.left = mouseX + 'px';
+    cursorGlow.style.top = mouseY + 'px';
+  });
+
+  // Mode switching on click
+  const modes = ['magnetic', 'wave', 'scatter'];
+  let currentModeIndex = 0;
+
+  document.addEventListener('click', () => {
+    currentModeIndex = (currentModeIndex + 1) % modes.length;
+    interactionMode = modes[currentModeIndex];
+    modeName.textContent = interactionMode.charAt(0).toUpperCase() + interactionMode.slice(1);
+  });
+
+  // Color theme switching
+  window.setColorTheme = function(swatch) {
+    const colors = JSON.parse(swatch.dataset.colors);
+    activeColors = colors;
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    swatch.classList.add('active');
+
+    // Update cursor glow color
+    const glow = cursorGlow.querySelector('.cursor-glow-inner');
+    glow.style.background = `radial-gradient(circle, ${colors[0]}26 0%, ${colors[1]}14 30%, transparent 70%)`;
+
+    // Update ring border colors
+    document.querySelectorAll('.deco-ring').forEach(ring => {
+      ring.style.borderColor = colors[0] + '1a';
+    });
+  };
+
+  // Animation loop
+  function animate() {
+    originalPositions.forEach((pos, i) => {
+      const letter = pos.el;
+      if (!letter) return;
+
+      const dx = mouseX - pos.x;
+      const dy = mouseY - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = 350;
+      const influence = Math.max(0, 1 - dist / maxDist);
+
+      // Color based on distance
+      const colorIndex = Math.floor((dist / maxDist) * (activeColors.length - 1));
+      const nextColorIndex = Math.min(colorIndex + 1, activeColors.length - 1);
+      const colorT = (dist / maxDist) * (activeColors.length - 1) - colorIndex;
+      const color = lerpColor(activeColors[colorIndex], activeColors[nextColorIndex], colorT);
+
+      if (interactionMode === 'magnetic') {
+        // Magnetic: letters attracted toward cursor
+        const moveX = dx * influence * 0.3;
+        const moveY = dy * influence * 0.3;
+        const scale = 1 + influence * 0.15;
+
+        letter.style.transform = `translate(${moveX}px, ${moveY}px) scale(${scale})`;
+        letter.style.color = influence > 0.3 ? color : '';
+        letter.style.textShadow = influence > 0.1 ? `0 0 ${20 * influence}px ${color}40, 0 0 ${40 * influence}px ${color}20` : '';
+      } else if (interactionMode === 'wave') {
+        // Wave: letters wave based on distance with phase offset
+        const phase = dist * 0.02 + performance.now() * 0.003;
+        const waveX = Math.sin(phase) * influence * 30;
+        const waveY = Math.cos(phase) * influence * 20;
+        const scale = 1 + influence * 0.2;
+
+        letter.style.transform = `translate(${waveX}px, ${waveY}px) scale(${scale})`;
+        letter.style.color = influence > 0.2 ? color : '';
+        letter.style.textShadow = influence > 0.1 ? `0 0 ${15 * influence}px ${color}60` : '';
+      } else if (interactionMode === 'scatter') {
+        // Scatter: letters push away from cursor
+        const pushX = -dx * influence * 0.5;
+        const pushY = -dy * influence * 0.5;
+        const rotation = influence * (dx > 0 ? 15 : -15);
+        const scale = 1 - influence * 0.1;
+
+        letter.style.transform = `translate(${pushX}px, ${pushY}px) rotate(${rotation}deg) scale(${scale})`;
+        letter.style.color = influence > 0.2 ? color : '';
+        letter.style.textShadow = influence > 0.1 ? `0 0 ${25 * influence}px ${color}80` : '';
+      }
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  // Gradient line letters use background-clip
+  const line2Letters = heroLine2.querySelectorAll('.hero-letter');
+  line2Letters.forEach(letter => {
+    const updateGradient = () => {
+      const colors = activeColors;
+      letter.style.background = `linear-gradient(135deg, ${colors.join(', ')})`;
+      letter.style.webkitBackgroundClip = 'text';
+      letter.style.backgroundClip = 'text';
+      letter.style.webkitTextFillColor = 'transparent';
+    };
+    updateGradient();
+    // Re-apply on color change
+    const origSetColor = window.setColorTheme;
+    window.setColorTheme = function(swatch) {
+      origSetColor(swatch);
+      updateGradient();
+    };
+  });
+
+  function lerpColor(a, b, t) {
+    const parse = (hex) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b2 = parseInt(hex.slice(5, 7), 16);
+      return [r, g, b2];
+    };
+    const [ar, ag, ab] = parse(a);
+    const [br, bg, bb] = parse(b);
+    const r = Math.round(ar + (br - ar) * t);
+    const g = Math.round(ag + (bg - ag) * t);
+    const bl = Math.round(ab + (bb - ab) * t);
+    return `rgb(${r},${g},${bl})`;
+  }
+
+  // Initial fade-in animation
+  allLetters.forEach((letter, i) => {
+    letter.style.opacity = '0';
+    letter.style.transform = 'translateY(50px)';
+    setTimeout(() => {
+      letter.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      letter.style.opacity = '1';
+      letter.style.transform = 'translateY(0)';
+      // Remove initial transitions after entrance anim
+      setTimeout(() => { letter.style.transition = ''; }, 700);
+    }, 100 + i * 50);
+  });
+
+  // Start animation
+  setTimeout(() => {
+    cachePositions();
+    animate();
+  }, 800);
+})();
+</script>
+</body>
+</html>

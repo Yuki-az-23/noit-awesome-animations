@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ========================================================
+       Overlay Menu Navigation Animation
+       Full-screen overlay with staggered item animations,
+       elastic easing, background blur, and reversible close.
+       ======================================================== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay Menu Animation</title>
+  <style>
+    /* === Base Reset & Variables === */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --color-muted: #8892a4;
+      --color-accent: #e94560;
+      --menu-bg: rgba(15, 15, 26, 0.97);
+      --transition-duration: 0.6s;
+      --stagger-delay: 0.08s;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      overflow-x: hidden;
+    }
+
+    /* === Page Content (behind overlay) === */
+    .page-content {
+      position: relative;
+      z-index: 1;
+      transition: filter var(--transition-duration) ease;
+      padding: 60px 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .page-content.blurred {
+      filter: blur(8px) brightness(0.4);
+    }
+
+    .page-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, var(--color-text) 0%, var(--color-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      font-size: 1.15rem;
+      color: var(--color-muted);
+      line-height: 1.7;
+      max-width: 560px;
+    }
+
+    .page-card {
+      margin-top: 40px;
+      background: var(--color-surface);
+      border-radius: 16px;
+      padding: 28px 32px;
+      border: 1px solid rgba(233, 69, 96, 0.15);
+    }
+
+    .page-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: var(--color-primary);
+    }
+
+    .page-card p {
+      color: var(--color-muted);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* === Hamburger Trigger === */
+    .menu-trigger {
+      position: fixed;
+      top: 28px;
+      right: 32px;
+      z-index: 1000;
+      width: 48px;
+      height: 48px;
+      background: none;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s, background 0.3s, transform 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .menu-trigger:hover {
+      border-color: var(--color-primary);
+      background: rgba(233, 69, 96, 0.1);
+      transform: scale(1.05);
+    }
+
+    .menu-trigger .bar {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--color-text);
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      position: absolute;
+    }
+
+    .menu-trigger .bar:nth-child(1) { transform: translateY(-7px); }
+    .menu-trigger .bar:nth-child(2) { transform: translateY(0); }
+    .menu-trigger .bar:nth-child(3) { transform: translateY(7px); }
+
+    .menu-trigger.active .bar:nth-child(1) {
+      transform: translateY(0) rotate(45deg);
+      background: var(--color-primary);
+    }
+    .menu-trigger.active .bar:nth-child(2) {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    .menu-trigger.active .bar:nth-child(3) {
+      transform: translateY(0) rotate(-45deg);
+      background: var(--color-primary);
+    }
+
+    /* === Overlay === */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      background: var(--menu-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      backdrop-filter: blur(0px);
+    }
+
+    .overlay.open {
+      opacity: 1;
+      visibility: visible;
+      backdrop-filter: blur(20px);
+    }
+
+    /* Decorative background elements */
+    .overlay-bg-circle {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(233, 69, 96, 0.12) 0%, transparent 70%);
+      transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.6s;
+      opacity: 0;
+    }
+
+    .overlay.open .overlay-bg-circle { opacity: 1; }
+
+    .overlay-bg-circle:nth-child(1) {
+      width: 500px; height: 500px;
+      top: -100px; left: -100px;
+      transition-delay: 0s;
+    }
+    .overlay.open .overlay-bg-circle:nth-child(1) { transform: scale(1.2); }
+
+    .overlay-bg-circle:nth-child(2) {
+      width: 400px; height: 400px;
+      bottom: -80px; right: -80px;
+      transition-delay: 0.15s;
+    }
+    .overlay.open .overlay-bg-circle:nth-child(2) { transform: scale(1.1); }
+
+    .overlay-bg-circle:nth-child(3) {
+      width: 300px; height: 300px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(22, 33, 62, 0.8) 0%, transparent 70%);
+      transition-delay: 0.1s;
+    }
+    .overlay.open .overlay-bg-circle:nth-child(3) { transform: translate(-50%, -50%) scale(1.3); }
+
+    /* === Menu Items === */
+    .menu-nav {
+      position: relative;
+      z-index: 10;
+      list-style: none;
+      text-align: center;
+    }
+
+    .menu-item {
+      margin: 8px 0;
+      opacity: 0;
+      transform: translate(var(--dir-x, 0), var(--dir-y, 0)) scale(0.8);
+      transition: opacity var(--transition-duration) cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                  transform var(--transition-duration) cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      transition-delay: var(--delay, 0s);
+    }
+
+    .overlay.open .menu-item {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+    }
+
+    /* Closing animation — reverse stagger */
+    .overlay.closing .menu-item {
+      opacity: 0;
+      transform: translate(var(--dir-x, 0), var(--dir-y, 0)) scale(0.8);
+      transition-delay: var(--close-delay, 0s);
+    }
+
+    .menu-link {
+      display: inline-block;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      text-decoration: none;
+      position: relative;
+      padding: 4px 0;
+      transition: color 0.3s, transform 0.3s;
+    }
+
+    .menu-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 3px;
+      background: var(--color-primary);
+      border-radius: 2px;
+      transition: width 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .menu-link:hover {
+      color: var(--color-primary);
+      transform: scale(1.05);
+    }
+
+    .menu-link:hover::after {
+      width: 100%;
+      left: 0;
+    }
+
+    .menu-link .link-number {
+      display: inline-block;
+      font-size: 0.4em;
+      font-weight: 400;
+      color: var(--color-primary);
+      margin-right: 12px;
+      opacity: 0.6;
+      vertical-align: super;
+    }
+
+    /* Subtitle under menu */
+    .menu-subtitle {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      transition-delay: 0.5s;
+    }
+
+    .overlay.open .menu-subtitle {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .menu-subtitle p {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .menu-subtitle .social-links {
+      margin-top: 12px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .menu-subtitle .social-links a {
+      color: var(--color-muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color 0.3s;
+    }
+
+    .menu-subtitle .social-links a:hover {
+      color: var(--color-primary);
+    }
+
+    /* Decorative side text */
+    .overlay-side-text {
+      position: absolute;
+      writing-mode: vertical-rl;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.08);
+      font-weight: 500;
+    }
+
+    .overlay-side-text.left {
+      left: 28px;
+      top: 50%;
+      transform: translateY(-50%) translateX(-20px);
+      opacity: 0;
+      transition: opacity 0.6s, transform 0.6s;
+      transition-delay: 0.4s;
+    }
+    .overlay.open .overlay-side-text.left {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    .overlay-side-text.right {
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%) translateX(20px);
+      opacity: 0;
+      transition: opacity 0.6s, transform 0.6s;
+      transition-delay: 0.45s;
+    }
+    .overlay.open .overlay-side-text.right {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .page-content { padding: 40px 20px; }
+      .menu-trigger { top: 16px; right: 16px; }
+      .menu-link { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Menu Trigger Button -->
+  <button class="menu-trigger" id="menuTrigger" aria-label="Toggle menu">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
+
+  <!-- Overlay Menu -->
+  <div class="overlay" id="overlay">
+    <div class="overlay-bg-circle"></div>
+    <div class="overlay-bg-circle"></div>
+    <div class="overlay-bg-circle"></div>
+
+    <span class="overlay-side-text left">Navigation &mdash; Explore</span>
+    <span class="overlay-side-text right">Creativity &mdash; Design</span>
+
+    <nav>
+      <ul class="menu-nav" id="menuNav">
+        <li class="menu-item" style="--dir-x:-120px; --dir-y:-40px; --delay:0.1s; --close-delay:0.32s;">
+          <a href="#" class="menu-link"><span class="link-number">01</span>Home</a>
+        </li>
+        <li class="menu-item" style="--dir-x:-140px; --dir-y:0px; --delay:0.18s; --close-delay:0.26s;">
+          <a href="#" class="menu-link"><span class="link-number">02</span>About</a>
+        </li>
+        <li class="menu-item" style="--dir-x:120px; --dir-y:-20px; --delay:0.26s; --close-delay:0.2s;">
+          <a href="#" class="menu-link"><span class="link-number">03</span>Services</a>
+        </li>
+        <li class="menu-item" style="--dir-x:100px; --dir-y:30px; --delay:0.34s; --close-delay:0.14s;">
+          <a href="#" class="menu-link"><span class="link-number">04</span>Portfolio</a>
+        </li>
+        <li class="menu-item" style="--dir-x:0px; --dir-y:80px; --delay:0.42s; --close-delay:0.08s;">
+          <a href="#" class="menu-link"><span class="link-number">05</span>Journal</a>
+        </li>
+        <li class="menu-item" style="--dir-x:-80px; --dir-y:60px; --delay:0.50s; --close-delay:0s;">
+          <a href="#" class="menu-link"><span class="link-number">06</span>Contact</a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="menu-subtitle">
+      <p>Follow us</p>
+      <div class="social-links">
+        <a href="#">Twitter</a>
+        <a href="#">Dribbble</a>
+        <a href="#">GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Content (Behind Overlay) -->
+  <main class="page-content" id="pageContent">
+    <h1 class="page-title">Overlay Menu Animation</h1>
+    <p class="page-subtitle">
+      Click the hamburger icon to open a full-screen overlay menu. Each item staggers in from a unique direction with elastic easing. The background blurs and darkens behind the menu. Close reverses the stagger.
+    </p>
+    <div class="page-card">
+      <h3>Features</h3>
+      <p>Staggered directional entry &bull; Elastic cubic-bezier easing &bull; Backdrop blur &amp; darken &bull; Reverse-stagger close &bull; Hover underline animation &bull; Decorative side text reveals</p>
+    </div>
+  </main>
+
+  <script>
+    /* === Overlay Menu Controller === */
+    const trigger = document.getElementById('menuTrigger');
+    const overlay = document.getElementById('overlay');
+    const pageContent = document.getElementById('pageContent');
+    let isOpen = false;
+
+    function openMenu() {
+      isOpen = true;
+      trigger.classList.add('active');
+      overlay.classList.remove('closing');
+      overlay.classList.add('open');
+      pageContent.classList.add('blurred');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      isOpen = false;
+      trigger.classList.remove('active');
+      overlay.classList.add('closing');
+      pageContent.classList.remove('blurred');
+
+      /* Wait for closing animation to finish */
+      overlay.addEventListener('transitionend', function handler(e) {
+        if (e.target === overlay && !isOpen) {
+          overlay.classList.remove('open', 'closing');
+          document.body.style.overflow = '';
+        }
+        overlay.removeEventListener('transitionend', handler);
+      });
+
+      /* Fallback: ensure overlay hides after animation */
+      setTimeout(() => {
+        if (!isOpen) {
+          overlay.classList.remove('open', 'closing');
+          document.body.style.overflow = '';
+        }
+      }, 1000);
+    }
+
+    trigger.addEventListener('click', () => {
+      isOpen ? closeMenu() : openMenu();
+    });
+
+    /* Close on Escape key */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) closeMenu();
+    });
+
+    /* Prevent link default and close menu */
+    document.querySelectorAll('.menu-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeMenu();
+      });
+    });
+  </script>
+</body>
+</html>

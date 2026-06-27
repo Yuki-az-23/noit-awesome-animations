@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Typography Navigation Animation
+  Inspired by "Scroll triggered typography navigation" and
+  "Typography animation transition". Navigation where text animates
+  and transforms when hovering or clicking. Large typography that
+  morphs, staggers, or rearranges.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typography Nav Animation</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+    --color-warm: #ff6b35;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow: hidden;
+    height: 100vh;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .custom-cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-primary);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, width 0.3s, height 0.3s, border-color 0.3s;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+  }
+
+  .custom-cursor.hovering {
+    width: 60px;
+    height: 60px;
+    border-color: var(--color-warm);
+  }
+
+  /* Nav overlay */
+  .nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .nav-overlay.open { pointer-events: auto; }
+
+  /* Background fill */
+  .nav-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .nav-overlay.open .nav-bg { opacity: 0.97; }
+
+  /* Menu items */
+  .nav-items {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 900px;
+  }
+
+  .nav-item {
+    display: block;
+    position: relative;
+    padding: 0.3em 0;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .nav-item-text {
+    display: block;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--color-text);
+    position: relative;
+    transform: translateY(120%);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+
+  .nav-overlay.open .nav-item-text {
+    transform: translateY(0);
+  }
+
+  .nav-item:nth-child(1) .nav-item-text { transition-delay: 0.05s; }
+  .nav-item:nth-child(2) .nav-item-text { transition-delay: 0.1s; }
+  .nav-item:nth-child(3) .nav-item-text { transition-delay: 0.15s; }
+  .nav-item:nth-child(4) .nav-item-text { transition-delay: 0.2s; }
+  .nav-item:nth-child(5) .nav-item-text { transition-delay: 0.25s; }
+
+  /* Stroke text behind */
+  .nav-item-text::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    -webkit-text-stroke: 1px var(--color-muted);
+    color: transparent;
+    opacity: 0.3;
+    transition: opacity 0.3s, -webkit-text-stroke-color 0.3s;
+  }
+
+  .nav-item:hover .nav-item-text::before {
+    opacity: 0.8;
+    -webkit-text-stroke-color: var(--color-primary);
+  }
+
+  /* Hover morph effect */
+  .nav-item:hover .nav-item-text {
+    transform: translateX(20px);
+    color: var(--color-primary);
+  }
+
+  .nav-item-index {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--color-primary);
+    vertical-align: super;
+    margin-right: 0.5em;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.3s, transform 0.3s;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nav-item:hover .nav-item-index {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Desc line that slides in */
+  .nav-item-desc {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s;
+    margin-top: 0;
+  }
+
+  .nav-item:hover .nav-item-desc {
+    max-height: 50px;
+    opacity: 1;
+    margin-top: 0.5rem;
+  }
+
+  /* Decorative line */
+  .nav-item-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-warm));
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .nav-item:hover .nav-item-line { width: 100%; }
+
+  /* Hamburger button */
+  .menu-btn {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 200;
+    width: 50px;
+    height: 50px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+  }
+
+  .menu-btn span {
+    display: block;
+    width: 30px;
+    height: 2px;
+    background: var(--color-text);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s, width 0.3s;
+    transform-origin: center;
+  }
+
+  .menu-btn:hover span { width: 36px; }
+
+  .menu-btn.active span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  .menu-btn.active span:nth-child(2) { opacity: 0; }
+  .menu-btn.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+  /* Main page content */
+  .page-content {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 2rem 5vw;
+  }
+
+  .hero-text {
+    max-width: 700px;
+  }
+
+  .hero-title {
+    font-size: clamp(4rem, 10vw, 9rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    position: relative;
+  }
+
+  .hero-title .word {
+    display: inline-block;
+    overflow: hidden;
+    margin-right: 0.3em;
+  }
+
+  .hero-title .char {
+    display: inline-block;
+    transform: translateY(100%);
+    animation: charReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes charReveal {
+    to { transform: translateY(0); }
+  }
+
+  .hero-subtitle {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    color: var(--color-muted);
+    max-width: 500px;
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.5s forwards;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+    from { transform: translateY(20px); }
+  }
+
+  .hero-cta {
+    margin-top: 2rem;
+    display: inline-block;
+    padding: 0.8rem 2.5rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-warm));
+    color: white;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.8s forwards;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .hero-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
+  }
+
+  /* Side decoration */
+  .side-text {
+    position: fixed;
+    right: 2rem;
+    bottom: 2rem;
+    writing-mode: vertical-rl;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    z-index: 10;
+  }
+
+  /* Floating letters effect */
+  .floating-letter {
+    position: fixed;
+    font-size: 8rem;
+    font-weight: 900;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+    animation: floatLetter 12s ease-in-out infinite;
+  }
+
+  @keyframes floatLetter {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-30px) rotate(5deg); }
+  }
+
+  /* Close X animation */
+  .close-label {
+    position: fixed;
+    top: 2.5rem;
+    right: 5rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    z-index: 201;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .nav-overlay.open ~ .close-label { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="custom-cursor" id="cursor"></div>
+
+<!-- Floating background letters -->
+<div class="floating-letter" style="top:10%; left:5%; animation-delay:0s;">T</div>
+<div class="floating-letter" style="top:60%; left:85%; animation-delay:-4s;">Y</div>
+<div class="floating-letter" style="top:30%; left:70%; animation-delay:-8s;">P</div>
+<div class="floating-letter" style="bottom:20%; right:15%; animation-delay:-2s;">E</div>
+
+<div class="side-text">Typography Nav — Explore</div>
+
+<button class="menu-btn" id="menuBtn" aria-label="Toggle menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<div class="nav-overlay" id="navOverlay">
+  <div class="nav-bg"></div>
+  <nav class="nav-items">
+    <div class="nav-item" data-section="work">
+      <span class="nav-item-text" data-text="Work">Work</span>
+      <span class="nav-item-index">01</span>
+      <div class="nav-item-desc">Selected projects & case studies</div>
+      <div class="nav-item-line"></div>
+    </div>
+    <div class="nav-item" data-section="about">
+      <span class="nav-item-text" data-text="About">About</span>
+      <span class="nav-item-index">02</span>
+      <div class="nav-item-desc">The story behind the craft</div>
+      <div class="nav-item-line"></div>
+    </div>
+    <div class="nav-item" data-section="services">
+      <span class="nav-item-text" data-text="Services">Services</span>
+      <span class="nav-item-index">03</span>
+      <div class="nav-item-desc">What we create & how we build</div>
+      <div class="nav-item-line"></div>
+    </div>
+    <div class="nav-item" data-section="journal">
+      <span class="nav-item-text" data-text="Journal">Journal</span>
+      <span class="nav-item-index">04</span>
+      <div class="nav-item-desc">Thoughts, insights & processes</div>
+      <div class="nav-item-line"></div>
+    </div>
+    <div class="nav-item" data-section="contact">
+      <span class="nav-item-text" data-text="Contact">Contact</span>
+      <span class="nav-item-index">05</span>
+      <div class="nav-item-desc">Let's start a conversation</div>
+      <div class="nav-item-line"></div>
+    </div>
+  </nav>
+</div>
+
+<main class="page-content" id="pageContent">
+  <div class="hero-text">
+    <h1 class="hero-title" id="heroTitle"></h1>
+    <p class="hero-subtitle">Where type becomes navigation. Large-scale typography that morphs, staggers, and transforms — turning the menu into the art itself.</p>
+    <button class="hero-cta" id="openMenu">Open Navigation</button>
+  </div>
+</main>
+
+<script>
+(function() {
+  const cursor = document.getElementById('cursor');
+  const menuBtn = document.getElementById('menuBtn');
+  const navOverlay = document.getElementById('navOverlay');
+  const pageContent = document.getElementById('pageContent');
+  const heroTitle = document.getElementById('heroTitle');
+  const openMenuBtn = document.getElementById('openMenu');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  let menuOpen = false;
+
+  // Animate hero title characters
+  const titleWords = ['Typo', 'meets', 'motion'];
+  let charDelay = 0;
+  titleWords.forEach((word, wi) => {
+    const wordSpan = document.createElement('span');
+    wordSpan.classList.add('word');
+    word.split('').forEach((ch) => {
+      const charSpan = document.createElement('span');
+      charSpan.classList.add('char');
+      charSpan.textContent = ch;
+      charSpan.style.animationDelay = (0.3 + charDelay * 0.04) + 's';
+      wordSpan.appendChild(charSpan);
+      charDelay++;
+    });
+    heroTitle.appendChild(wordSpan);
+  });
+
+  // Custom cursor
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+
+  // Hover state for cursor
+  const interactiveEls = document.querySelectorAll('.nav-item, .menu-btn, .hero-cta');
+  interactiveEls.forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
+  });
+
+  // Toggle menu
+  function toggleMenu() {
+    menuOpen = !menuOpen;
+    menuBtn.classList.toggle('active', menuOpen);
+    navOverlay.classList.toggle('open', menuOpen);
+
+    if (menuOpen) {
+      // Stagger animate each nav item text
+      navItems.forEach((item, i) => {
+        const text = item.querySelector('.nav-item-text');
+        text.style.transitionDelay = (0.1 + i * 0.08) + 's';
+      });
+      // Fade page content
+      pageContent.style.transition = 'opacity 0.3s, transform 0.3s';
+      pageContent.style.opacity = '0';
+      pageContent.style.transform = 'scale(0.95)';
+    } else {
+      navItems.forEach((item, i) => {
+        const text = item.querySelector('.nav-item-text');
+        text.style.transitionDelay = (0.05 * i) + 's';
+      });
+      pageContent.style.opacity = '1';
+      pageContent.style.transform = 'scale(1)';
+    }
+  }
+
+  menuBtn.addEventListener('click', toggleMenu);
+  openMenuBtn.addEventListener('click', toggleMenu);
+
+  // Nav item click
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+
+      // Animate the clicked text
+      const text = item.querySelector('.nav-item-text');
+      text.style.transform = 'translateX(100%)';
+      text.style.opacity = '0';
+
+      setTimeout(() => {
+        // Update page hero
+        heroTitle.innerHTML = '';
+        const wordSpan = document.createElement('span');
+        wordSpan.classList.add('word');
+        section.split('').forEach((ch, ci) => {
+          const charSpan = document.createElement('span');
+          charSpan.classList.add('char');
+          charSpan.textContent = ch.toUpperCase();
+          charSpan.style.animationDelay = (ci * 0.04) + 's';
+          wordSpan.appendChild(charSpan);
+        });
+        heroTitle.appendChild(wordSpan);
+
+        // Close menu
+        text.style.transform = '';
+        text.style.opacity = '';
+        toggleMenu();
+      }, 500);
+    });
+
+    // Interactive hover effect on nav items
+    item.addEventListener('mousemove', (e) => {
+      const rect = item.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const text = item.querySelector('.nav-item-text');
+      text.style.transform = `translateX(${(x - 0.5) * 30}px)`;
+    });
+
+    item.addEventListener('mouseleave', () => {
+      const text = item.querySelector('.nav-item-text');
+      text.style.transform = '';
+    });
+  });
+
+  // Magnetic effect on nav items
+  navItems.forEach(item => {
+    item.addEventListener('mousemove', (e) => {
+      const rect = item.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) * 0.15;
+      const dy = (e.clientY - cy) * 0.1;
+      item.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+
+    item.addEventListener('mouseleave', () => {
+      item.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      item.style.transform = '';
+      setTimeout(() => { item.style.transition = ''; }, 400);
+    });
+  });
+
+  // Keyboard toggle
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuOpen) toggleMenu();
+  });
+})();
+</script>
+</body>
+</html>

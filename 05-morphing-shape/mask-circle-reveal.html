@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  Mask Circle Reveal
+  Content revealed by an expanding circle mask that follows
+  a staggered path. Click to trigger reveals with multiple
+  sizes and speeds.
+
+  Pure CSS + Vanilla JS · No external dependencies
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mask Circle Reveal</title>
+<style>
+  /* ── Reset & Variables ─────────────────────────── */
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-primary-rgb: 233,69,96;
+    --color-text: #eaeaea;
+    --font-display: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-display);
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero Section ──────────────────────────────── */
+  .hero {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(var(--color-primary-rgb),0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(22,33,62,0.9) 0%, transparent 50%),
+                var(--color-bg);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, var(--color-primary), #ff6b9d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-desc {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    opacity: 0.6;
+    font-weight: 300;
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  .click-prompt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2.5rem;
+    border: 1px solid rgba(var(--color-primary-rgb),0.4);
+    border-radius: 60px;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    animation: promptPulse 2.5s ease-in-out infinite;
+    cursor: pointer;
+    background: rgba(var(--color-primary-rgb),0.05);
+    transition: background 0.3s;
+  }
+
+  .click-prompt:hover { background: rgba(var(--color-primary-rgb),0.15); }
+
+  .click-prompt svg {
+    width: 20px; height: 20px;
+    fill: none; stroke: var(--color-primary);
+    stroke-width: 2;
+  }
+
+  @keyframes promptPulse {
+    0%, 100% { border-color: rgba(var(--color-primary-rgb),0.3); }
+    50% { border-color: rgba(var(--color-primary-rgb),0.7); }
+  }
+
+  /* ── Revealable Content Sections ───────────────── */
+  .reveal-section {
+    position: relative;
+    padding: 6rem 2rem;
+  }
+
+  /* ── Gallery Grid ─────────────────────────────── */
+  .gallery {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  .gallery-item {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    transform: scale(0.98);
+    transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+  }
+
+  .gallery-item:hover { transform: scale(1); }
+
+  .gallery-item-inner {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    clip-path: circle(0% at var(--cx, 50%) var(--cy, 50%));
+    transition: clip-path 0s; /* controlled by JS */
+  }
+
+  .gallery-item-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 1.5rem;
+    z-index: 2;
+  }
+
+  .gallery-item-info {
+    background: rgba(15,15,26,0.7);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.5s ease 0.3s;
+  }
+
+  .gallery-item.revealed .gallery-item-info {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .gallery-item-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .gallery-item-tag {
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .gallery-item-number {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(var(--color-primary-rgb),0.2);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 3;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s;
+  }
+
+  .gallery-item.revealed .gallery-item-number {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .gallery-item-placeholder {
+    position: absolute;
+    inset: 0;
+    background: var(--color-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gallery-item-placeholder svg {
+    width: 48px; height: 48px;
+    stroke: rgba(var(--color-primary-rgb),0.3);
+    stroke-width: 1.5;
+    fill: none;
+  }
+
+  /* ── Text Reveal Blocks ───────────────────────── */
+  .text-blocks {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .text-block {
+    position: relative;
+    padding: 2.5rem;
+    border-radius: 16px;
+    background: var(--color-surface);
+    border: 1px solid rgba(var(--color-primary-rgb),0.1);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+
+  .text-block:hover {
+    border-color: rgba(var(--color-primary-rgb),0.3);
+  }
+
+  .text-block-reveal {
+    position: absolute;
+    inset: 0;
+    background: var(--color-bg);
+    z-index: 2;
+    clip-path: circle(0% at var(--cx, 50%) var(--cy, 50%));
+  }
+
+  .text-block-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .text-block-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .text-block-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .text-block-body {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    opacity: 0.7;
+  }
+
+  /* ── Section Header ───────────────────────────── */
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-number {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Stats Row ─────────────────────────────────── */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    margin-top: 4rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b9d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-top: 0.25rem;
+  }
+
+  /* ── Ripple Indicator ──────────────────────────── */
+  .ripple-indicator {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--color-primary);
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+
+  .ripple-indicator.active {
+    animation: rippleOut 0.8s ease-out forwards;
+  }
+
+  @keyframes rippleOut {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+  }
+
+  /* ── Footer ────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 3rem;
+    font-size: 0.8rem;
+    opacity: 0.3;
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<!-- Click Ripple -->
+<div class="ripple-indicator" id="ripple"></div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">Circle <span>Reveal</span></h1>
+    <p class="hero-desc">Click anywhere to reveal hidden layers through expanding circular masks. Each reveal follows its own unique path and timing.</p>
+    <div class="click-prompt" id="heroPrompt">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+      Click to Begin
+    </div>
+  </div>
+</section>
+
+<!-- Gallery Section -->
+<section class="reveal-section">
+  <div class="section-header">
+    <div class="section-number">01 — Visual Gallery</div>
+    <h2 class="section-title">Click Each Card to Reveal</h2>
+  </div>
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<!-- Text Blocks -->
+<section class="reveal-section">
+  <div class="section-header">
+    <div class="section-number">02 — Expanding Ideas</div>
+    <h2 class="section-title">Uncover the Details</h2>
+  </div>
+  <div class="text-blocks" id="textBlocks"></div>
+</section>
+
+<!-- Stats -->
+<section class="reveal-section">
+  <div class="stats-row" id="statsRow"></div>
+</section>
+
+<div class="footer">Circle Reveal Animation · Pure CSS + JS</div>
+
+<script>
+/* ================================================================
+   Mask Circle Reveal – Core Logic
+   Click-triggered circle reveals using clip-path animations
+   via requestAnimationFrame for smooth, staggered paths.
+   ================================================================ */
+
+// ── Gallery Data ─────────────────────────────────
+const galleryItems = [
+  { title: 'Aurora Borealis', tag: 'Nature', color: '#1a3a5c' },
+  { title: 'Neon District', tag: 'Urban', color: '#3c1361' },
+  { title: 'Ocean Depths', tag: 'Marine', color: '#0a2342' },
+  { title: 'Desert Sun', tag: 'Landscape', color: '#4a1a2e' },
+  { title: 'Digital Flora', tag: 'Abstract', color: '#1a3c2a' },
+  { title: 'Crystal Cave', tag: 'Geology', color: '#2a1a4c' }
+];
+
+// ── Text Block Data ──────────────────────────────
+const textBlocks = [
+  { label: 'Concept', heading: 'Organic Reveals', body: 'Each circle mask expands from the exact point of interaction, creating a direct connection between user action and visual response. The staggered timing adds rhythm and flow.' },
+  { label: 'Design', heading: 'Multiple Speeds & Sizes', body: 'Not all reveals happen at the same pace. Smaller elements reveal quickly for snap feedback, while larger areas expand slowly for dramatic impact.' },
+  { label: 'Motion', heading: 'Path-Following Masks', body: 'The reveal circle doesn\'t just scale—it can follow a staggered path, creating asymmetric expansions that feel more natural and alive than symmetrical reveals.' }
+];
+
+const stats = [
+  { number: '6', label: 'Unique Reveals' },
+  { number: '3', label: 'Reveal Speeds' },
+  { number: '∞', label: 'Interaction Points' }
+];
+
+// ── Build Gallery ────────────────────────────────
+const galleryEl = document.getElementById('gallery');
+
+galleryItems.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'gallery-item';
+  div.dataset.index = i;
+  div.dataset.revealed = 'false';
+
+  // Calculate staggered reveal properties
+  const speed = i % 3 === 0 ? 600 : i % 3 === 1 ? 900 : 1200;
+  const size = i % 2 === 0 ? 150 : 200;
+
+  div.innerHTML = `
+    <div class="gallery-item-placeholder">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="gallery-item-inner" style="background: linear-gradient(135deg, ${item.color}, ${item.color}cc, var(--color-surface));"></div>
+    <div class="gallery-item-number">${String(i + 1).padStart(2, '0')}</div>
+    <div class="gallery-item-overlay">
+      <div class="gallery-item-info">
+        <div class="gallery-item-tag">${item.tag}</div>
+        <div class="gallery-item-title">${item.title}</div>
+      </div>
+    </div>
+  `;
+
+  galleryEl.appendChild(div);
+});
+
+// ── Build Text Blocks ────────────────────────────
+const textBlocksEl = document.getElementById('textBlocks');
+
+textBlocks.forEach((block, i) => {
+  const div = document.createElement('div');
+  div.className = 'text-block';
+  div.dataset.index = i;
+  div.dataset.revealed = 'false';
+  div.dataset.speed = [500, 800, 1100][i];
+
+  div.innerHTML = `
+    <div class="text-block-reveal"></div>
+    <div class="text-block-content">
+      <div class="text-block-label">${block.label}</div>
+      <div class="text-block-heading">${block.heading}</div>
+      <div class="text-block-body">${block.body}</div>
+    </div>
+  `;
+
+  textBlocksEl.appendChild(div);
+});
+
+// ── Build Stats ───────────────────────────────────
+const statsEl = document.getElementById('statsRow');
+
+stats.forEach(stat => {
+  const div = document.createElement('div');
+  div.className = 'stat-item';
+  div.innerHTML = `
+    <div class="stat-number">${stat.number}</div>
+    <div class="stat-label">${stat.label}</div>
+  `;
+  statsEl.appendChild(div);
+});
+
+// ── Circle Reveal Animation Engine ───────────────
+const activeAnimations = new Map();
+
+function animateCircleReveal(element, cx, cy, duration, easingType) {
+  // Get viewport-relative coordinates
+  const rect = element.getBoundingClientRect();
+  const relX = ((cx - rect.left) / rect.width) * 100;
+  const relY = ((cy - rect.top) / rect.height) * 100;
+
+  // Calculate max radius needed (distance to farthest corner)
+  const corners = [
+    [0, 0], [100, 0], [0, 100], [100, 100]
+  ];
+  let maxDist = 0;
+  corners.forEach(([x, y]) => {
+    const dist = Math.sqrt(Math.pow(x - relX, 2) + Math.pow(y - relY, 2));
+    if (dist > maxDist) maxDist = dist;
+  });
+
+  const targetRadius = maxDist * 1.1; // slight overshoot
+  const innerEl = element.querySelector('.gallery-item-inner') ||
+                  element.querySelector('.text-block-reveal');
+
+  if (!innerEl) return;
+
+  // Determine if this is a gallery reveal or text reveal
+  const isGallery = innerEl.classList.contains('gallery-item-inner');
+
+  innerEl.style.setProperty('--cx', relX + '%');
+  innerEl.style.setProperty('--cy', relY + '%');
+
+  const startTime = performance.now();
+  const animId = Symbol('anim');
+
+  // Store animation reference for cancellation
+  activeAnimations.set(element, animId);
+
+  function getEasedValue(t, type) {
+    switch (type) {
+      case 'snap':    return 1 - Math.pow(1 - t, 2);       // fast start
+      case 'smooth':  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3) / 2; // easeInOutCubic
+      case 'dramatic': return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);         // easeOutExpo
+      default:        return t;
+    }
+  }
+
+  function animate(now) {
+    // Check if animation was superseded
+    if (activeAnimations.get(element) !== animId) return;
+
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    const easedT = getEasedValue(t, easingType);
+    const currentRadius = easedT * targetRadius;
+
+    innerEl.style.clipPath = `circle(${currentRadius}% at ${relX}% ${relY}%)`;
+
+    if (isGallery) {
+      // Scale inner element slightly for depth
+      const scale = 1 + (1 - easedT) * 0.05;
+      innerEl.style.transform = `scale(${scale})`;
+    }
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      // Animation complete
+      if (isGallery) {
+        innerEl.style.transform = 'scale(1)';
+      }
+      element.dataset.revealed = 'true';
+      element.classList.add('revealed');
+      activeAnimations.delete(element);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// ── Click Handler ────────────────────────────────
+const rippleEl = document.getElementById('ripple');
+
+function showRipple(x, y) {
+  rippleEl.style.left = x + 'px';
+  rippleEl.style.top = y + 'px';
+  rippleEl.classList.remove('active');
+  void rippleEl.offsetWidth; // force reflow
+  rippleEl.classList.add('active');
+}
+
+document.addEventListener('click', (e) => {
+  showRipple(e.clientX, e.clientY);
+
+  // Check gallery items
+  const galleryItem = e.target.closest('.gallery-item');
+  if (galleryItem) {
+    const index = parseInt(galleryItem.dataset.index);
+    const speeds = ['snap', 'smooth', 'dramatic'];
+    const durations = [600, 900, 1200];
+
+    animateCircleReveal(
+      galleryItem,
+      e.clientX,
+      e.clientY,
+      durations[index % 3],
+      speeds[index % 3]
+    );
+    return;
+  }
+
+  // Check text blocks
+  const textBlock = e.target.closest('.text-block');
+  if (textBlock && textBlock.dataset.revealed !== 'true') {
+    const speed = parseInt(textBlock.dataset.speed) || 800;
+    const easings = ['smooth', 'dramatic', 'snap'];
+    const idx = parseInt(textBlock.dataset.index);
+    animateCircleReveal(textBlock, e.clientX, e.clientY, speed, easings[idx]);
+    return;
+  }
+
+  // Hero prompt
+  const prompt = e.target.closest('#heroPrompt');
+  if (prompt) {
+    // Reveal all gallery items with stagger
+    document.querySelectorAll('.gallery-item').forEach((item, i) => {
+      const rect = item.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      setTimeout(() => {
+        const speeds = ['snap', 'dramatic', 'smooth'];
+        const durations = [600, 900, 1200];
+        animateCircleReveal(item, cx, cy, durations[i % 3], speeds[i % 3]);
+      }, i * 200);
+    });
+
+    // Then reveal text blocks
+    document.querySelectorAll('.text-block').forEach((block, i) => {
+      const rect = block.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      setTimeout(() => {
+        const easings = ['smooth', 'dramatic', 'snap'];
+        const durations = [500, 800, 1100];
+        animateCircleReveal(block, cx, cy, durations[i], easings[i]);
+      }, 1400 + i * 300);
+    });
+  }
+});
+
+// ── Hover Preview on Gallery Items ───────────────
+document.querySelectorAll('.gallery-item').forEach((item) => {
+  const inner = item.querySelector('.gallery-item-inner');
+
+  item.addEventListener('mouseenter', (e) => {
+    if (item.dataset.revealed === 'true') return;
+    const rect = item.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * 100;
+    const relY = ((e.clientY - rect.top) / rect.height) * 100;
+    inner.style.setProperty('--cx', relX + '%');
+    inner.style.setProperty('--cy', relY + '%');
+    // Subtle preview
+    inner.style.transition = 'clip-path 0.4s ease';
+    inner.style.clipPath = 'circle(8% at ' + relX + '% ' + relY + '%)';
+  });
+
+  item.addEventListener('mousemove', (e) => {
+    if (item.dataset.revealed === 'true') return;
+    const rect = item.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * 100;
+    const relY = ((e.clientY - rect.top) / rect.height) * 100;
+    inner.style.setProperty('--cx', relX + '%');
+    inner.style.setProperty('--cy', relY + '%');
+    inner.style.clipPath = 'circle(12% at ' + relX + '% ' + relY + '%)';
+  });
+
+  item.addEventListener('mouseleave', () => {
+    if (item.dataset.revealed === 'true') return;
+    inner.style.transition = 'clip-path 0.5s ease';
+    inner.style.clipPath = 'circle(0% at var(--cx) var(--cy))';
+  });
+});
+
+// ── Scroll-Triggered Reveal for Stats ────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.stat-item').forEach((stat, i) => {
+        stat.style.transition = `opacity 0.6s ease ${i * 0.2}s, transform 0.6s ease ${i * 0.2}s`;
+        stat.style.opacity = '1';
+        stat.style.transform = 'translateY(0)';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.stats-row').forEach(row => {
+  row.querySelectorAll('.stat-item').forEach(stat => {
+    stat.style.opacity = '0';
+    stat.style.transform = 'translateY(20px)';
+  });
+  observer.observe(row);
+});
+
+// ── Reset Button (double-click to reset) ─────────
+document.addEventListener('dblclick', (e) => {
+  // Reset all reveals
+  document.querySelectorAll('.gallery-item').forEach(item => {
+    item.dataset.revealed = 'false';
+    item.classList.remove('revealed');
+    const inner = item.querySelector('.gallery-item-inner');
+    inner.style.transition = 'clip-path 0.5s ease';
+    inner.style.clipPath = 'circle(0% at var(--cx) var(--cy))';
+    inner.style.transform = 'scale(1)';
+  });
+
+  document.querySelectorAll('.text-block').forEach(block => {
+    block.dataset.revealed = 'false';
+    block.classList.remove('revealed');
+    const inner = block.querySelector('.text-block-reveal');
+    inner.style.transition = 'clip-path 0.5s ease';
+    inner.style.clipPath = 'circle(0% at var(--cx) var(--cy))';
+  });
+});
+</script>
+</body>
+</html>

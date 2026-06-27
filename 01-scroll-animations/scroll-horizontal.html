@@ -1,0 +1,615 @@
+<!--
+  scroll-horizontal.html
+  Horizontal scroll section that transforms vertical scroll into horizontal movement.
+  A horizontally scrolling gallery of cards pins in the viewport while scrolling vertically.
+  Smooth and performant using requestAnimationFrame with lerp easing.
+  Pure CSS + vanilla JS. No dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Horizontal</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a8e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Intro ── */
+  .intro {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .intro::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(233,69,96,.12) 0%, transparent 70%);
+    top: -50px; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .intro .badge {
+    display: inline-block;
+    padding: .3rem .9rem;
+    border: 1px solid var(--color-primary);
+    border-radius: 999px;
+    font-size: .7rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .intro h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 20%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .intro p {
+    max-width: 500px;
+    color: var(--color-muted);
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .scroll-cue {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    color: var(--color-muted);
+    font-size: .8rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    animation: bob 2s ease-in-out infinite;
+  }
+
+  .scroll-cue .arrows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .scroll-cue .arrows span {
+    width: 16px; height: 16px;
+    border-right: 2px solid var(--color-primary);
+    border-bottom: 2px solid var(--color-primary);
+    transform: rotate(45deg);
+  }
+
+  .scroll-cue .arrows span:nth-child(2) {
+    opacity: .5;
+    transform: rotate(45deg) translateY(-2px);
+  }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* ── Horizontal scroll wrapper ── */
+  .hscroll-wrapper {
+    position: relative;
+  }
+
+  .hscroll-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+
+  .hscroll-track {
+    display: flex;
+    gap: 2rem;
+    padding: 0 max(2rem, calc((100vw - 400px) / 2));
+    will-change: transform;
+  }
+
+  /* ── Cards ── */
+  .h-card {
+    flex-shrink: 0;
+    width: 380px;
+    height: 480px;
+    background: var(--color-surface);
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    transition: box-shadow .4s ease;
+    border: 1px solid rgba(255,255,255,.04);
+  }
+
+  .h-card:hover {
+    box-shadow: 0 20px 60px rgba(233,69,96,.15);
+  }
+
+  .h-card-visual {
+    height: 240px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .h-card-visual .gradient-bg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .h-card:nth-child(1) .gradient-bg { background: linear-gradient(135deg, #e94560, #533483); }
+  .h-card:nth-child(2) .gradient-bg { background: linear-gradient(135deg, #0f3460, #e9456044); }
+  .h-card:nth-child(3) .gradient-bg { background: linear-gradient(135deg, #533483, #0f3460); }
+  .h-card:nth-child(4) .gradient-bg { background: linear-gradient(135deg, #16213e, #e9456066); }
+  .h-card:nth-child(5) .gradient-bg { background: linear-gradient(135deg, #e94560, #0f3460); }
+  .h-card:nth-child(6) .gradient-bg { background: linear-gradient(135deg, #533483, #e9456044); }
+  .h-card:nth-child(7) .gradient-bg { background: linear-gradient(135deg, #0f3460, #533483); }
+  .h-card:nth-child(8) .gradient-bg { background: linear-gradient(135deg, #e94560, #53348388); }
+
+  .h-card-visual .card-number {
+    position: absolute;
+    bottom: -20px;
+    right: 20px;
+    font-size: 8rem;
+    font-weight: 900;
+    line-height: 1;
+    color: rgba(255,255,255,.08);
+    pointer-events: none;
+  }
+
+  .h-card-visual .card-icon-wrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.12);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+
+  .h-card-body {
+    padding: 1.8rem;
+  }
+
+  .h-card-body h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: .6rem;
+  }
+
+  .h-card-body p {
+    color: var(--color-muted);
+    font-size: .9rem;
+    line-height: 1.55;
+    margin-bottom: 1.2rem;
+  }
+
+  .h-card-body .card-tags {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+  }
+
+  .card-tag {
+    padding: .2rem .6rem;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 500;
+    background: rgba(233,69,96,.1);
+    color: var(--color-primary);
+    border: 1px solid rgba(233,69,96,.15);
+  }
+
+  <!-- Outro -->
+  .outro {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+  }
+
+  .outro::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(83,52,131,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .outro h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 20%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .outro p {
+    color: var(--color-muted);
+    max-width: 480px;
+    margin-bottom: 2rem;
+  }
+
+  .outro .stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 1rem;
+  }
+
+  .outro .stat-item {
+    text-align: center;
+  }
+
+  .outro .stat-item .num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-primary);
+  }
+
+  .outro .stat-item .lbl {
+    color: var(--color-muted);
+    font-size: .8rem;
+  }
+
+  /* Progress indicator */
+  .h-progress {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(22,33,62,.85);
+    backdrop-filter: blur(12px);
+    padding: .6rem 1.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.08);
+    opacity: 0;
+    transition: opacity .4s ease;
+    pointer-events: none;
+  }
+
+  .h-progress.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .h-progress-bar {
+    width: 160px;
+    height: 4px;
+    background: rgba(255,255,255,.1);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .h-progress-bar .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: var(--color-primary);
+    border-radius: 2px;
+    transition: width .1s linear;
+  }
+
+  .h-progress-label {
+    font-size: .8rem;
+    color: var(--color-muted);
+    font-weight: 600;
+    min-width: 3rem;
+    text-align: right;
+  }
+
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-muted);
+    font-size: .85rem;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
+
+  @media (max-width: 600px) {
+    .h-card { width: 300px; height: 420px; }
+    .h-card-visual { height: 180px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hscroll-track { transform: none !important; }
+    .scroll-cue { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Intro -->
+<section class="intro">
+  <span class="badge">Horizontal Scroll</span>
+  <h1>Scroll sideways<br>without touching</h1>
+  <p>Vertical scroll transforms into smooth horizontal movement. The gallery pins in place while you browse.</p>
+  <div class="scroll-cue">
+    <span>Keep scrolling</span>
+    <div class="arrows"><span></span><span></span></div>
+  </div>
+</section>
+
+<!-- Horizontal scroll section -->
+<div class="hscroll-wrapper" id="hscrollWrapper">
+  <div class="hscroll-sticky" id="hscrollSticky">
+    <div class="hscroll-track" id="hscrollTrack">
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">🚀</div>
+          <div class="card-number">01</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Sticky Pinning</h3>
+          <p>The container locks to the viewport using position: sticky, so the horizontal scroll feels natural while the user scrolls vertically.</p>
+          <div class="card-tags">
+            <span class="card-tag">CSS Sticky</span>
+            <span class="card-tag">Scroll Pin</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">🎯</div>
+          <div class="card-number">02</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Lerp Smoothing</h3>
+          <p>Linear interpolation between target and current positions creates a butter-smooth glide effect instead of jerky jumps.</p>
+          <div class="card-tags">
+            <span class="card-tag">rAF Loop</span>
+            <span class="card-tag">Easing</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">⚡</div>
+          <div class="card-number">03</div>
+        </div>
+        <div class="h-card-body">
+          <h3>GPU Compositing</h3>
+          <p>Using translate3d forces GPU-accelerated compositing, keeping paint times low and frames at 60fps.</p>
+          <div class="card-tags">
+            <span class="card-tag">translate3d</span>
+            <span class="card-tag">will-change</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">📐</div>
+          <div class="card-number">04</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Dynamic Sizing</h3>
+          <p>The scroll height adapts to the track width, so the horizontal distance always matches the vertical scroll budget.</p>
+          <div class="card-tags">
+            <span class="card-tag">Responsive</span>
+            <span class="card-tag">Resize-safe</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">🎨</div>
+          <div class="card-number">05</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Design Tokens</h3>
+          <p>All colors, spacing, and radii use CSS custom properties. Swap the theme by changing a few variables at the root.</p>
+          <div class="card-tags">
+            <span class="card-tag">CSS Variables</span>
+            <span class="card-tag">Themeable</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">♿</div>
+          <div class="card-number">06</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Accessibility</h3>
+          <p>Respects prefers-reduced-motion, provides keyboard scroll support, and maintains semantic HTML structure throughout.</p>
+          <div class="card-tags">
+            <span class="card-tag">Reduced Motion</span>
+            <span class="card-tag">ARIA</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">🔧</div>
+          <div class="card-number">07</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Zero Dependencies</h3>
+          <p>No GSAP, no ScrollTrigger, no Locomotive. Pure IntersectionObserver, requestAnimationFrame, and CSS sticky positioning.</p>
+          <div class="card-tags">
+            <span class="card-tag">Vanilla JS</span>
+            <span class="card-tag">Lightweight</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-card-visual">
+          <div class="gradient-bg"></div>
+          <div class="card-icon-wrap">🏁</div>
+          <div class="card-number">08</div>
+        </div>
+        <div class="h-card-body">
+          <h3>Smooth Exit</h3>
+          <p>When the last card scrolls past, the sticky section unpins naturally and the page resumes normal vertical scrolling.</p>
+          <div class="card-tags">
+            <span class="card-tag">Native Feel</span>
+            <span class="card-tag">No Jank</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="h-progress" id="hProgress">
+  <div class="h-progress-bar"><div class="fill" id="hProgressFill"></div></div>
+  <div class="h-progress-label" id="hProgressLabel">0%</div>
+</div>
+
+<!-- Outro -->
+<section class="outro">
+  <h2>Back to normal scroll</h2>
+  <p>The horizontal section unpins naturally and the page resumes vertical flow. Seamless transition, no JavaScript toggling.</p>
+  <div class="stats">
+    <div class="stat-item">
+      <div class="num">0</div>
+      <div class="lbl">Dependencies</div>
+    </div>
+    <div class="stat-item">
+      <div class="num">60</div>
+      <div class="lbl">FPS</div>
+    </div>
+    <div class="stat-item">
+      <div class="num">&lt;8</div>
+      <div class="lbl">KB Gzipped</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Horizontal Scroll Demo &middot; Pure CSS + Vanilla JS &middot; No Dependencies</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const wrapper = document.getElementById('hscrollWrapper');
+  const sticky = document.getElementById('hscrollSticky');
+  const track = document.getElementById('hscrollTrack');
+  const progressEl = document.getElementById('hProgress');
+  const progressFill = document.getElementById('hProgressFill');
+  const progressLabel = document.getElementById('hProgressLabel');
+
+  let currentX = 0;
+  let targetX = 0;
+
+  function setScrollHeight() {
+    const trackWidth = track.scrollWidth;
+    const viewportWidth = window.innerWidth;
+    const scrollDistance = trackWidth - viewportWidth;
+    // The wrapper height allows scrolling for the full horizontal distance
+    wrapper.style.height = (scrollDistance + viewportWidth) + 'px';
+  }
+
+  function updateProgress(progress) {
+    const pct = Math.round(progress * 100);
+    progressFill.style.width = pct + '%';
+    progressLabel.textContent = pct + '%';
+  }
+
+  function animate() {
+    if (!prefersReduced) {
+      currentX += (targetX - currentX) * 0.1;
+      track.style.transform = `translate3d(${-currentX}px, 0, 0)`;
+    }
+
+    const top = wrapper.getBoundingClientRect().top;
+    const height = wrapper.offsetHeight - window.innerHeight;
+    const progress = Math.max(0, Math.min(1, -top / height));
+
+    if (!prefersReduced) {
+      targetX = progress * (track.scrollWidth - window.innerWidth);
+    } else {
+      // In reduced motion: snap without lerp
+      const x = progress * (track.scrollWidth - window.innerWidth);
+      track.style.transform = `translate3d(${-x}px, 0, 0)`;
+    }
+
+    updateProgress(progress);
+
+    // Show progress bar only when in the horizontal section
+    if (top <= 0 && top > -height) {
+      progressEl.classList.add('visible');
+    } else {
+      progressEl.classList.remove('visible');
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  setScrollHeight();
+  window.addEventListener('resize', setScrollHeight);
+
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>

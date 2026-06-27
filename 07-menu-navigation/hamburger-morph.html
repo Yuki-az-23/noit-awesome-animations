@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ========================================================
+       Hamburger Morph Animation
+       Hamburger icon that morphs into X, arrow, plus, and
+       back-arrow states with smooth CSS transitions.
+       ======================================================== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hamburger Morph Animation</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+      --color-muted: #8892a4;
+      --bar-width: 26px;
+      --bar-height: 2.5px;
+      --bar-gap: 7px;
+      --bar-radius: 2px;
+      --morph-duration: 0.45s;
+      --morph-ease: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 60px;
+      padding: 40px 20px;
+    }
+
+    .page-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-align: center;
+      background: linear-gradient(135deg, var(--color-text) 0%, var(--color-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-desc {
+      text-align: center;
+      color: var(--color-muted);
+      font-size: 0.95rem;
+      max-width: 480px;
+      line-height: 1.6;
+      margin-top: -30px;
+    }
+
+    /* === Morph Grid === */
+    .morph-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    @media (max-width: 500px) {
+      .morph-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+    }
+
+    .morph-card {
+      background: var(--color-surface);
+      border-radius: 20px;
+      padding: 36px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      border: 1px solid rgba(233, 69, 96, 0.1);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .morph-card:hover {
+      border-color: rgba(233, 69, 96, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .morph-card .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+    }
+
+    .morph-card .state-name {
+      font-size: 0.85rem;
+      color: var(--color-primary);
+      font-weight: 500;
+      min-height: 1.2em;
+    }
+
+    /* === Hamburger Base === */
+    .hamburger {
+      width: 48px;
+      height: 48px;
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      transition: border-color 0.3s, background 0.3s, transform 0.3s;
+    }
+
+    .hamburger:hover {
+      border-color: rgba(233, 69, 96, 0.4);
+      background: rgba(233, 69, 96, 0.06);
+      transform: scale(1.08);
+    }
+
+    .hamburger:active {
+      transform: scale(0.95);
+    }
+
+    .hamburger .bar {
+      display: block;
+      width: var(--bar-width);
+      height: var(--bar-height);
+      background: var(--color-text);
+      border-radius: var(--bar-radius);
+      position: absolute;
+      transition: all var(--morph-duration) var(--morph-ease);
+      transform-origin: center center;
+    }
+
+    .hamburger .bar:nth-child(1) {
+      transform: translateY(calc(var(--bar-gap) * -1));
+    }
+
+    .hamburger .bar:nth-child(2) {
+      transform: translateY(0);
+    }
+
+    .hamburger .bar:nth-child(3) {
+      transform: translateY(var(--bar-gap));
+    }
+
+    /* ============================================
+       State: X (close)
+       Top down-left, middle fades, bottom up-right
+       ============================================ */
+    .hamburger.state-x .bar:nth-child(1) {
+      transform: translateY(0) rotate(45deg);
+      background: var(--color-primary);
+    }
+    .hamburger.state-x .bar:nth-child(2) {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    .hamburger.state-x .bar:nth-child(3) {
+      transform: translateY(0) rotate(-45deg);
+      background: var(--color-primary);
+    }
+
+    /* ============================================
+       State: Arrow Right
+       Top rotates to 45deg & shortens,
+       middle stays with slight right shift,
+       bottom rotates to -45deg & shortens,
+       all shift right
+       ============================================ */
+    .hamburger.state-arrow .bar:nth-child(1) {
+      transform: translateY(calc(var(--bar-gap) * -1)) rotate(45deg) scaleX(0.6);
+      background: var(--color-primary);
+    }
+    .hamburger.state-arrow .bar:nth-child(2) {
+      transform: translateX(4px);
+      width: calc(var(--bar-width) * 1.1);
+      background: var(--color-primary);
+    }
+    .hamburger.state-arrow .bar:nth-child(3) {
+      transform: translateY(var(--bar-gap)) rotate(-45deg) scaleX(0.6);
+      background: var(--color-primary);
+    }
+
+    /* ============================================
+       State: Plus
+       Top and bottom merge to center,
+       middle stays, forming plus shape
+       ============================================ */
+    .hamburger.state-plus .bar:nth-child(1) {
+      transform: translateY(0) rotate(90deg);
+      background: var(--color-primary);
+    }
+    .hamburger.state-plus .bar:nth-child(2) {
+      transform: translateY(0);
+      background: var(--color-primary);
+    }
+    .hamburger.state-plus .bar:nth-child(3) {
+      opacity: 0;
+      transform: translateY(0) scaleX(0);
+    }
+
+    /* ============================================
+       State: Back Arrow (left)
+       Arrow pointing left — mirror of arrow state
+       ============================================ */
+    .hamburger.state-back-arrow .bar:nth-child(1) {
+      transform: translateY(calc(var(--bar-gap) * -1)) rotate(-45deg) scaleX(0.6);
+      background: var(--color-primary);
+    }
+    .hamburger.state-back-arrow .bar:nth-child(2) {
+      transform: translateX(-4px);
+      width: calc(var(--bar-width) * 1.1);
+      background: var(--color-primary);
+    }
+    .hamburger.state-back-arrow .bar:nth-child(3) {
+      transform: translateY(var(--bar-gap)) rotate(45deg) scaleX(0.6);
+      background: var(--color-primary);
+    }
+
+    /* === Cycle Hint === */
+    .cycle-hint {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--color-muted);
+    }
+
+    .cycle-hint .dot-sep {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      opacity: 0.5;
+    }
+
+    /* === Interactive Demo === */
+    .demo-section {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .demo-section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--color-text);
+      text-align: center;
+    }
+
+    .demo-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--color-surface);
+      border-radius: 16px;
+      padding: 20px 28px;
+      border: 1px solid rgba(233, 69, 96, 0.1);
+    }
+
+    .demo-row .info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .demo-row .info .state-label {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .demo-row .info .state-hint {
+      font-size: 0.78rem;
+      color: var(--color-muted);
+    }
+
+    /* Animation Progress Bar */
+    .progress-bar {
+      width: 100%;
+      max-width: 560px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.45s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    @media (max-width: 500px) {
+      .morph-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="page-title">Hamburger Morph Animations</h1>
+  <p class="page-desc">Click each hamburger to cycle through morph states. Smooth CSS transforms with elastic easing transition between shapes.</p>
+
+  <!-- Morph Grid: 4 morph variations -->
+  <div class="morph-grid">
+    <!-- Card 1: Hamburger → X -->
+    <div class="morph-card">
+      <span class="label">Morph Variant</span>
+      <button class="hamburger" data-states='["","state-x"]' data-current="0" aria-label="Toggle X morph">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div style="text-align:center">
+        <div class="state-name">Hamburger → X</div>
+      </div>
+    </div>
+
+    <!-- Card 2: Hamburger → Arrow -->
+    <div class="morph-card">
+      <span class="label">Morph Variant</span>
+      <button class="hamburger" data-states='["","state-arrow"]' data-current="0" aria-label="Toggle arrow morph">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div style="text-align:center">
+        <div class="state-name">Hamburger → Arrow</div>
+      </div>
+    </div>
+
+    <!-- Card 3: Hamburger → Plus -->
+    <div class="morph-card">
+      <span class="label">Morph Variant</span>
+      <button class="hamburger" data-states='["","state-plus"]' data-current="0" aria-label="Toggle plus morph">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div style="text-align:center">
+        <div class="state-name">Hamburger → Plus</div>
+      </div>
+    </div>
+
+    <!-- Card 4: Hamburger → Back Arrow -->
+    <div class="morph-card">
+      <span class="label">Morph Variant</span>
+      <button class="hamburger" data-states='["","state-back-arrow"]' data-current="0" aria-label="Toggle back arrow morph">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div style="text-align:center">
+        <div class="state-name">Hamburger → Back Arrow</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Demo: cycle through all states -->
+  <div class="demo-section">
+    <h2>Interactive Demo — Click to Cycle All States</h2>
+    <div class="demo-row">
+      <div class="info">
+        <span class="state-label" id="demoLabel">Hamburger</span>
+        <span class="state-hint">Click to morph through all 5 states</span>
+      </div>
+      <button class="hamburger" id="demoHamburger" aria-label="Cycle morph states">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </div>
+    <div class="progress-bar">
+      <div class="fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div class="cycle-hint">
+    <span>Hamburger</span>
+    <span class="dot-sep"></span>
+    <span>X Close</span>
+    <span class="dot-sep"></span>
+    <span>Arrow Right</span>
+    <span class="dot-sep"></span>
+    <span>Plus</span>
+    <span class="dot-sep"></span>
+    <span>Back Arrow</span>
+  </div>
+
+  <script>
+    /* === Simple Toggle for Grid Cards === */
+    document.querySelectorAll('.morph-grid .hamburger').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const states = JSON.parse(btn.dataset.states);
+        let current = parseInt(btn.dataset.current);
+        current = (current + 1) % states.length;
+        btn.dataset.current = current;
+
+        /* Remove all state classes first */
+        btn.classList.remove('state-x', 'state-arrow', 'state-plus', 'state-back-arrow');
+
+        /* Add the new state class (empty string = no class = default hamburger) */
+        if (states[current]) {
+          btn.classList.add(states[current]);
+        }
+      });
+    });
+
+    /* === Cycle Demo: cycles through all 5 states === */
+    const demoBtn = document.getElementById('demoHamburger');
+    const demoLabel = document.getElementById('demoLabel');
+    const progressFill = document.getElementById('progressFill');
+
+    const allStates = [
+      { class: '', label: 'Hamburger' },
+      { class: 'state-x', label: 'X Close' },
+      { class: 'state-arrow', label: 'Arrow Right' },
+      { class: 'state-plus', label: 'Plus' },
+      { class: 'state-back-arrow', label: 'Back Arrow' }
+    ];
+
+    let demoIndex = 0;
+
+    demoBtn.addEventListener('click', () => {
+      demoIndex = (demoIndex + 1) % allStates.length;
+      const state = allStates[demoIndex];
+
+      demoBtn.classList.remove('state-x', 'state-arrow', 'state-plus', 'state-back-arrow');
+      if (state.class) {
+        demoBtn.classList.add(state.class);
+      }
+
+      demoLabel.textContent = state.label;
+      progressFill.style.width = ((demoIndex) / (allStates.length - 1) * 100) + '%';
+    });
+  </script>
+</body>
+</html>

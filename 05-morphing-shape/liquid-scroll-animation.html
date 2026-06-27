@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Liquid Scroll Position Animation
+  Inspired by "Liquid Scroll Position Animation"
+  Scroll-position-driven liquid/blob morphing.
+  Elements smoothly morph between organic shapes as user scrolls.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Scroll Animation</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #0f3460;
+    --color-secondary: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) var(--color-bg);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow-x: hidden;
+  }
+
+  /* Sticky morphing container */
+  .morph-stage {
+    position: sticky;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* SVG liquid blob */
+  .liquid-blob {
+    position: absolute;
+    filter: blur(0px);
+    transition: filter 0.3s;
+  }
+
+  .liquid-blob path {
+    transition: d 0.4s ease;
+  }
+
+  /* Color blobs behind main blob */
+  .color-blob {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    transition: transform 0.8s ease, opacity 0.8s ease;
+  }
+
+  .color-blob-1 { background: var(--color-primary); }
+  .color-blob-2 { background: var(--color-secondary); }
+  .color-blob-3 { background: var(--color-accent); }
+
+  /* Scroll text overlay */
+  .scroll-text {
+    position: absolute;
+    z-index: 10;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .scroll-text h1 {
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    mix-blend-mode: difference;
+    color: var(--color-text);
+  }
+
+  .scroll-text .subtitle {
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    color: var(--color-muted);
+    margin-top: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+
+  /* Scroll progress */
+  .scroll-progress {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .progress-track {
+    width: 2px;
+    height: 120px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 1px;
+    position: relative;
+  }
+
+  .progress-fill {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 0%;
+    background: var(--color-primary);
+    border-radius: 1px;
+    transition: height 0.2s ease;
+  }
+
+  .progress-label {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Sections below */
+  .content-sections {
+    position: relative;
+    z-index: 20;
+  }
+
+  .content-section {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+  }
+
+  .content-inner {
+    max-width: 600px;
+    text-align: center;
+  }
+
+  .content-inner h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--color-text), var(--color-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .content-inner p {
+    font-size: 1.1rem;
+    color: var(--color-muted);
+    line-height: 1.8;
+  }
+
+  /* Morphing shapes canvas */
+  .morph-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Phase indicators */
+  .phase-dots {
+    position: fixed;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .phase-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+
+  .phase-dot.active {
+    background: var(--color-primary);
+    box-shadow: 0 0 10px rgba(233,69,96,0.5);
+    transform: scale(1.5);
+  }
+
+  /* Floating particles */
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    opacity: 0.3;
+    animation: particleFloat 6s ease-in-out infinite;
+  }
+
+  @keyframes particleFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    25% { opacity: 0.6; }
+    50% { transform: translate(var(--dx, 30px), var(--dy, -40px)) scale(1.5); opacity: 0.15; }
+    75% { opacity: 0.5; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Scroll progress indicator -->
+<div class="scroll-progress">
+  <div class="progress-label">Scroll</div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-label" id="scrollPercent">0%</div>
+</div>
+
+<!-- Phase dots -->
+<div class="phase-dots" id="phaseDots">
+  <div class="phase-dot active" data-phase="0"></div>
+  <div class="phase-dot" data-phase="1"></div>
+  <div class="phase-dot" data-phase="2"></div>
+  <div class="phase-dot" data-phase="3"></div>
+  <div class="phase-dot" data-phase="4"></div>
+</div>
+
+<!-- Morphing stage (sticky) -->
+<div class="morph-stage" id="morphStage">
+  <canvas class="morph-canvas" id="morphCanvas"></canvas>
+
+  <div class="color-blob color-blob-1" id="blob1"></div>
+  <div class="color-blob color-blob-2" id="blob2"></div>
+  <div class="color-blob color-blob-3" id="blob3"></div>
+
+  <!-- Floating particles -->
+  <div class="particle" style="top:20%; left:30%; --dx:25px; --dy:-35px; animation-delay:0s;"></div>
+  <div class="particle" style="top:60%; left:70%; --dx:-30px; --dy:20px; animation-delay:-2s;"></div>
+  <div class="particle" style="top:40%; left:50%; --dx:40px; --dy:15px; animation-delay:-4s;"></div>
+  <div class="particle" style="top:75%; left:20%; --dx:-20px; --dy:-25px; animation-delay:-1s;"></div>
+  <div class="particle" style="top:30%; left:80%; --dx:15px; --dy:30px; animation-delay:-3s;"></div>
+
+  <div class="scroll-text" id="scrollText">
+    <h1 id="heroTitle">Liquid</h1>
+    <div class="subtitle" id="heroSubtitle">Scroll to morph the form</div>
+  </div>
+</div>
+
+<!-- Scrollable content to drive the animation -->
+<div class="content-sections" id="contentSections">
+  <div class="content-section" style="min-height: 50vh;"></div>
+  <div class="content-section">
+    <div class="content-inner">
+      <h2>Organic Transformation</h2>
+      <p>As you scroll, the liquid shape smoothly morphs between organic forms — each phase a different character of fluid motion, driven by your interaction.</p>
+    </div>
+  </div>
+  <div class="content-section">
+    <div class="content-inner">
+      <h2>Scroll-Driven Motion</h2>
+      <p>No timeline, no autoplay. The animation is entirely in your hands. Scroll up, scroll down — the blob responds in real-time, interpolating seamlessly between states.</p>
+    </div>
+  </div>
+  <div class="content-section">
+    <div class="content-inner">
+      <h2>Fluid Mathematics</h2>
+      <p>Under the hood, cosine interpolation and spline-based path generation create that buttery smooth organic feel. No jarring transitions, just liquid flow.</p>
+    </div>
+  </div>
+  <div class="content-section">
+    <div class="content-inner">
+      <h2>Infinite States</h2>
+      <p>Every scroll position yields a unique shape. The morphing never repeats — like water, it flows through infinite intermediate forms between defined keyframes.</p>
+    </div>
+  </div>
+  <div class="content-section" style="min-height: 50vh;"></div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('morphCanvas');
+  const ctx = canvas.getContext('2d');
+  const morphStage = document.getElementById('morphStage');
+  const progressFill = document.getElementById('progressFill');
+  const scrollPercentEl = document.getElementById('scrollPercent');
+  const heroTitle = document.getElementById('heroTitle');
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  const blob1 = document.getElementById('blob1');
+  const blob2 = document.getElementById('blob2');
+  const blob3 = document.getElementById('blob3');
+  const phaseDots = document.querySelectorAll('.phase-dot');
+
+  const titles = ['Liquid', 'Flow', 'Morph', 'Drift', 'Form'];
+  const subtitles = [
+    'Scroll to morph the form',
+    'Between shape and chaos',
+    'Transforming with you',
+    'Letting go of structure',
+    'Finding final shape'
+  ];
+
+  let scrollProgress = 0;
+  let currentPhase = 0;
+  let animFrame;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Blob shape generator using polar coordinates with cosine noise
+  function generateBlobPoints(cx, cy, baseRadius, numPoints, seed, time) {
+    const points = [];
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const noise1 = Math.sin(angle * 3 + seed) * 0.3;
+      const noise2 = Math.cos(angle * 5 + seed * 2) * 0.15;
+      const noise3 = Math.sin(angle * 7 + seed * 0.5) * 0.08;
+      const r = baseRadius * (1 + noise1 + noise2 + noise3);
+      points.push({
+        x: cx + Math.cos(angle) * r,
+        y: cy + Math.sin(angle) * r
+      });
+    }
+    return points;
+  }
+
+  // Smooth interpolation between two sets of points
+  function lerpPoints(pts1, pts2, t) {
+    const result = [];
+    const len = Math.min(pts1.length, pts2.length);
+    const smoothT = t * t * (3 - 2 * t); // smoothstep
+    for (let i = 0; i < len; i++) {
+      result.push({
+        x: pts1[i].x + (pts2[i].x - pts1[i].x) * smoothT,
+        y: pts1[i].y + (pts2[i].y - pts1[i].y) * smoothT
+      });
+    }
+    return result;
+  }
+
+  // Draw smooth blob from points using cardinal spline
+  function drawBlob(points, fill, stroke, lineWidth) {
+    if (points.length < 3) return;
+    ctx.beginPath();
+    // Catmull-Rom to Bezier conversion for smooth curve through all points
+    const len = points.length;
+    for (let i = 0; i < len; i++) {
+      const p0 = points[(i - 1 + len) % len];
+      const p1 = points[i];
+      const p2 = points[(i + 1) % len];
+      const p3 = points[(i + 2) % len];
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      if (i === 0) ctx.moveTo(p1.x, p1.y);
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    }
+    ctx.closePath();
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = lineWidth || 2;
+      ctx.stroke();
+    }
+  }
+
+  // Define 5 keyframe blob shapes
+  const NUM_POINTS = 80;
+  const cx = () => canvas.width / 2;
+  const cy = () => canvas.height / 2;
+  const baseR = () => Math.min(canvas.width, canvas.height) * 0.2;
+
+  const seeds = [0, 2.5, 5.0, 7.5, 10.0];
+  const scales = [1.0, 1.3, 0.8, 1.5, 1.1];
+  const rotations = [0, 0.5, 1.0, 1.5, 2.0];
+
+  function getKeyframeBlob(phase) {
+    const bR = baseR() * scales[phase];
+    const points = [];
+    for (let i = 0; i < NUM_POINTS; i++) {
+      const angle = (i / NUM_POINTS) * Math.PI * 2 + rotations[phase];
+      const n1 = Math.sin(angle * 3 + seeds[phase]) * 0.3;
+      const n2 = Math.cos(angle * 5 + seeds[phase] * 2) * 0.15;
+      const n3 = Math.sin(angle * 7 + seeds[phase] * 0.5) * 0.08;
+      const r = bR * (1 + n1 + n2 + n3);
+      points.push({
+        x: cx() + Math.cos(angle) * r,
+        y: cy() + Math.sin(angle) * r
+      });
+    }
+    return points;
+  }
+
+  // Gradient colors per phase
+  const gradientColors = [
+    ['#e94560', '#533483'],
+    ['#533483', '#0f3460'],
+    ['#0f3460', '#e94560'],
+    ['#e94560', '#0f3460'],
+    ['#533483', '#e94560']
+  ];
+
+  function getGradient(phaseA, phaseB, t) {
+    const grad = ctx.createRadialGradient(cx(), cy(), 0, cx(), cy(), baseR() * 1.8);
+    const c1 = gradientColors[phaseA];
+    const c2 = gradientColors[phaseB];
+    // Interpolate hex colors not needed - just blend stops
+    grad.addColorStop(0, c1[0]);
+    grad.addColorStop(t * 0.5 + 0.25, c1[1]);
+    grad.addColorStop(t * 0.5 + 0.5, c2[0]);
+    grad.addColorStop(1, c2[1]);
+    return grad;
+  }
+
+  function lerpColor(a, b, t) {
+    const parse = (hex) => {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return [r, g, b];
+    };
+    const [ar, ag, ab] = parse(a);
+    const [br, bg, bb] = parse(b);
+    const r = Math.round(ar + (br - ar) * t);
+    const g = Math.round(ag + (bg - ag) * t);
+    const b2 = Math.round(ab + (bb - ab) * t);
+    return `rgb(${r},${g},${b2})`;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const p = scrollProgress;
+    const phaseF = p * (seeds.length - 1);
+    const phaseA = Math.min(Math.floor(phaseF), seeds.length - 2);
+    const phaseB = phaseA + 1;
+    const t = phaseF - phaseA;
+
+    // Main blob
+    const ptsA = getKeyframeBlob(phaseA);
+    const ptsB = getKeyframeBlob(phaseB);
+    const morphedPts = lerpPoints(ptsA, ptsB, t);
+
+    // Glow layer
+    ctx.save();
+    ctx.shadowBlur = 40 + Math.sin(p * Math.PI * 2) * 20;
+    ctx.shadowColor = lerpColor(gradientColors[phaseA][0], gradientColors[phaseB][0], t);
+    drawBlob(morphedPts, lerpColor(gradientColors[phaseA][0], gradientColors[phaseB][0], t) + '33');
+    ctx.restore();
+
+    // Fill blob with gradient
+    const grad = ctx.createRadialGradient(cx(), cy(), baseR() * 0.3, cx(), cy(), baseR() * 1.8);
+    grad.addColorStop(0, lerpColor('#e94560', gradientColors[phaseB][0], t));
+    grad.addColorStop(0.5, lerpColor(gradientColors[phaseA][0], gradientColors[phaseA][1], t));
+    grad.addColorStop(1, lerpColor(gradientColors[phaseA][1], gradientColors[phaseB][1], t) + '00');
+
+    drawBlob(morphedPts, grad, lerpColor('#e94560', '#533483', t), 1.5);
+
+    // Inner highlight
+    const innerGrad = ctx.createRadialGradient(cx() - baseR() * 0.3, cy() - baseR() * 0.3, 0, cx(), cy(), baseR() * 0.8);
+    innerGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+    innerGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    drawBlob(morphedPts, innerGrad);
+
+    animFrame = requestAnimationFrame(render);
+  }
+
+  // Scroll handler
+  function onScroll() {
+    const scrollY = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    scrollProgress = Math.min(Math.max(scrollY / docHeight, 0), 1);
+
+    progressFill.style.height = (scrollProgress * 100) + '%';
+    scrollPercentEl.textContent = Math.round(scrollProgress * 100) + '%';
+
+    // Update phase
+    const phase = Math.min(Math.floor(scrollProgress * (titles.length - 1) + 0.5), titles.length - 1);
+    if (phase !== currentPhase) {
+      currentPhase = phase;
+      heroTitle.textContent = titles[phase];
+      heroSubtitle.textContent = subtitles[phase];
+      phaseDots.forEach((d, i) => d.classList.toggle('active', i === phase));
+    }
+
+    // Move background color blobs
+    const bAngle = scrollProgress * Math.PI * 2;
+    blob1.style.transform = `translate(${Math.cos(bAngle) * 100}px, ${Math.sin(bAngle) * 80}px)`;
+    blob2.style.transform = `translate(${Math.cos(bAngle + 2) * 120}px, ${Math.sin(bAngle + 2) * 90}px)`;
+    blob3.style.transform = `translate(${Math.cos(bAngle + 4) * 80}px, ${Math.sin(bAngle + 4) * 100}px)`;
+
+    // Title parallax
+    const titleOffset = scrollProgress * 30;
+    heroTitle.style.transform = `translateY(${-titleOffset}px)`;
+    heroTitle.style.opacity = 1 - scrollProgress * 0.3;
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  render();
+  onScroll();
+})();
+</script>
+</body>
+</html>

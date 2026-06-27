@@ -1,0 +1,552 @@
+<!--
+  scroll-reveal.html
+  Elements that fade in and slide up when scrolled into view.
+  Uses IntersectionObserver with staggered delays.
+  Multiple demo sections: cards, text blocks, images.
+  Pure CSS + vanilla JS. No dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Reveal Animations</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a8e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(233,69,96,.18) 0%, transparent 70%);
+    top: -100px; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: .35rem 1rem;
+    border: 1px solid var(--color-primary);
+    border-radius: 999px;
+    font-size: .75rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--color-text) 0%, var(--color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    max-width: 520px;
+    color: var(--color-muted);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+
+  .scroll-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+    color: var(--color-muted);
+    font-size: .8rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    animation: float 2s ease-in-out infinite;
+  }
+
+  .scroll-hint .arrow {
+    width: 20px; height: 20px;
+    border-right: 2px solid var(--color-primary);
+    border-bottom: 2px solid var(--color-primary);
+    transform: rotate(45deg);
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* ── Sections ── */
+  .section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 6rem 2rem;
+  }
+
+  .section-label {
+    display: inline-block;
+    font-size: .7rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: .75rem;
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .section-label::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    width: 1.2rem; height: 2px;
+    background: var(--color-primary);
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .section-desc {
+    color: var(--color-muted);
+    max-width: 560px;
+    margin-bottom: 3rem;
+  }
+
+  /* ── Reveal base ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* staggered children */
+  .reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+  }
+
+  .reveal-stagger.visible > * {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-stagger.visible > *:nth-child(1) { transition-delay: .0s; }
+  .reveal-stagger.visible > *:nth-child(2) { transition-delay: .1s; }
+  .reveal-stagger.visible > *:nth-child(3) { transition-delay: .2s; }
+  .reveal-stagger.visible > *:nth-child(4) { transition-delay: .3s; }
+  .reveal-stagger.visible > *:nth-child(5) { transition-delay: .4s; }
+  .reveal-stagger.visible > *:nth-child(6) { transition-delay: .5s; }
+
+  /* ── Cards ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--color-surface);
+    border-radius: 16px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(233,69,96,.15);
+  }
+
+  .card-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg, rgba(233,69,96,.15), rgba(83,52,131,.15));
+  }
+
+  .card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: .5rem;
+  }
+
+  .card p {
+    color: var(--color-muted);
+    font-size: .9rem;
+  }
+
+  /* ── Text blocks ── */
+  .text-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .text-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .text-block.reverse { direction: rtl; }
+  .text-block.reverse > * { direction: ltr; }
+
+  .text-block-image {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+  }
+
+  .text-block-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(15,15,26,.4) 100%);
+  }
+
+  .text-block-image .pattern {
+    position: absolute;
+    inset: 0;
+    opacity: .12;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.3) 1px, transparent 1px),
+      radial-gradient(circle at 80% 70%, rgba(255,255,255,.3) 1px, transparent 1px);
+    background-size: 30px 30px, 45px 45px;
+  }
+
+  .text-block-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: .75rem;
+  }
+
+  .text-block-content p {
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+  }
+
+  .text-block-content .tag {
+    display: inline-block;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    background: rgba(233,69,96,.12);
+    color: var(--color-primary);
+    margin-right: .5rem;
+  }
+
+  /* ── Stat counters ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--color-surface);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid rgba(233,69,96,.08);
+    transition: border-color .3s ease;
+  }
+
+  .stat-card:hover {
+    border-color: rgba(233,69,96,.3);
+  }
+
+  .stat-number {
+    font-size: 2.4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    color: var(--color-muted);
+    font-size: .85rem;
+    margin-top: .25rem;
+  }
+
+  /* ── Image masonry ── */
+  .masonry {
+    columns: 3;
+    column-gap: 1.2rem;
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1.2rem;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .masonry-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 -60px 40px -20px rgba(15,15,26,.6);
+  }
+
+  .masonry-item .fill {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #1a1a3e 0%, #533483 100%);
+  }
+
+  .masonry-item:nth-child(2) .fill { background: linear-gradient(135deg, #1a2640 0%, #e94560 100%); }
+  .masonry-item:nth-child(3) .fill { background: linear-gradient(135deg, #2a1a3e 0%, #0f3460 100%); }
+  .masonry-item:nth-child(4) .fill { background: linear-gradient(135deg, #16213e 0%, #533483 100%); }
+  .masonry-item:nth-child(5) .fill { background: linear-gradient(135deg, #0f3460 0%, #e94560 100%); }
+  .masonry-item:nth-child(6) .fill { background: linear-gradient(135deg, #1a1a3e 0%, #e94560 100%); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-muted);
+    font-size: .85rem;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
+
+  @media (max-width: 768px) {
+    .text-block { grid-template-columns: 1fr; }
+    .masonry { columns: 2; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .reveal-stagger > * {
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <span class="hero-badge">Scroll Animation Library</span>
+  <h1>Reveal on Scroll</h1>
+  <p>Elements fade in and slide up as they enter the viewport. Staggered delays create a cascading rhythm.</p>
+  <div class="scroll-hint">
+    <span>Scroll down</span>
+    <div class="arrow"></div>
+  </div>
+</section>
+
+<!-- Cards Section -->
+<section class="section">
+  <span class="section-label reveal">Features</span>
+  <h2 class="section-title reveal">Built for modern interfaces</h2>
+  <p class="section-desc reveal">Each card reveals independently as it scrolls into view with staggered timing.</p>
+  <div class="card-grid reveal-stagger">
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>Lightning Fast</h3>
+      <p>IntersectionObserver runs off the main thread for jank-free scroll detection.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <h3>Precise Control</h3>
+      <p>Fine-tune thresholds, root margins, and timing per element or group.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎭</div>
+      <h3>Staggered Reveal</h3>
+      <p>Child elements cascade in with incremental delays for visual rhythm.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">♿</div>
+      <h3>Accessible</h3>
+      <p>Respects prefers-reduced-motion. Animations disable gracefully.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📐</div>
+      <h3>Composable</h3>
+      <p>Stack reveal with scale, rotate, or direction for unique effects.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧪</div>
+      <h3>Well Tested</h3>
+      <p>Cubic-bezier easing tuned for 60fps across browsers and devices.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Text Blocks Section -->
+<section class="section">
+  <span class="section-label reveal">Showcase</span>
+  <h2 class="section-title reveal">Directional reveals</h2>
+  <p class="section-desc reveal">Content blocks can reveal from any direction — up, left, or right.</p>
+  <div class="text-rows">
+    <div class="text-block reveal">
+      <div class="text-block-image"><div class="pattern"></div></div>
+      <div class="text-block-content">
+        <h3>Observer-Driven Performance</h3>
+        <p>No scroll event listeners. The browser handles detection natively, delivering butter-smooth reveals without layout thrash.</p>
+        <span class="tag">Performance</span><span class="tag">Native API</span>
+      </div>
+    </div>
+    <div class="text-block reverse reveal">
+      <div class="text-block-image"><div class="pattern"></div></div>
+      <div class="text-block-content">
+        <h3>Progressive Enhancement</h3>
+        <p>Content is always visible without JS. Animations layer on top as an enhancement — never blocking the user.</p>
+        <span class="tag">Resilient</span><span class="tag">No-JS Fallback</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<section class="section">
+  <span class="section-label reveal">Metrics</span>
+  <h2 class="section-title reveal">By the numbers</h2>
+  <p class="section-desc reveal">Stats count up when they scroll into view.</p>
+  <div class="stat-grid reveal-stagger">
+    <div class="stat-card">
+      <div class="stat-number" data-count="60">0</div>
+      <div class="stat-label">Frames per second</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" data-count="0">0</div>
+      <div class="stat-label">Scroll listeners</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" data-count="16">0</div>
+      <div class="stat-label">ms paint time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" data-count="100">0</div>
+      <div class="stat-label">% Lighthouse score</div>
+    </div>
+  </div>
+</section>
+
+<!-- Masonry Section -->
+<section class="section">
+  <span class="section-label reveal">Gallery</span>
+  <h2 class="section-title reveal">Independent reveals</h2>
+  <p class="section-desc reveal">Each masonry item reveals as it enters the viewport independently.</p>
+  <div class="masonry reveal-stagger">
+    <div class="masonry-item"><div class="fill" style="height:220px"></div></div>
+    <div class="masonry-item"><div class="fill" style="height:300px"></div></div>
+    <div class="masonry-item"><div class="fill" style="height:260px"></div></div>
+    <div class="masonry-item"><div class="fill" style="height:180px"></div></div>
+    <div class="masonry-item"><div class="fill" style="height:320px"></div></div>
+    <div class="masonry-item"><div class="fill" style="height:240px"></div></div>
+  </div>
+</section>
+
+<footer>
+  <p>Scroll Reveal Animation Demo &middot; Pure CSS + Vanilla JS &middot; No Dependencies</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── IntersectionObserver for .reveal ──
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach((el) => revealObs.observe(el));
+
+  // ── IntersectionObserver for .reveal-stagger ──
+  const staggerObs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        staggerObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
+
+  document.querySelectorAll('.reveal-stagger').forEach((el) => staggerObs.observe(el));
+
+  // ── Count-up animation for stat numbers ──
+  const countObs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const target = parseInt(el.dataset.count, 10);
+      const duration = 1400;
+      const start = performance.now();
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+      countObs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.stat-number[data-count]').forEach((el) => countObs.observe(el));
+})();
+</script>
+</body>
+</html>

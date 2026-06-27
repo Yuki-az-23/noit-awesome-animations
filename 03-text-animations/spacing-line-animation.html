@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================================
+  SPACING LINE ANIMATION — Letter-spacing & Line-height
+  ============================================================
+  Text where letter-spacing and line-height animate rhythmically.
+  Characters spread apart and come together. Lines of text animate
+  their spacing with different timing functions.
+  4 demo sections with distinct timing functions.
+  Pure CSS + Vanilla JS. No dependencies.
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spacing Line Animation</title>
+<style>
+  /* ── Reset & Custom Properties ── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a9e;
+    --color-glow: rgba(233, 69, 96, 0.35);
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 20%, rgba(233,69,96,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(78,205,196,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 2.5rem 2rem 1rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  header h1 {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 200;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #e94560, #4ecdc4, #fbbf24, #e94560);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradFlow 5s ease-in-out infinite;
+  }
+
+  @keyframes gradFlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  header p {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem 2rem 3rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── Demo Section ── */
+  .demo-section {
+    background: linear-gradient(160deg, var(--color-surface) 0%, rgba(15,15,26,0.7) 100%);
+    border: 1px solid rgba(233,69,96,0.08);
+    border-radius: 1.25rem;
+    padding: 2rem 1.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .demo-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0.6;
+  }
+
+  .demo-section:nth-child(1)::after { background: linear-gradient(90deg, transparent, #ff6b9d, transparent); }
+  .demo-section:nth-child(2)::after { background: linear-gradient(90deg, transparent, #4ecdc4, transparent); }
+  .demo-section:nth-child(3)::after { background: linear-gradient(90deg, transparent, #fbbf24, transparent); }
+  .demo-section:nth-child(4)::after { background: linear-gradient(90deg, transparent, #c084fc, transparent); }
+
+  .demo-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .demo-label-num {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-muted);
+  }
+
+  .demo-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .demo-timing {
+    font-size: 0.72rem;
+    font-family: 'Courier New', monospace;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    background: rgba(233,69,96,0.08);
+    border: 1px solid rgba(233,69,96,0.15);
+    color: var(--color-primary);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Spacing Text ── */
+  .spacing-text {
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .spacing-text .word {
+    display: inline-block;
+  }
+
+  .spacing-text .char {
+    display: inline-block;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* ── Line container ── */
+  .anim-line {
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ── Section 1: Ease — Smooth Breathing ── */
+  .section-ease .anim-line {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #ff6b9d;
+    text-shadow: 0 0 30px rgba(255,107,157,0.25);
+  }
+
+  /* ── Section 2: Cubic Bezier — Snappy ── */
+  .section-snap .anim-line {
+    font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    color: #4ecdc4;
+    text-shadow: 0 0 30px rgba(78,205,196,0.25);
+  }
+
+  .section-snap .anim-line:nth-child(2) {
+    font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
+  /* ── Section 3: Steps — Staccato ── */
+  .section-step .anim-line {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: #fbbf24;
+    text-shadow: 0 0 30px rgba(251,191,36,0.25);
+  }
+
+  /* ── Section 4: Spring — Elastic ── */
+  .section-spring .anim-line {
+    font-size: clamp(1.3rem, 3vw, 2.2rem);
+    font-weight: 600;
+    color: #c084fc;
+    text-shadow: 0 0 30px rgba(192,132,252,0.25);
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn {
+    background: transparent;
+    color: var(--color-muted);
+    border: 1px solid rgba(233,69,96,0.2);
+    padding: 0.45rem 1.3rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: rgba(233,69,96,0.08);
+  }
+
+  .btn.active {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: rgba(233,69,96,0.12);
+  }
+
+  /* ── Speed Slider ── */
+  .speed-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .speed-row label {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .speed-row input[type="range"] {
+    -webkit-appearance: none;
+    width: 120px;
+    height: 3px;
+    background: rgba(233,69,96,0.2);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .speed-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .speed-val {
+    font-size: 0.78rem;
+    color: var(--color-primary);
+    font-family: 'Courier New', monospace;
+    min-width: 3em;
+  }
+
+  /* ── Info Footer ── */
+  .info-bar {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1rem 0 0;
+  }
+
+  .info-card {
+    background: var(--color-surface);
+    border: 1px solid rgba(233,69,96,0.08);
+    border-radius: 0.75rem;
+    padding: 0.7rem 1.2rem;
+    text-align: center;
+  }
+
+  .info-card .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-muted);
+  }
+
+  .info-card .value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  /* ── Reduce Motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .spacing-text .char {
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Spacing &amp; Line</h1>
+  <p>Letter-spacing &amp; line-height animation &middot; 4 timing functions</p>
+</header>
+
+<div class="container">
+
+  <div class="controls">
+    <button class="btn" id="btnPlay" onclick="togglePlay()">Pause</button>
+    <button class="btn" onclick="restart()">Restart</button>
+  </div>
+
+  <div class="speed-row">
+    <label>Speed</label>
+    <input type="range" min="0.3" max="2.5" step="0.1" value="1" id="speedSlider" oninput="updateSpeed()">
+    <span class="speed-val" id="speedVal">1.0x</span>
+  </div>
+
+  <!-- Section 1: Ease — Smooth Breathing -->
+  <div class="demo-section section-ease" id="sec1">
+    <div class="demo-meta">
+      <div>
+        <div class="demo-label-num">Section 01</div>
+        <div class="demo-title">Smooth Breathing</div>
+      </div>
+      <div class="demo-timing">ease-in-out</div>
+    </div>
+    <div class="spacing-text" id="st1">
+      <div class="anim-line" id="line1a"></div>
+      <div class="anim-line" id="line1b" style="margin-top:0.3em;"></div>
+    </div>
+  </div>
+
+  <!-- Section 2: Cubic Bezier — Snappy -->
+  <div class="demo-section section-snap" id="sec2">
+    <div class="demo-meta">
+      <div>
+        <div class="demo-label-num">Section 02</div>
+        <div class="demo-title">Snappy Bounce</div>
+      </div>
+      <div class="demo-timing">cubic-bezier(0.68, -0.55, 0.27, 1.55)</div>
+    </div>
+    <div class="spacing-text" id="st2">
+      <div class="anim-line" id="line2a"></div>
+      <div class="anim-line" id="line2b" style="margin-top:0.2em;"></div>
+    </div>
+  </div>
+
+  <!-- Section 3: Steps — Staccato -->
+  <div class="demo-section section-step" id="sec3">
+    <div class="demo-meta">
+      <div>
+        <div class="demo-label-num">Section 03</div>
+        <div class="demo-title">Staccato Steps</div>
+      </div>
+      <div class="demo-timing">steps(8, end)</div>
+    </div>
+    <div class="spacing-text" id="st3">
+      <div class="anim-line" id="line3a"></div>
+    </div>
+  </div>
+
+  <!-- Section 4: Spring — Elastic -->
+  <div class="demo-section section-spring" id="sec4">
+    <div class="demo-meta">
+      <div>
+        <div class="demo-label-num">Section 04</div>
+        <div class="demo-title">Elastic Spring</div>
+      </div>
+      <div class="demo-timing">custom spring JS</div>
+    </div>
+    <div class="spacing-text" id="st4">
+      <div class="anim-line" id="line4a"></div>
+      <div class="anim-line" id="line4b" style="margin-top:0.2em;"></div>
+      <div class="anim-line" id="line4c" style="margin-top:0.2em;"></div>
+    </div>
+  </div>
+
+  <div class="info-bar">
+    <div class="info-card">
+      <div class="label">Timing Functions</div>
+      <div class="value">4</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Animated Chars</div>
+      <div class="value" id="charCount">0</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Frame</div>
+      <div class="value" id="frameCount">0</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/*
+  ============================================================
+  Spacing & Line Animation — JS Engine
+  ============================================================
+  Rhythmically animates letter-spacing and line-height
+  using 4 different timing function approaches.
+*/
+
+// ── Text Data ──
+const TEXT_DATA = {
+  sec1: ['BREATHE IN', 'BREATHE OUT'],
+  sec2: ['PUSH & PULL', 'snap back'],
+  sec3: ['STEPPER'],
+  sec4: ['SPRING LOADED', 'elastic rebound', 'rhythm & flow']
+};
+
+// ── Timings ──
+const EASE_DURATION = 3000;    // ms for one ease cycle
+const SNAP_DURATION = 2000;    // ms for snap cycle
+const STEP_DURATION = 2500;    // ms for step cycle
+const SPRING_DURATION = 2800;  // ms for spring cycle
+
+// ── State ──
+let playing = true;
+let rafId = null;
+let frameCount = 0;
+let speed = 1.0;
+let startTime = performance.now();
+
+// ── Timing Functions ──
+function easeInOut(t) {
+  return 0.5 * (1 - Math.cos(t * Math.PI));
+}
+
+function cubicBezierSnap(t) {
+  // Approximate cubic-bezier(0.68, -0.55, 0.27, 1.55) overshoot
+  const c4 = (2 * Math.PI) / 3;
+  if (t < 0.5) {
+    return 1.3 * (t * t * t);
+  }
+  const over = 1 + 0.55 * Math.sin((t - 0.5) * Math.PI * 2);
+  return t < 0.8 ? t * t * (3 - 2 * t) * over : 1 - Math.pow(1 - t, 3);
+}
+
+function stepEasing(t) {
+  // Step function with 8 steps
+  const steps = 8;
+  return Math.floor(t * steps) / steps;
+}
+
+function springEasing(t) {
+  // Damped spring oscillation
+  const damp = 0.3;
+  const freq = 8;
+  return 1 - Math.exp(-damp * freq * t) * Math.cos(freq * Math.PI * t * 2);
+}
+
+// ── Build Characters ──
+function buildChars(containerId, text) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const chars = [];
+
+  text.split('').forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'char';
+    if (ch === ' ') {
+      span.innerHTML = '&nbsp;';
+    } else {
+      span.textContent = ch;
+    }
+    container.appendChild(span);
+    chars.push(span);
+  });
+
+  return chars;
+}
+
+// Build all sections
+const sections = {};
+
+// Section 1: Ease — two lines
+sections.sec1_line1 = buildChars('line1a', TEXT_DATA.sec1[0]);
+sections.sec1_line2 = buildChars('line1b', TEXT_DATA.sec1[1]);
+sections.sec1_all = [...sections.sec1_line1, ...sections.sec1_line2];
+
+// Section 2: Snap — two lines
+sections.sec2_line1 = buildChars('line2a', TEXT_DATA.sec2[0]);
+sections.sec2_line2 = buildChars('line2b', TEXT_DATA.sec2[1]);
+sections.sec2_all = [...sections.sec2_line1, ...sections.sec2_line2];
+
+// Section 3: Step — one line
+sections.sec3_line1 = buildChars('line3a', TEXT_DATA.sec3[0]);
+
+// Section 4: Spring — three lines
+sections.sec4_line1 = buildChars('line4a', TEXT_DATA.sec4[0]);
+sections.sec4_line2 = buildChars('line4b', TEXT_DATA.sec4[1]);
+sections.sec4_line3 = buildChars('line4c', TEXT_DATA.sec4[2]);
+sections.sec4_all = [...sections.sec4_line1, ...sections.sec4_line2, ...sections.sec4_line3];
+
+// Count total chars
+let totalChars = 0;
+Object.values(sections).forEach(arr => {
+  if (Array.isArray(arr)) totalChars += arr.length;
+});
+document.getElementById('charCount').textContent = totalChars;
+
+// ── Animation Loop ──
+function animate(now) {
+  if (!playing) return;
+
+  const elapsed = (now - startTime) * speed;
+  frameCount++;
+  document.getElementById('frameCount').textContent = frameCount;
+
+  // ── Section 1: Ease In-Out — Smooth Breathing ──
+  {
+    const cycle = (elapsed % EASE_DURATION) / EASE_DURATION;  // 0→1
+    const val = easeInOut(cycle);
+
+    // Letter-spacing: 0em → 0.6em → 0em
+    const spacing = val * 0.6;
+    // Line-height: 1.4 → 2.0 → 1.4
+    const lineHeight = 1.4 + val * 0.6;
+
+    sections.sec1_line1.forEach((ch, i) => {
+      const phase = i * 0.05;
+      const charVal = easeInOut((cycle + phase) % 1);
+      ch.style.transform = `translateY(${Math.sin(charVal * Math.PI) * -5}px)`;
+    });
+
+    const container1 = document.getElementById('line1a');
+    container1.style.letterSpacing = `${spacing}em`;
+    container1.style.lineHeight = lineHeight;
+
+    // Second line with offset
+    const cycle2 = ((elapsed + 800) % EASE_DURATION) / EASE_DURATION;
+    const val2 = easeInOut(cycle2);
+    const spacing2 = val2 * 0.4;
+    const container2 = document.getElementById('line1b');
+    container2.style.letterSpacing = `${spacing2}em`;
+  }
+
+  // ── Section 2: Cubic Bezier — Snappy ──
+  {
+    const cycle = (elapsed % SNAP_DURATION) / SNAP_DURATION;
+    const val = cycle < 0.5
+      ? cubicBezierSnap(cycle * 2) * 0.5
+      : 0.5 + (1 - cubicBezierSnap((cycle - 0.5) * 2)) * 0.5;
+
+    sections.sec2_line1.forEach((ch, i) => {
+      const stagger = i * 0.03;
+      const charCycle = ((cycle + stagger) % 1);
+      const expanded = charCycle < 0.5;
+      const spacing = expanded ? 0.5 * Math.min(1, charCycle * 4) : 0.5 * Math.max(0, 1 - (charCycle - 0.5) * 4);
+      ch.style.transform = `translateX(${Math.sin(cycle * Math.PI * 2 + i * 0.3) * 8}px)`;
+      ch.style.opacity = 0.5 + 0.5 * Math.abs(Math.cos(cycle * Math.PI + i * 0.2));
+    });
+
+    const containerA = document.getElementById('line2a');
+    const sp1 = 0.35 * Math.abs(Math.sin(cycle * Math.PI));
+    containerA.style.letterSpacing = `${sp1}em`;
+
+    const containerB = document.getElementById('line2b');
+    const sp2 = 0.25 * Math.abs(Math.cos(cycle * Math.PI));
+    containerB.style.letterSpacing = `${sp2}em`;
+  }
+
+  // ── Section 3: Steps — Staccato ──
+  {
+    const cycle = (elapsed % STEP_DURATION) / STEP_DURATION;
+    const val = stepEasing(cycle);
+
+    sections.sec3_line1.forEach((ch, i) => {
+      const staggered = stepEasing((cycle + i * 0.02) % 1);
+      ch.style.letterSpacing = `${staggered * 0.5}em`;
+      ch.style.transform = `translateY(${staggered * -10}px)`;
+      ch.style.opacity = 0.6 + staggered * 0.4;
+    });
+  }
+
+  // ── Section 4: Spring — Elastic ──
+  {
+    const cycle = (elapsed % SPRING_DURATION) / SPRING_DURATION;
+    const val = springEasing(cycle);
+
+    // Animate per-line with different phase offsets
+    const lines4 = [sections.sec4_line1, sections.sec4_line2, sections.sec4_line3];
+    const lineContainers = ['line4a', 'line4b', 'line4c'];
+
+    lines4.forEach((line, li) => {
+      const lineCycle = ((cycle + li * 0.15) % 1);
+      const springVal = springEasing(lineCycle);
+      const spacing = springVal * 0.5;
+
+      line.forEach((ch, ci) => {
+        const charPhase = ((lineCycle + ci * 0.015) % 1);
+        const charSpring = springEasing(charPhase);
+        ch.style.transform = `translateX(${(charSpring - 0.5) * 20}px) translateY(${Math.sin(charPhase * Math.PI) * -8}px)`;
+        ch.style.opacity = 0.5 + charSpring * 0.5;
+      });
+
+      const container = document.getElementById(lineContainers[li]);
+      container.style.letterSpacing = `${spacing}em`;
+      container.style.lineHeight = `${1.4 + springVal * 0.4}`;
+    });
+  }
+
+  rafId = requestAnimationFrame(animate);
+}
+
+// ── Controls ──
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('btnPlay');
+  btn.textContent = playing ? 'Pause' : 'Play';
+  btn.classList.toggle('active', !playing);
+
+  if (playing) {
+    startTime = performance.now() - (startTime - performance.now());
+    rafId = requestAnimationFrame(animate);
+  } else {
+    cancelAnimationFrame(rafId);
+  }
+}
+
+function updateSpeed() {
+  const slider = document.getElementById('speedSlider');
+  speed = parseFloat(slider.value);
+  document.getElementById('speedVal').textContent = speed.toFixed(1) + 'x';
+}
+
+function restart() {
+  startTime = performance.now();
+  frameCount = 0;
+  if (!playing) {
+    playing = true;
+    document.getElementById('btnPlay').textContent = 'Pause';
+    document.getElementById('btnPlay').classList.remove('active');
+  }
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(animate);
+}
+
+// ── Start ──
+startTime = performance.now();
+rafId = requestAnimationFrame(animate);
+</script>
+</body>
+</html>

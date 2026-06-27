@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    Animated Shape Transition
+    Inspired by "Animated shape transition" and "Black Dog - Animated shape transition"
+    Geometric shapes that transition and morph between states.
+    Click or auto-play to trigger shape transitions. Abstract visual art.
+    Pure CSS + Vanilla JS. No external dependencies.
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Shape Transition</title>
+  <style>
+    :root {
+      --color-bg: #0f0f1a;
+      --color-surface: #16213e;
+      --color-primary: #e94560;
+      --color-text: #eaeaea;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Canvas area ── */
+    .canvas-area {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Central shape morphing area ── */
+    .shape-stage {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Morphing shapes via clip-path ── */
+    .morph-shape {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      transition: all 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .shape-primary {
+      background: linear-gradient(135deg, #e94560, #b829dd);
+      clip-path: var(--clip, polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%));
+      z-index: 3;
+    }
+
+    .shape-secondary {
+      background: linear-gradient(135deg, #00d4ff, #3a86ff);
+      clip-path: var(--clip, polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%));
+      opacity: 0.3;
+      z-index: 2;
+      animation: rotate-slow 20s linear infinite;
+    }
+
+    .shape-tertiary {
+      background: linear-gradient(135deg, #ffe600, #ff6b35);
+      clip-path: var(--clip, polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%));
+      opacity: 0.15;
+      z-index: 1;
+      animation: rotate-slow 30s linear infinite reverse;
+    }
+
+    @keyframes rotate-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Ring elements ── */
+    .orbit-ring {
+      position: absolute;
+      border: 1px solid rgba(233, 69, 96, 0.1);
+      border-radius: 50%;
+      animation: orbit-pulse 4s ease-in-out infinite;
+    }
+
+    .ring-1 { width: 450px; height: 450px; animation-delay: 0s; }
+    .ring-2 { width: 550px; height: 550px; animation-delay: 0.5s; border-color: rgba(0, 212, 255, 0.08); }
+    .ring-3 { width: 650px; height: 650px; animation-delay: 1s; border-color: rgba(184, 41, 221, 0.06); }
+
+    @keyframes orbit-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.03); opacity: 1; }
+    }
+
+    /* ── Floating particles ── */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .particle-ring {
+      position: fixed;
+      border: 1px solid;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.1;
+    }
+
+    /* ── UI Controls ── */
+    .controls-overlay {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      z-index: 100;
+    }
+
+    .shape-buttons {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .shape-btn {
+      padding: 0.5rem 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(22, 33, 62, 0.8);
+      color: #8892b0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-radius: 6px;
+      backdrop-filter: blur(10px);
+    }
+
+    .shape-btn:hover, .shape-btn.active {
+      background: rgba(233, 69, 96, 0.2);
+      color: #e94560;
+      border-color: rgba(233, 69, 96, 0.5);
+      box-shadow: 0 0 20px rgba(233, 69, 96, 0.15);
+    }
+
+    .auto-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: #5a6a80;
+    }
+
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      background: rgba(22, 33, 62, 0.8);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: #5a6a80;
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    .toggle-switch.active {
+      background: rgba(233, 69, 96, 0.3);
+      border-color: rgba(233, 69, 96, 0.5);
+    }
+
+    .toggle-switch.active::after {
+      transform: translateX(20px);
+      background: #e94560;
+    }
+
+    /* ── Shape label ── */
+    .shape-label {
+      position: fixed;
+      top: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: #3a4a5e;
+      z-index: 100;
+    }
+
+    /* ── Transition counter ── */
+    .counter {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      font-size: 0.7rem;
+      color: #3a4a5e;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      z-index: 100;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .counter span {
+      color: #e94560;
+      font-weight: 700;
+    }
+
+    /* ── Corner decorations ── */
+    .corner-info {
+      position: fixed;
+      font-size: 0.65rem;
+      color: #2a3a4e;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .corner-info.top-left { top: 2rem; left: 2rem; }
+    .corner-info.bottom-left { bottom: 2rem; left: 2rem; }
+
+    /* ── Transition flash ── */
+    .flash-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      transition: opacity 0.1s;
+    }
+
+    .flash-overlay.flash {
+      opacity: 0.08;
+    }
+
+    /* ── Background grid ── */
+    .bg-grid {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: -1;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="flash-overlay" id="flashOverlay"></div>
+
+  <!-- Counter -->
+  <div class="counter">
+    Transition <span id="transCount">0</span>
+  </div>
+
+  <!-- Shape Label -->
+  <div class="shape-label" id="shapeLabel">Diamond</div>
+
+  <!-- Corner Info -->
+  <div class="corner-info top-left">Shape Transition</div>
+  <div class="corner-info bottom-left">Click shapes below or press space</div>
+
+  <!-- Canvas Area -->
+  <div class="canvas-area" id="canvasArea">
+    <div class="shape-stage" id="shapeStage">
+      <!-- Orbit rings -->
+      <div class="orbit-ring ring-1"></div>
+      <div class="orbit-ring ring-2"></div>
+      <div class="orbit-ring ring-3"></div>
+
+      <!-- Morphing shapes -->
+      <div class="morph-shape shape-primary" id="shapePrimary"></div>
+      <div class="morph-shape shape-secondary" id="shapeSecondary"></div>
+      <div class="morph-shape shape-tertiary" id="shapeTertiary"></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-overlay">
+    <div class="shape-buttons" id="shapeButtons">
+      <!-- Buttons inserted by JS -->
+    </div>
+    <div class="auto-toggle">
+      <span>Auto-play</span>
+      <div class="toggle-switch active" id="autoToggle"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── Shape Definitions (clip-path polygons) ──
+    const shapes = [
+      {
+        name: 'Diamond',
+        clip: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+        color1: '#e94560',
+        color2: '#b829dd'
+      },
+      {
+        name: 'Circle',
+        clip: 'circle(50% at 50% 50%)',
+        color1: '#00d4ff',
+        color2: '#3a86ff'
+      },
+      {
+        name: 'Triangle',
+        clip: 'polygon(50% 0%, 100% 100%, 0% 100%)',
+        color1: '#4ecca3',
+        color2: '#00d4ff'
+      },
+      {
+        name: 'Hexagon',
+        clip: 'polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)',
+        color1: '#ffe600',
+        color2: '#ff6b35'
+      },
+      {
+        name: 'Star',
+        clip: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+        color1: '#e94560',
+        color2: '#ffe600'
+      },
+      {
+        name: 'Square',
+        clip: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+        color1: '#b829dd',
+        color2: '#e94560'
+      },
+      {
+        name: 'Pentagon',
+        clip: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+        color1: '#ff6b35',
+        color2: '#e94560'
+      },
+      {
+        name: 'Cross',
+        clip: 'polygon(35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%)',
+        color1: '#00d4ff',
+        color2: '#4ecca3'
+      },
+      {
+        name: 'Arrow',
+        clip: 'polygon(50% 0%, 100% 40%, 75% 40%, 75% 100%, 25% 100%, 25% 40%, 0% 40%)',
+        color1: '#ffe600',
+        color2: '#4ecca3'
+      },
+      {
+        name: 'Heart',
+        clip: 'polygon(50% 15%, 65% 0%, 85% 0%, 100% 15%, 100% 40%, 50% 100%, 0% 40%, 0% 15%, 15% 0%, 35% 0%)',
+        color1: '#e94560',
+        color2: '#ff2d95'
+      }
+    ];
+
+    let currentShapeIndex = 0;
+    let transitionCount = 0;
+    let autoPlay = true;
+    let autoPlayInterval = null;
+    let isTransitioning = false;
+
+    const shapePrimary = document.getElementById('shapePrimary');
+    const shapeSecondary = document.getElementById('shapeSecondary');
+    const shapeTertiary = document.getElementById('shapeTertiary');
+    const shapeLabel = document.getElementById('shapeLabel');
+    const transCount = document.getElementById('transCount');
+    const flashOverlay = document.getElementById('flashOverlay');
+    const shapeButtons = document.getElementById('shapeButtons');
+    const autoToggle = document.getElementById('autoToggle');
+
+    // ── Create buttons ──
+    shapes.forEach((shape, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'shape-btn' + (i === 0 ? ' active' : '');
+      btn.textContent = shape.name;
+      btn.addEventListener('click', () => transitionTo(i));
+      shapeButtons.appendChild(btn);
+    });
+
+    // ── Transition to a shape ──
+    function transitionTo(index) {
+      if (isTransitioning || index === currentShapeIndex) return;
+      isTransitioning = true;
+
+      const shape = shapes[index];
+
+      // Flash
+      flashOverlay.classList.add('flash');
+      setTimeout(() => flashOverlay.classList.remove('flash'), 150);
+
+      // Update shapes
+      shapePrimary.style.setProperty('--clip', shape.clip);
+      shapePrimary.style.clipPath = shape.clip;
+      shapePrimary.style.background = `linear-gradient(135deg, ${shape.color1}, ${shape.color2})`;
+
+      // Secondary morphs with delay
+      setTimeout(() => {
+        shapeSecondary.style.clipPath = shapes[(index + 2) % shapes.length].clip;
+        shapeSecondary.style.background = `linear-gradient(135deg, ${shapes[(index + 2) % shapes.length].color1}, ${shapes[(index + 2) % shapes.length].color2})`;
+      }, 200);
+
+      // Tertiary morphs with more delay
+      setTimeout(() => {
+        shapeTertiary.style.clipPath = shapes[(index + 4) % shapes.length].clip;
+        shapeTertiary.style.background = `linear-gradient(135deg, ${shapes[(index + 4) % shapes.length].color1}, ${shapes[(index + 4) % shapes.length].color2})`;
+      }, 400);
+
+      // Scale pulse
+      shapePrimary.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+        shapePrimary.style.transform = 'scale(1)';
+      }, 400);
+
+      // Update label with typewriter effect
+      shapeLabel.style.opacity = '0';
+      setTimeout(() => {
+        shapeLabel.textContent = shape.name;
+        shapeLabel.style.opacity = '1';
+      }, 200);
+
+      // Update counter
+      transitionCount++;
+      transCount.textContent = transitionCount;
+
+      // Update button active state
+      shapeButtons.querySelectorAll('.shape-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+
+      currentShapeIndex = index;
+
+      // Unlock transitioning after animation
+      setTimeout(() => {
+        isTransitioning = false;
+      }, 1200);
+    }
+
+    // ── Auto-play ──
+    function startAutoPlay() {
+      stopAutoPlay();
+      autoPlayInterval = setInterval(() => {
+        const nextIndex = (currentShapeIndex + 1) % shapes.length;
+        transitionTo(nextIndex);
+      }, 3000);
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+      }
+    }
+
+    autoToggle.addEventListener('click', () => {
+      autoPlay = !autoPlay;
+      autoToggle.classList.toggle('active', autoPlay);
+      if (autoPlay) {
+        startAutoPlay();
+      } else {
+        stopAutoPlay();
+      }
+    });
+
+    // ── Keyboard controls ──
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        const nextIndex = (currentShapeIndex + 1) % shapes.length;
+        transitionTo(nextIndex);
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        transitionTo((currentShapeIndex + 1) % shapes.length);
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        transitionTo((currentShapeIndex - 1 + shapes.length) % shapes.length);
+      }
+    });
+
+    // ── Click on shape to trigger transition ──
+    document.getElementById('shapeStage').addEventListener('click', () => {
+      const nextIndex = (currentShapeIndex + 1) % shapes.length;
+      transitionTo(nextIndex);
+    });
+
+    // ── Create floating particles ──
+    function createParticles() {
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = 2 + Math.random() * 4;
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        const colors = ['#e94560', '#00d4ff', '#b829dd', '#4ecca3', '#ffe600', '#ff6b35'];
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.opacity = 0.1 + Math.random() * 0.2;
+        p.style.animation = `particle-float-${i % 5} ${8 + Math.random() * 12}s ease-in-out infinite`;
+        p.style.animationDelay = Math.random() * 5 + 's';
+        document.body.appendChild(p);
+      }
+
+      // Add particle animation keyframes
+      const style = document.createElement('style');
+      let keyframes = '';
+      for (let i = 0; i < 5; i++) {
+        const tx1 = Math.random() * 80 - 40;
+        const ty1 = Math.random() * 80 - 40;
+        const tx2 = Math.random() * 80 - 40;
+        const ty2 = Math.random() * 80 - 40;
+        keyframes += `
+          @keyframes particle-float-${i} {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(${tx1}px, ${ty1}px); }
+            66% { transform: translate(${tx2}px, ${ty2}px); }
+          }
+        `;
+      }
+      style.textContent = keyframes;
+      document.head.appendChild(style);
+    }
+
+    // ── Mouse proximity effect ──
+    const canvasArea = document.getElementById('canvasArea');
+    canvasArea.addEventListener('mousemove', (e) => {
+      const rect = canvasArea.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = (e.clientX - centerX) / rect.width;
+      const dy = (e.clientY - centerY) / rect.height;
+
+      // Slight rotation based on mouse position
+      const rotateX = dy * 10;
+      const rotateY = dx * -10;
+
+      document.getElementById('shapeStage').style.transform = 
+        `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+
+    canvasArea.addEventListener('mouseleave', () => {
+      document.getElementById('shapeStage').style.transform = 
+        'perspective(800px) rotateX(0deg) rotateY(0deg)';
+    });
+
+    // ── Initialize ──
+    const initialShape = shapes[0];
+    shapePrimary.style.clipPath = initialShape.clip;
+    shapePrimary.style.background = `linear-gradient(135deg, ${initialShape.color1}, ${initialShape.color2})`;
+
+    shapeLabel.style.transition = 'opacity 0.2s';
+
+    createParticles();
+    startAutoPlay();
+  </script>
+</body>
+</html>

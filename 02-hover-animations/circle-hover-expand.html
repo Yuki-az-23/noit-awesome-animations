@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Circle Hover Expand Animation
+  Inspired by Awwwards "Circle hover animation"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circle Hover Expand</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    padding: 4rem 2rem 2rem;
+    text-align: center;
+  }
+
+  .page-header h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    margin-bottom: 0.75rem;
+  }
+
+  .page-header h1 .highlight {
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-header p {
+    color: var(--color-muted);
+    font-size: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Cards Grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    padding: 3rem 2rem 6rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ── Circle Reveal Card ── */
+  .circle-card {
+    position: relative;
+    height: 420px;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* ── Default State (visible layer) ── */
+  .circle-card .card-default {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    z-index: 1;
+    transition: opacity 0.3s;
+  }
+
+  .card-default .card-emoji {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-default .card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-default .card-number {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* ── Reveal Layer (hidden behind circle mask) ── */
+  .circle-card .card-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+    text-align: center;
+    z-index: 2;
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    color: #fff;
+  }
+
+  .circle-card:hover .card-reveal {
+    clip-path: circle(100% at var(--mx, 50%) var(--my, 50%));
+  }
+
+  .circle-card:hover .card-default {
+    opacity: 0;
+  }
+
+  .card-reveal .reveal-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-reveal .reveal-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-reveal .reveal-desc {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    opacity: 0.9;
+    max-width: 280px;
+  }
+
+  .card-reveal .reveal-link {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: 0.6rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+
+  .card-reveal .reveal-link:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  /* ── Card Color Themes ── */
+  .card-reveal.theme-rose { background: linear-gradient(135deg, #e94560, #ff6b8a); }
+  .card-reveal.theme-ocean { background: linear-gradient(135deg, #0f3460, #1a6fb8); }
+  .card-reveal.theme-purple { background: linear-gradient(135deg, #533483, #8b5cf6); }
+  .card-reveal.theme-teal { background: linear-gradient(135deg, #0d7377, #14b8a6); }
+  .card-reveal.theme-sunset { background: linear-gradient(135deg, #e94560, #f59e0b); }
+  .card-reveal.theme-midnight { background: linear-gradient(135deg, #1e1e3f, #4338ca); }
+
+  /* ── Ripple effect ── */
+  .circle-card .ripple-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    z-index: 3;
+    animation: rippleExpand 0.8s ease-out forwards;
+  }
+
+  @keyframes rippleExpand {
+    0% {
+      width: 0; height: 0;
+      opacity: 0.6;
+    }
+    100% {
+      width: 600px; height: 600px;
+      opacity: 0;
+    }
+  }
+
+  /* ── Hover Scale ── */
+  .circle-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .circle-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ── Demo Types ── */
+  .demo-section {
+    padding: 4rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .demo-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .demo-section h2 span {
+    color: var(--color-primary);
+  }
+
+  /* ── Full-Width Variant ── */
+  .full-card {
+    position: relative;
+    height: 350px;
+    border-radius: 24px;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--color-surface);
+    margin-bottom: 2rem;
+  }
+
+  .full-card .card-default {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 3rem;
+    z-index: 1;
+    transition: opacity 0.3s;
+  }
+
+  .full-card .card-default .default-content {
+    max-width: 50%;
+  }
+
+  .full-card .card-default .default-content h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .full-card .card-default .default-content p {
+    color: var(--color-muted);
+    line-height: 1.6;
+  }
+
+  .full-card .card-default .default-visual {
+    position: absolute;
+    right: 3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 6rem;
+    opacity: 0.3;
+  }
+
+  .full-card .card-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 3rem;
+    z-index: 2;
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    color: #fff;
+  }
+
+  .full-card:hover .card-reveal {
+    clip-path: circle(100% at var(--mx, 50%) var(--my, 50%));
+  }
+
+  .full-card:hover .card-default {
+    opacity: 0;
+  }
+
+  .full-card {
+    transition: transform 0.3s;
+  }
+
+  .full-card:hover {
+    transform: scale(1.01);
+  }
+
+  .card-reveal.reveal-gradient-1 { background: linear-gradient(135deg, #e94560, #c73050, #533483); }
+  .card-reveal.reveal-gradient-2 { background: linear-gradient(135deg, #0f3460, #00d2ff, #14b8a6); }
+
+  /* ── Row of Small Circles ── */
+  .circle-items-row {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 2rem 0;
+  }
+
+  .circle-item {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--color-surface);
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    transition: transform 0.3s, border-color 0.3s;
+  }
+
+  .circle-item:hover {
+    transform: scale(1.1);
+    border-color: var(--color-primary);
+  }
+
+  .circle-item .item-default {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    z-index: 1;
+    transition: opacity 0.3s;
+  }
+
+  .circle-item .item-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .circle-item:hover .item-reveal {
+    clip-path: circle(100% at var(--mx, 50%) var(--my, 50%));
+  }
+
+  .circle-item:hover .item-default {
+    opacity: 0;
+  }
+
+  .item-reveal.bg-1 { background: linear-gradient(135deg, #e94560, #ff6b8a); }
+  .item-reveal.bg-2 { background: linear-gradient(135deg, #0f3460, #1a6fb8); }
+  .item-reveal.bg-3 { background: linear-gradient(135deg, #533483, #8b5cf6); }
+  .item-reveal.bg-4 { background: linear-gradient(135deg, #0d7377, #14b8a6); }
+  .item-reveal.bg-5 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .cards-grid { grid-template-columns: 1fr; }
+    .full-card .card-default .default-visual { display: none; }
+    .full-card .card-default .default-content { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="page-header">
+    <h1>Circle <span class="highlight">Hover</span> Expand</h1>
+    <p>Hover over any card to reveal hidden content through a circular mask that expands from your cursor position.</p>
+  </header>
+
+  <!-- Small Circle Items -->
+  <div class="demo-section">
+    <h2>Quick <span>Circles</span></h2>
+    <div class="circle-items-row">
+      <div class="circle-item" data-circle-hover>
+        <div class="item-default">🎨</div>
+        <div class="item-reveal bg-1">Design</div>
+      </div>
+      <div class="circle-item" data-circle-hover>
+        <div class="item-default">⚡</div>
+        <div class="item-reveal bg-2">Speed</div>
+      </div>
+      <div class="circle-item" data-circle-hover>
+        <div class="item-default">🔮</div>
+        <div class="item-reveal bg-3">Magic</div>
+      </div>
+      <div class="circle-item" data-circle-hover>
+        <div class="item-default">🌊</div>
+        <div class="item-reveal bg-4">Flow</div>
+      </div>
+      <div class="circle-item" data-circle-hover>
+        <div class="item-default">✨</div>
+        <div class="item-reveal bg-5">Spark</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Grid -->
+  <div class="cards-grid">
+    <div class="circle-card" data-circle-hover>
+      <div class="card-default">
+        <div class="card-emoji">🎨</div>
+        <div class="card-title">Design System</div>
+        <div class="card-number">001</div>
+      </div>
+      <div class="card-reveal theme-rose">
+        <div class="reveal-icon">🖌️</div>
+        <div class="reveal-title">Craft & Create</div>
+        <div class="reveal-desc">Build beautiful, consistent interfaces with a component-driven design system that scales effortlessly.</div>
+        <a href="#" class="reveal-link">Explore →</a>
+      </div>
+    </div>
+
+    <div class="circle-card" data-circle-hover>
+      <div class="card-default">
+        <div class="card-emoji">⚡</div>
+        <div class="card-title">Performance</div>
+        <div class="card-number">002</div>
+      </div>
+      <div class="card-reveal theme-ocean">
+        <div class="reveal-icon">🚀</div>
+        <div class="reveal-title">Blazing Fast</div>
+        <div class="reveal-desc">Zero dependencies, pure CSS animations. GPU-accelerated clip-path transitions running at 60fps.</div>
+        <a href="#" class="reveal-link">Learn More →</a>
+      </div>
+    </div>
+
+    <div class="circle-card" data-circle-hover>
+      <div class="card-default">
+        <div class="card-emoji">🔮</div>
+        <div class="card-title">Interaction</div>
+        <div class="card-number">003</div>
+      </div>
+      <div class="card-reveal theme-purple">
+        <div class="reveal-icon">✨</div>
+        <div class="reveal-title">Magical UX</div>
+        <div class="reveal-desc">Every hover, every transition, every reveal creates a moment of delight that users remember.</div>
+        <a href="#" class="reveal-link">Discover →</a>
+      </div>
+    </div>
+
+    <div class="circle-card" data-circle-hover>
+      <div class="card-default">
+        <div class="card-emoji">🌊</div>
+        <div class="card-title">Fluid Motion</div>
+        <div class="card-number">004</div>
+      </div>
+      <div class="card-reveal theme-teal">
+        <div class="reveal-icon">💧</div>
+        <div class="reveal-title">Smooth Flow</div>
+        <div class="reveal-desc">Cubic-bezier easing curves create natural, organic motion that feels intuitive and responsive.</div>
+        <a href="#" class="reveal-link">View Details →</a>
+      </div>
+    </div>
+
+    <div class="circle-card" data-circle-hover>
+      <div class="card-default">
+        <div class="card-emoji">🔥</div>
+        <div class="card-title">Energy</div>
+        <div class="card-number">005</div>
+      </div>
+      <div class="card-reveal theme-sunset">
+        <div class="reveal-icon">☀️</div>
+        <div class="reveal-title">Dynamic Impact</div>
+        <div class="reveal-desc">Vibrant color transitions that radiate energy, making each interaction feel vivid and alive.</div>
+        <a href="#" class="reveal-link">Try It →</a>
+      </div>
+    </div>
+
+    <div class="circle-card" data-circle-hover>
+      <div class="card-default">
+        <div class="card-emoji">🌙</div>
+        <div class="card-title">Elegance</div>
+        <div class="card-number">006</div>
+      </div>
+      <div class="card-reveal theme-midnight">
+        <div class="reveal-icon">💎</div>
+        <div class="reveal-title">Refined Detail</div>
+        <div class="reveal-desc">Subtle shadows, precise timing, and carefully chosen gradients create understated sophistication.</div>
+        <a href="#" class="reveal-link">See More →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-Width Variants -->
+  <div class="demo-section">
+    <h2>Full-Width <span>Reveals</span></h2>
+
+    <div class="full-card" data-circle-hover>
+      <div class="card-default">
+        <div class="default-content">
+          <h3>Circle Mask Transitions</h3>
+          <p>Hover anywhere to reveal a hidden layer that radiates outward from your exact cursor position using CSS clip-path.</p>
+        </div>
+        <div class="default-visual">🎯</div>
+      </div>
+      <div class="card-reveal reveal-gradient-1">
+        <div style="max-width:600px;">
+          <h3 style="font-size:2rem;font-weight:800;margin-bottom:1rem;">Radial Unveil</h3>
+          <p style="font-size:1rem;line-height:1.7;opacity:0.9;">The circle expands from precisely where your cursor enters, creating a natural, intuitive reveal that connects the user's action directly to the visual feedback. No animation frame needed — pure CSS clip-path transitions handle the heavy lifting.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="full-card" data-circle-hover>
+      <div class="card-default">
+        <div class="default-content">
+          <h3>Cursor-Driven Masks</h3>
+          <p>Each reveal follows your mouse inside the element, making the interaction feel personal and direct.</p>
+        </div>
+        <div class="default-visual">🖱️</div>
+      </div>
+      <div class="card-reveal reveal-gradient-2">
+        <div style="max-width:600px;">
+          <h3 style="font-size:2rem;font-weight:800;margin-bottom:1rem;">Position Aware</h3>
+          <p style="font-size:1rem;line-height:1.7;opacity:0.9;">Using CSS custom properties (--mx, --my) updated by JavaScript mousemove events, the clip-path circle origin follows the cursor in real-time. This creates a magnetic, responsive feel that makes the interface feel alive.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Circle Hover: Update CSS custom properties for clip-path origin ──
+  const circleElements = document.querySelectorAll('[data-circle-hover]');
+
+  circleElements.forEach(el => {
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const percentX = ((x / rect.width) * 100).toFixed(1);
+      const percentY = ((y / rect.height) * 100).toFixed(1);
+      el.style.setProperty('--mx', percentX + '%');
+      el.style.setProperty('--my', percentY + '%');
+    });
+
+    el.addEventListener('mouseenter', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const percentX = ((x / rect.width) * 100).toFixed(1);
+      const percentY = ((y / rect.height) * 100).toFixed(1);
+      el.style.setProperty('--mx', percentX + '%');
+      el.style.setProperty('--my', percentY + '%');
+    });
+
+    // Optional: add ripple ring on click
+    el.addEventListener('click', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const ring = document.createElement('div');
+      ring.className = 'ripple-ring';
+      ring.style.left = (x - 300) + 'px';
+      ring.style.top = (y - 300) + 'px';
+      el.appendChild(ring);
+
+      ring.addEventListener('animationend', () => {
+        ring.remove();
+      });
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

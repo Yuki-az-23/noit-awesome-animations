@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Colourful Text Animation
+  Inspired by "Colourful text animation" & "Background Animation, Cool Gradients and Scrolling Marquee Text"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colourful Text Animation</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Background Gradient Animation ── */
+  .bg-animation {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .bg-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    animation: blobDrift 15s ease-in-out infinite alternate;
+  }
+
+  .bg-blob:nth-child(1) {
+    width: 500px; height: 500px;
+    background: linear-gradient(135deg, #e94560, #ff6b8a);
+    top: -10%; left: -10%;
+    animation-delay: 0s;
+  }
+
+  .bg-blob:nth-child(2) {
+    width: 400px; height: 400px;
+    background: linear-gradient(135deg, #533483, #8b5cf6);
+    top: 30%; right: -5%;
+    animation-delay: -5s;
+    animation-duration: 18s;
+  }
+
+  .bg-blob:nth-child(3) {
+    width: 350px; height: 350px;
+    background: linear-gradient(135deg, #00d2ff, #0f3460);
+    bottom: -5%; left: 20%;
+    animation-delay: -10s;
+    animation-duration: 20s;
+  }
+
+  .bg-blob:nth-child(4) {
+    width: 300px; height: 300px;
+    background: linear-gradient(135deg, #00ff88, #0d7377);
+    top: 50%; left: 50%;
+    animation-delay: -7s;
+    animation-duration: 16s;
+  }
+
+  @keyframes blobDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(50px, -30px) scale(1.1); }
+    66% { transform: translate(-30px, 50px) scale(0.95); }
+    100% { transform: translate(20px, -20px) scale(1.05); }
+  }
+
+  /* ── Content ── */
+  .content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── 1. Gradient Flow Text ── */
+  .gradient-flow-section {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+
+  .gradient-flow-text {
+    font-size: clamp(3rem, 10vw, 8rem);
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(
+      90deg,
+      #e94560 0%,
+      #ff6b8a 15%,
+      #f59e0b 30%,
+      #00ff88 45%,
+      #00d2ff 60%,
+      #533483 75%,
+      #e94560 90%,
+      #ff6b8a 100%
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .gradient-flow-sub {
+    font-size: 1rem;
+    color: var(--color-muted);
+    margin-top: 1.5rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ── 2. Colour Cycle Letters ── */
+  .cycle-section {
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+
+  .cycle-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.15em;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .cycle-letter {
+    display: inline-block;
+    animation: colorCycle 3s ease-in-out infinite;
+    transition: transform 0.3s;
+  }
+
+  .cycle-letter:hover {
+    transform: scale(1.3) translateY(-5px);
+  }
+
+  @keyframes colorCycle {
+    0%   { color: #e94560; }
+    16%  { color: #ff6b8a; }
+    33%  { color: #f59e0b; }
+    50%  { color: #00ff88; }
+    66%  { color: #00d2ff; }
+    83%  { color: #533483; }
+    100% { color: #e94560; }
+  }
+
+  /* ── 3. Marquee Section ── */
+  .marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 2rem 0;
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .marquee-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .marquee-track {
+    display: flex;
+    animation: marqueeScroll 25s linear infinite;
+  }
+
+  .marquee-track.reverse {
+    animation: marqueeScrollReverse 30s linear infinite;
+  }
+
+  .marquee-text {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    white-space: nowrap;
+    padding: 0 2rem;
+  }
+
+  .marquee-text.gradient-1 {
+    background: linear-gradient(90deg, #e94560, #ff6b8a, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .marquee-text.gradient-2 {
+    background: linear-gradient(90deg, #00ff88, #00d2ff, #533483);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .marquee-text.gradient-3 {
+    background: linear-gradient(90deg, #533483, #e94560, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .marquee-text.outline {
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 2px rgba(233, 69, 96, 0.4);
+  }
+
+  .marquee-sep {
+    color: var(--color-primary);
+    font-size: 0.5rem;
+    padding: 0 1.5rem;
+    opacity: 0.4;
+  }
+
+  @keyframes marqueeScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes marqueeScrollReverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+
+  /* ── 4. Split Gradient Fill ── */
+  .split-section {
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+
+  .split-text-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .split-text {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    line-height: 1.1;
+    position: relative;
+  }
+
+  .split-text-bg {
+    color: rgba(255, 255, 255, 0.06);
+  }
+
+  .split-text-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e94560, #f59e0b, #00ff88, #00d2ff, #533483);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: splitReveal 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes splitReveal {
+    0% { clip-path: inset(0 0 100% 0); background-position: 0% 50%; }
+    33% { clip-path: inset(0 0 0% 0); background-position: 100% 50%; }
+    66% { clip-path: inset(100% 0 0 0); background-position: 50% 100%; }
+    100% { clip-path: inset(0 0 0 0); background-position: 0% 50%; }
+  }
+
+  /* ── 5. Rainbow Wave Text ── */
+  .wave-section {
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+
+  .wave-text {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 900;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+    perspective: 600px;
+  }
+
+  .wave-char {
+    display: inline-block;
+    animation: waveFloat 2.5s ease-in-out infinite;
+    background: linear-gradient(180deg,
+      #e94560,
+      #ff6b8a,
+      #f59e0b,
+      #00ff88,
+      #00d2ff,
+      #533483
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 100% 300%;
+    animation: waveFloat 2.5s ease-in-out infinite, colorRise 3s ease-in-out infinite;
+  }
+
+  @keyframes waveFloat {
+    0%, 100% { transform: translateY(0) rotateX(0deg); }
+    25% { transform: translateY(-15px) rotateX(10deg); }
+    75% { transform: translateY(10px) rotateX(-5deg); }
+  }
+
+  @keyframes colorRise {
+    0% { background-position: 0% 100%; }
+    50% { background-position: 0% 0%; }
+    100% { background-position: 0% 100%; }
+  }
+
+  /* ── 6. Glitch Colour Text ── */
+  .glitch-section {
+    padding: 6rem 2rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .glitch-text {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    position: relative;
+    display: inline-block;
+    color: var(--color-text);
+  }
+
+  .glitch-text::before,
+  .glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .glitch-text::before {
+    color: #00d2ff;
+    z-index: -1;
+    animation: glitch1 3s infinite linear alternate-reverse;
+  }
+
+  .glitch-text::after {
+    color: #e94560;
+    z-index: -2;
+    animation: glitch2 2s infinite linear alternate-reverse;
+  }
+
+  @keyframes glitch1 {
+    0% { clip-path: inset(40% 0 61% 0); transform: translate(-3px, -2px); }
+    20% { clip-path: inset(92% 0 1% 0); transform: translate(3px, 1px); }
+    40% { clip-path: inset(43% 0 1% 0); transform: translate(-2px, 3px); }
+    60% { clip-path: inset(25% 0 58% 0); transform: translate(3px, -1px); }
+    80% { clip-path: inset(54% 0 7% 0); transform: translate(-3px, 2px); }
+    100% { clip-path: inset(58% 0 43% 0); transform: translate(2px, -3px); }
+  }
+
+  @keyframes glitch2 {
+    0% { clip-path: inset(65% 0 13% 0); transform: translate(3px, 2px); }
+    20% { clip-path: inset(15% 0 62% 0); transform: translate(-3px, -1px); }
+    40% { clip-path: inset(72% 0 5% 0); transform: translate(2px, -2px); }
+    60% { clip-path: inset(10% 0 76% 0); transform: translate(-1px, 3px); }
+    80% { clip-path: inset(48% 0 30% 0); transform: translate(3px, -2px); }
+    100% { clip-path: inset(33% 0 48% 0); transform: translate(-2px, 1px); }
+  }
+
+  /* ── 7. Animated Gradient Outline ── */
+  .outline-section {
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+
+  .outline-text {
+    font-size: clamp(4rem, 10vw, 9rem);
+    font-weight: 900;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 2px;
+    background: linear-gradient(
+      90deg,
+      #e94560, #ff6b8a, #f59e0b, #00ff88, #00d2ff, #533483, #e94560
+    );
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: gradientStroke 6s linear infinite;
+  }
+
+  @keyframes gradientStroke {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+  }
+
+  /* ── 8. Typing Gradient ── */
+  .typing-section {
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+
+  .typing-container {
+    display: inline-block;
+    position: relative;
+  }
+
+  .typing-text {
+    font-size: clamp(1.5rem, 4vw, 3rem);
+    font-weight: 700;
+    background: linear-gradient(90deg, #e94560, #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .typing-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 1em;
+    background: var(--color-primary);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 0.7s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── Section Dividers ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.3), transparent);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .cycle-container {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Background Animation -->
+  <div class="bg-animation">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- 1. Gradient Flow -->
+    <section class="gradient-flow-section">
+      <div>
+        <div class="gradient-flow-text">Colourful</div>
+        <div class="gradient-flow-text" style="animation-delay: -1s;">Text Flow</div>
+        <p class="gradient-flow-sub">Animated gradient fills that flow endlessly</p>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 2. Colour Cycle Letters -->
+    <section class="cycle-section">
+      <p style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--color-primary);margin-bottom:2rem;">02 — Letter Colour Cycle</p>
+      <div class="cycle-container" id="cycleContainer">
+        <!-- Filled by JS -->
+      </div>
+      <p style="color:var(--color-muted);font-size:0.85rem;margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.6;">Each letter cycles through the rainbow independently, creating a wave of colour that ripples across the text. Hover any letter to pop it up.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 3. Scrolling Marquee -->
+    <section style="padding: 4rem 0;">
+      <div class="marquee-container">
+        <div class="marquee-row">
+          <div class="marquee-track">
+            <span class="marquee-text gradient-1">COLOURFUL</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-2">ANIMATED</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-3">GRADIENT</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text outline">MARQUEE</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-1">COLOURFUL</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-2">ANIMATED</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-3">GRADIENT</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text outline">MARQUEE</span>
+            <span class="marquee-sep">◆</span>
+          </div>
+        </div>
+        <div class="marquee-row">
+          <div class="marquee-track reverse">
+            <span class="marquee-text outline">SCROLLING</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-3">TEXT</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-1">WITH</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-2">COOL</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-3">GRADIENTS</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text outline">SCROLLING</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-1">TEXT</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-2">WITH</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-3">COOL</span>
+            <span class="marquee-sep">◆</span>
+            <span class="marquee-text gradient-1">GRADIENTS</span>
+            <span class="marquee-sep">◆</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 4. Split Gradient Fill -->
+    <section class="split-section">
+      <p style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--color-primary);margin-bottom:2rem;">04 — Gradient Fill Reveal</p>
+      <div class="split-text-container">
+        <div class="split-text split-text-bg">PRISM</div>
+        <div class="split-text split-text-fill" id="splitFill">PRISM</div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 5. Rainbow Wave -->
+    <section class="wave-section">
+      <p style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--color-primary);margin-bottom:2rem;">05 — Rainbow Wave</p>
+      <div class="wave-text" id="waveText">
+        <!-- Filled by JS -->
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 6. Glitch Colour -->
+    <section class="glitch-section">
+      <p style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--color-primary);margin-bottom:2rem;">06 — Glitch Colour Shift</p>
+      <div class="glitch-text" data-text="GLITCH">GLITCH</div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 7. Gradient Outline -->
+    <section class="outline-section">
+      <p style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--color-primary);margin-bottom:2rem;">07 — Gradient Outline Stroke</p>
+      <div class="outline-text">VIVID</div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- 8. Typing Gradient -->
+    <section class="typing-section">
+      <p style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--color-primary);margin-bottom:2rem;">08 — Typing Gradient</p>
+      <div class="typing-container">
+        <span class="typing-text" id="typingText"></span>
+        <span class="typing-cursor"></span>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── 2. Colour Cycle Letters ──
+  const cycleText = 'RAINBOW TEXT ANIMATION';
+  const container = document.getElementById('cycleContainer');
+  cycleText.split('').forEach((char, i) => {
+    const span = document.createElement('span');
+    span.className = 'cycle-letter';
+    span.textContent = char === ' ' ? '\u00A0' : char;
+    span.style.animationDelay = (i * 0.12) + 's';
+    container.appendChild(span);
+  });
+
+  // ── 5. Rainbow Wave ──
+  const waveStr = 'COLOURFUL WAVE TEXT';
+  const waveEl = document.getElementById('waveText');
+  waveStr.split('').forEach((char, i) => {
+    const span = document.createElement('span');
+    span.className = 'wave-char';
+    span.textContent = char === ' ' ? '\u00A0' : char;
+    span.style.animationDelay = `${i * 0.08}s, ${i * 0.15}s`;
+    waveEl.appendChild(span);
+  });
+
+  // ── 4. Split Fill Animation (scroll-driven) ──
+  const splitFill = document.getElementById('splitFill');
+  let splitProgress = 0;
+  let splitDirection = 1;
+
+  function animateSplit() {
+    splitProgress += 0.005 * splitDirection;
+    if (splitProgress >= 1) splitDirection = -1;
+    if (splitProgress <= 0) splitDirection = 1;
+
+    const topInset = (1 - splitProgress) * 100;
+    splitFill.style.clipPath = `inset(${topInset}% 0 0 0)`;
+    // Gradient angle also shifts
+    const angle = splitProgress * 360;
+    splitFill.style.background = `linear-gradient(${angle}deg, #e94560, #f59e0b, #00ff88, #00d2ff, #533483)`;
+    splitFill.style.backgroundSize = '200% 200%';
+    splitFill.style.webkitBackgroundClip = 'text';
+    splitFill.style.webkitTextFillColor = 'transparent';
+
+    requestAnimationFrame(animateSplit);
+  }
+  animateSplit();
+
+  // ── 8. Typing Gradient ──
+  const typingPhrases = [
+    'Colourful animated text',
+    'Gradient flows and colour shifts',
+    'Scrolling marquee typography',
+    'Pure CSS + vanilla JavaScript',
+    'No external dependencies',
+    'Vibrant rainbow animations'
+  ];
+
+  const typingEl = document.getElementById('typingText');
+  let phraseIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+  let typingSpeed = 80;
+
+  function typeEffect() {
+    const currentPhrase = typingPhrases[phraseIndex];
+
+    if (isDeleting) {
+      typingEl.textContent = currentPhrase.substring(0, charIndex - 1);
+      charIndex--;
+      typingSpeed = 40;
+    } else {
+      typingEl.textContent = currentPhrase.substring(0, charIndex + 1);
+      charIndex++;
+      typingSpeed = 80;
+    }
+
+    // Update gradient
+    const progress = charIndex / currentPhrase.length;
+    const hue1 = progress * 360;
+    const hue2 = (hue1 + 120) % 360;
+    typingEl.style.background = `linear-gradient(90deg, hsl(${hue1}, 80%, 60%), hsl(${hue2}, 80%, 60%))`;
+    typingEl.style.webkitBackgroundClip = 'text';
+    typingEl.style.webkitTextFillColor = 'transparent';
+    typingEl.style.backgroundClip = 'text';
+
+    if (!isDeleting && charIndex === currentPhrase.length) {
+      typingSpeed = 2000;
+      isDeleting = true;
+    } else if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      phraseIndex = (phraseIndex + 1) % typingPhrases.length;
+      typingSpeed = 500;
+    }
+
+    setTimeout(typeEffect, typingSpeed);
+  }
+
+  typeEffect();
+})();
+</script>
+</body>
+</html>

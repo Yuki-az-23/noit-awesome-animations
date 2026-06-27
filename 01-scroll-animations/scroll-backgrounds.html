@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  Scroll Backgrounds
+  Inspired by "Scroll backgrounds" & "Video scroll backgrounds"
+  Pure CSS + Vanilla JS | No dependencies
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Backgrounds</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-secondary: #0f3460;
+    --color-text: #eaeaea;
+    --color-muted: #8892a4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Background Overlay System ── */
+  .bg-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+  }
+
+  .bg-gradient-1 {
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(233, 69, 96, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(83, 52, 131, 0.12) 0%, transparent 50%),
+      var(--color-bg);
+    opacity: 0;
+  }
+
+  .bg-gradient-2 {
+    background:
+      radial-gradient(ellipse at 70% 80%, rgba(0, 210, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 30% 30%, rgba(233, 69, 96, 0.1) 0%, transparent 40%),
+      linear-gradient(180deg, #0a0a1a, #1a0a2e);
+    opacity: 0;
+  }
+
+  .bg-gradient-3 {
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(83, 52, 131, 0.25) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 10%, rgba(233, 69, 96, 0.1) 0%, transparent 40%),
+      linear-gradient(135deg, #0a0a1a, #1e0a30, #0a1e2e);
+    opacity: 0;
+  }
+
+  .bg-gradient-4 {
+    background:
+      radial-gradient(ellipse at 20% 70%, rgba(0, 255, 136, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 30%, rgba(0, 210, 255, 0.15) 0%, transparent 50%),
+      linear-gradient(180deg, #0a1e2e, #0f0f1a);
+    opacity: 0;
+  }
+
+  .bg-gradient-5 {
+    background:
+      radial-gradient(ellipse at 60% 40%, rgba(233, 69, 96, 0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 40% 80%, rgba(255, 107, 138, 0.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 20%, rgba(0, 210, 255, 0.1) 0%, transparent 40%),
+      linear-gradient(180deg, #1a0a1e, #0f0f1a);
+    opacity: 0;
+  }
+
+  .bg-active { opacity: 1; }
+
+  /* ── Noise Overlay ── */
+  .noise-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Content Sections ── */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    padding: 6rem 2rem;
+  }
+
+  .section-inner {
+    max-width: 900px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Section 1: Hero ── */
+  .hero-content {
+    text-align: center;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    padding: 0.4rem 1.2rem;
+    border-radius: 30px;
+    margin-bottom: 2rem;
+  }
+
+  .hero-heading {
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--color-text) 0%, var(--color-primary) 50%, #00d2ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--color-muted);
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── Section 2: Cards ── */
+  .cards-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+
+  .bg-card {
+    background: rgba(22, 33, 62, 0.7);
+    border: 1px solid rgba(233, 69, 96, 0.12);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+    transition: transform 0.4s ease, border-color 0.4s;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .bg-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .bg-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(233, 69, 96, 0.4);
+  }
+
+  .bg-card .card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .bg-card:nth-child(1) .card-icon { background: rgba(233, 69, 96, 0.15); }
+  .bg-card:nth-child(2) .card-icon { background: rgba(0, 210, 255, 0.15); }
+  .bg-card:nth-child(3) .card-icon { background: rgba(0, 255, 136, 0.15); }
+
+  .bg-card .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .bg-card .card-desc {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+  }
+
+  /* ── Section 3: Showcase ── */
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .showcase-item {
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    min-height: 260px;
+    display: flex;
+    align-items: flex-end;
+    padding: 2rem;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+
+  .showcase-item.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .showcase-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(15, 15, 26, 0.85) 100%);
+    z-index: 1;
+  }
+
+  .showcase-item:nth-child(1) {
+    background: linear-gradient(135deg, #1a0a2e, #e94560);
+    grid-row: span 2;
+  }
+
+  .showcase-item:nth-child(2) {
+    background: linear-gradient(135deg, #0a1e2e, #00d2ff);
+  }
+
+  .showcase-item:nth-child(3) {
+    background: linear-gradient(135deg, #0a2e1a, #00ff88);
+  }
+
+  .showcase-item .item-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .showcase-item .item-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.5rem;
+  }
+
+  .showcase-item .item-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  /* ── Section 4: Stats ── */
+  .stats-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .stats-text h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(90deg, var(--color-text), #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-text p {
+    color: var(--color-muted);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  .stats-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .stat-bar {
+    position: relative;
+  }
+
+  .stat-bar .stat-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .stat-bar .stat-label span:last-child {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .stat-bar .bar-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .stat-bar .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .stat-bar:nth-child(1) .bar-fill { background: linear-gradient(90deg, var(--color-primary), #ff6b8a); }
+  .stat-bar:nth-child(2) .bar-fill { background: linear-gradient(90deg, #00d2ff, #00ff88); }
+  .stat-bar:nth-child(3) .bar-fill { background: linear-gradient(90deg, #533483, #e94560); }
+
+  /* ── Section 5: CTA ── */
+  .cta-content {
+    text-align: center;
+  }
+
+  .cta-heading {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a, #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cta-sub {
+    font-size: 1.05rem;
+    color: var(--color-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    padding: 1rem 3rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-primary), #c73050);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(233, 69, 96, 0.3);
+  }
+
+  .cta-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .cta-btn:hover::after {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* ── Orb Animations ── */
+  .floating-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 1;
+    transition: transform 2s ease-out;
+  }
+
+  .orb-1 {
+    width: 300px; height: 300px;
+    background: rgba(233, 69, 96, 0.08);
+    top: 10%; left: -5%;
+  }
+
+  .orb-2 {
+    width: 250px; height: 250px;
+    background: rgba(0, 210, 255, 0.06);
+    top: 40%; right: -5%;
+  }
+
+  .orb-3 {
+    width: 200px; height: 200px;
+    background: rgba(83, 52, 131, 0.1);
+    bottom: 10%; left: 30%;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .showcase-grid { grid-template-columns: 1fr; }
+    .showcase-item:nth-child(1) { grid-row: span 1; }
+    .stats-layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Background Layers -->
+  <div class="bg-layer bg-gradient-1" id="bg1"></div>
+  <div class="bg-layer bg-gradient-2" id="bg2"></div>
+  <div class="bg-layer bg-gradient-3" id="bg3"></div>
+  <div class="bg-layer bg-gradient-4" id="bg4"></div>
+  <div class="bg-layer bg-gradient-5" id="bg5"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Floating Orbs -->
+  <div class="floating-orb orb-1" id="orb1"></div>
+  <div class="floating-orb orb-2" id="orb2"></div>
+  <div class="floating-orb orb-3" id="orb3"></div>
+
+  <!-- Section 1: Hero -->
+  <section class="section" data-bg="1" id="sec1">
+    <div class="section-inner hero-content">
+      <span class="hero-tag">Scroll Backgrounds</span>
+      <h1 class="hero-heading">Immersive<br>Scroll Worlds</h1>
+      <p class="hero-sub">Backgrounds that transform as you journey through each section. Every scroll shifts the atmosphere, creating a seamless visual narrative.</p>
+    </div>
+  </section>
+
+  <!-- Section 2: Cards -->
+  <section class="section" data-bg="2" id="sec2">
+    <div class="section-inner">
+      <div class="cards-wrapper">
+        <div class="bg-card" data-reveal>
+          <div class="card-icon">🌸</div>
+          <div class="card-title">Gradient Transitions</div>
+          <div class="card-desc">Multi-layered gradients shift smoothly as the viewport moves, creating depth and atmosphere that evolves with each scroll.</div>
+        </div>
+        <div class="bg-card" data-reveal>
+          <div class="card-icon">💧</div>
+          <div class="card-title">Radial Blends</div>
+          <div class="card-desc">Radial gradients positioned at different focal points blend organically to simulate natural lighting effects and color temperature shifts.</div>
+        </div>
+        <div class="bg-card" data-reveal>
+          <div class="card-icon">🌿</div>
+          <div class="card-title">Organic Motion</div>
+          <div class="card-desc">Floating orbs and noise overlays add subtle life to backgrounds, preventing static dead zones while keeping the focus on content.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Showcase -->
+  <section class="section" data-bg="3" id="sec3">
+    <div class="section-inner">
+      <div class="showcase-grid">
+        <div class="showcase-item" data-reveal>
+          <div class="item-content">
+            <div class="item-label">Gradient</div>
+            <div class="item-title">Deep Color Shifts</div>
+          </div>
+        </div>
+        <div class="showcase-item" data-reveal>
+          <div class="item-content">
+            <div class="item-label">Atmosphere</div>
+            <div class="item-title">Ocean Depths</div>
+          </div>
+        </div>
+        <div class="showcase-item" data-reveal>
+          <div class="item-content">
+            <div class="item-label">Luminance</div>
+            <div class="item-title">Neon Forest</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Stats -->
+  <section class="section" data-bg="4" id="sec4">
+    <div class="section-inner">
+      <div class="stats-layout">
+        <div class="stats-text">
+          <h2>Performance Meets Aesthetics</h2>
+          <p>CSS-driven background transitions use opacity blending and gradient compositing for buttery-smooth color shifts. No JavaScript animation loops needed for the core effect — just pure CSS transitions triggered by scroll-driven class changes.</p>
+        </div>
+        <div class="stats-bars">
+          <div class="stat-bar" data-reveal>
+            <div class="stat-label"><span>Scroll Smoothness</span><span>97%</span></div>
+            <div class="bar-track"><div class="bar-fill" data-width="97"></div></div>
+          </div>
+          <div class="stat-bar" data-reveal>
+            <div class="stat-label"><span>Color Transitions</span><span>85%</span></div>
+            <div class="bar-track"><div class="bar-fill" data-width="85"></div></div>
+          </div>
+          <div class="stat-bar" data-reveal>
+            <div class="stat-label"><span>Visual Impact</span><span>92%</span></div>
+            <div class="bar-track"><div class="bar-fill" data-width="92"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: CTA -->
+  <section class="section" data-bg="5" id="sec5">
+    <div class="section-inner cta-content">
+      <h2 class="cta-heading">Ready to Dive In?</h2>
+      <p class="cta-sub">Each section's background tells a chapter of the visual story. Scroll back up to relive each transition, or start building your own scroll-driven atmosphere.</p>
+      <button class="cta-btn">Start Creating</button>
+    </div>
+  </section>
+
+<script>
+(() => {
+  'use strict';
+
+  const backgrounds = [
+    document.getElementById('bg1'),
+    document.getElementById('bg2'),
+    document.getElementById('bg3'),
+    document.getElementById('bg4'),
+    document.getElementById('bg5'),
+  ];
+
+  const sections = document.querySelectorAll('.section');
+  const sectionInners = document.querySelectorAll('.section-inner');
+  const revealElements = document.querySelectorAll('[data-reveal]');
+  const orbs = [
+    document.getElementById('orb1'),
+    document.getElementById('orb2'),
+    document.getElementById('orb3'),
+  ];
+
+  let activeBg = 0;
+  let ticking = false;
+
+  // ── Background Switching ──
+  function updateBackgrounds() {
+    const scrollY = window.pageYOffset;
+    const winH = window.innerHeight;
+    let currentSection = 0;
+
+    sections.forEach((sec, i) => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top < winH * 0.5) {
+        currentSection = i;
+      }
+    });
+
+    if (currentSection !== activeBg) {
+      backgrounds[activeBg].classList.remove('bg-active');
+      backgrounds[currentSection].classList.add('bg-active');
+      activeBg = currentSection;
+    }
+  }
+
+  // ── Section Content Reveal ──
+  function updateSectionVisibility() {
+    const winH = window.innerHeight;
+
+    sectionInners.forEach(inner => {
+      const rect = inner.getBoundingClientRect();
+      if (rect.top < winH * 0.85) {
+        inner.classList.add('visible');
+      }
+    });
+
+    revealElements.forEach((el, i) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < winH * 0.85) {
+        setTimeout(() => {
+          el.classList.add('visible');
+        }, i * 100);
+      }
+    });
+  }
+
+  // ── Stats Bar Fill ──
+  function updateStatBars() {
+    document.querySelectorAll('.bar-fill').forEach(bar => {
+      const rect = bar.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.9) {
+        bar.style.width = bar.dataset.width + '%';
+      }
+    });
+  }
+
+  // ── Floating Orbs ──
+  function updateOrbs() {
+    const scrollY = window.pageYOffset;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = scrollY / maxScroll;
+
+    orbs[0].style.transform = `translate(${Math.sin(progress * 6) * 40}px, ${progress * 100}px)`;
+    orbs[1].style.transform = `translate(${Math.cos(progress * 4) * 50}px, ${progress * -80}px)`;
+    orbs[2].style.transform = `translate(${Math.sin(progress * 5 + 2) * 30}px, ${progress * 60}px)`;
+  }
+
+  // ── Scroll Handler ──
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        updateBackgrounds();
+        updateSectionVisibility();
+        updateStatBars();
+        updateOrbs();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+
+  // ── Init ──
+  backgrounds[0].classList.add('bg-active');
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  // Initial reveal
+  setTimeout(onScroll, 100);
+  onScroll();
+})();
+</script>
+</body>
+</html>

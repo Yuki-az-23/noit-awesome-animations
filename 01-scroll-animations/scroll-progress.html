@@ -1,0 +1,720 @@
+<!--
+  scroll-progress.html
+  Scroll progress indicator as circle and bar that fills based on scroll position.
+  Includes animated number counter and section progress markers.
+  Clean, minimal design. Dark theme.
+  Pure CSS + vanilla JS. No dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Progress</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #7a7a8e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Top progress bar ── */
+  .top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    z-index: 1000;
+    width: 0%;
+    transition: width .05s linear;
+    box-shadow: 0 0 10px rgba(233,69,96,.5);
+  }
+
+  /* ── Circular progress indicator ── */
+  .circle-progress {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+    transition: transform .3s ease, opacity .3s ease;
+  }
+
+  .circle-progress:hover {
+    transform: scale(1.1);
+  }
+
+  .circle-progress svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .circle-progress .bg-ring {
+    fill: none;
+    stroke: rgba(255,255,255,.08);
+    stroke-width: 3;
+  }
+
+  .circle-progress .progress-ring {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 157; /* 2 * PI * 25 */
+    stroke-dashoffset: 157;
+    transition: stroke-dashoffset .05s linear;
+  }
+
+  .circle-progress .center-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .circle-progress .arrow-up {
+    font-size: .65rem;
+    opacity: .6;
+    margin-top: 2px;
+  }
+
+  /* ── Side section markers ── */
+  .side-nav {
+    position: fixed;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    align-items: flex-start;
+  }
+
+  .side-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    cursor: pointer;
+    transition: gap .3s ease;
+  }
+
+  .side-nav .nav-item:hover {
+    gap: .9rem;
+  }
+
+  .side-nav .nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    border: 2px solid transparent;
+    transition: all .3s ease;
+    position: relative;
+  }
+
+  .side-nav .nav-item.active .nav-dot {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 12px rgba(233,69,96,.4);
+  }
+
+  .side-nav .nav-item.passed .nav-dot {
+    background: rgba(233,69,96,.3);
+    border-color: rgba(233,69,96,.5);
+  }
+
+  .side-nav .nav-label {
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all .3s ease;
+    white-space: nowrap;
+  }
+
+  .side-nav .nav-item.active .nav-label {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--color-text);
+  }
+
+  /* ── Section progress fills ── */
+  .section-progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(255,255,255,.04);
+  }
+
+  .section-progress-bar .fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 0%;
+    background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+    border-radius: 2px;
+    transition: height .1s linear;
+  }
+
+  /* ── Content sections ── */
+  .content-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 4rem;
+    position: relative;
+  }
+
+  .content-section .inner {
+    max-width: 700px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .content-section .section-number {
+    display: inline-block;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+    position: relative;
+  }
+
+  .content-section .section-number::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1.2rem;
+    height: 2px;
+    background: var(--color-primary);
+  }
+
+  .content-section h2 {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+  }
+
+  .content-section h2 .accent {
+    background: linear-gradient(135deg, var(--color-primary), #ff6b8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .content-section .desc {
+    color: var(--color-muted);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+  }
+
+  .content-section .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .feature-item {
+    padding: 1.2rem;
+    background: rgba(22,33,62,.6);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.04);
+    transition: border-color .3s, transform .3s;
+  }
+
+  .feature-item:hover {
+    border-color: rgba(233,69,96,.2);
+    transform: translateY(-2px);
+  }
+
+  .feature-item .fi-icon {
+    font-size: 1.4rem;
+    margin-bottom: .5rem;
+  }
+
+  .feature-item h4 {
+    font-size: .9rem;
+    font-weight: 600;
+    margin-bottom: .3rem;
+  }
+
+  .feature-item p {
+    font-size: .8rem;
+    color: var(--color-muted);
+  }
+
+  /* ── Progress stats strip ── */
+  .progress-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+
+  .progress-stat {
+    flex: 1;
+  }
+
+  .progress-stat .ps-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--color-muted);
+    margin-bottom: .4rem;
+  }
+
+  .progress-stat .ps-bar {
+    height: 4px;
+    background: rgba(255,255,255,.06);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: .3rem;
+  }
+
+  .progress-stat .ps-bar .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    border-radius: 2px;
+    transition: width .4s cubic-bezier(.22,1,.36,1);
+  }
+
+  .progress-stat .ps-value {
+    font-size: .8rem;
+    font-weight: 600;
+  }
+
+  /* ── Big percentage hero ── */
+  .big-percent {
+    position: absolute;
+    right: -2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(8rem, 18vw, 16rem);
+    font-weight: 900;
+    color: rgba(255,255,255,.02);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ── Section-specific backgrounds ── */
+  .content-section:nth-child(1)::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(233,69,96,.1) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    pointer-events: none;
+  }
+
+  .content-section:nth-child(2)::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(83,52,131,.1) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+    pointer-events: none;
+  }
+
+  .content-section:nth-child(3)::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(15,52,96,.12) 0%, transparent 70%);
+    top: -100px; left: 30%;
+    pointer-events: none;
+  }
+
+  .content-section:nth-child(4)::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(233,69,96,.08) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-muted);
+    font-size: .85rem;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
+
+  @media (max-width: 768px) {
+    .content-section { padding: 4rem 1.5rem; }
+    .content-section .feature-grid { grid-template-columns: 1fr; }
+    .side-nav { display: none; }
+    .circle-progress { bottom: 1rem; right: 1rem; width: 50px; height: 50px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top progress bar -->
+<div class="top-bar" id="topBar"></div>
+
+<!-- Circular progress -->
+<div class="circle-progress" id="circleProgress" title="Back to top">
+  <svg viewBox="0 0 54 54">
+    <circle class="bg-ring" cx="27" cy="27" r="25"></circle>
+    <circle class="progress-ring" cx="27" cy="27" r="25" id="progressRing"></circle>
+  </svg>
+  <div class="center-text">
+    <span id="circlePercent">0</span>
+    <span class="arrow-up">↑</span>
+  </div>
+</div>
+
+<!-- Side navigation -->
+<nav class="side-nav" id="sideNav">
+  <div class="nav-item active" data-section="0">
+    <div class="nav-dot"></div>
+    <span class="nav-label">Introduction</span>
+  </div>
+  <div class="nav-item" data-section="1">
+    <div class="nav-dot"></div>
+    <span class="nav-label">Circular Mode</span>
+  </div>
+  <div class="nav-item" data-section="2">
+    <div class="nav-dot"></div>
+    <span class="nav-label">Bar Mode</span>
+  </div>
+  <div class="nav-item" data-section="3">
+    <div class="nav-dot"></div>
+    <span class="nav-label">Combined</span>
+  </div>
+</nav>
+
+<!-- Section 1: Introduction -->
+<section class="content-section" id="section-0">
+  <div class="inner">
+    <div class="section-number">01 &mdash; Introduction</div>
+    <h2>Track every <span class="accent">pixel</span> of progress</h2>
+    <p class="desc">Scroll progress indicators give users spatial awareness in long-form content. Multiple visualization modes ensure the feedback feels natural.</p>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi-icon">⭕</div>
+        <h4>Circle Progress</h4>
+        <p>SVG ring that fills as you scroll, with a live percentage counter.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">📊</div>
+        <h4>Bar Progress</h4>
+        <p>Top-edge progress bar with gradient fill and subtle glow.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">📍</div>
+        <h4>Section Markers</h4>
+        <p>Side navigation dots that highlight as sections enter the viewport.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">🔢</div>
+        <h4>Percentage Counter</h4>
+        <p>Animated number that counts from 0 to 100 in sync with scroll.</p>
+      </div>
+    </div>
+    <div class="progress-stats" id="stats0">
+      <div class="progress-stat">
+        <div class="ps-label">This section</div>
+        <div class="ps-bar"><div class="fill" data-section-fill="0"></div></div>
+        <div class="ps-value" data-section-pct="0">0%</div>
+      </div>
+      <div class="progress-stat">
+        <div class="ps-label">Total page</div>
+        <div class="ps-bar"><div class="fill" id="totalFill0"></div></div>
+        <div class="ps-value" id="totalPct0">0%</div>
+      </div>
+    </div>
+  </div>
+  <div class="big-percent" id="bigPercent0">0</div>
+</section>
+
+<!-- Section 2: Circle mode -->
+<section class="content-section" id="section-1">
+  <div class="inner">
+    <div class="section-number">02 &mdash; Circular Mode</div>
+    <h2>A ring that <span class="accent">wraps</span> your progress</h2>
+    <p class="desc">The SVG circle indicator in the bottom-right corner provides constant at-a-glance feedback. Click it to scroll back to the top.</p>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi-icon">🔄</div>
+        <h4>SVG Dash Array</h4>
+        <p>Uses stroke-dashoffset manipulation for smooth ring animation.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">🖱️</div>
+        <h4>Clickable</h4>
+        <p>Click the circle to instantly scroll back to the top of the page.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">✨</div>
+        <h4>Glow Effect</h4>
+        <p>Progress stroke adds a soft color glow at higher scroll positions.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">📏</div>
+        <h4>Scaled Ring</h4>
+        <p>Circumference is calculated from radius for pixel-perfect accuracy.</p>
+      </div>
+    </div>
+    <div class="progress-stats">
+      <div class="progress-stat">
+        <div class="ps-label">This section</div>
+        <div class="ps-bar"><div class="fill" data-section-fill="1"></div></div>
+        <div class="ps-value" data-section-pct="1">0%</div>
+      </div>
+      <div class="progress-stat">
+        <div class="ps-label">Total page</div>
+        <div class="ps-bar"><div class="fill" id="totalFill1"></div></div>
+        <div class="ps-value" id="totalPct1">0%</div>
+      </div>
+    </div>
+  </div>
+  <div class="big-percent" id="bigPercent1">0</div>
+</section>
+
+<!-- Section 3: Bar mode -->
+<section class="content-section" id="section-2">
+  <div class="inner">
+    <div class="section-number">03 &mdash; Bar Mode</div>
+    <h2>Linear <span class="accent">clarity</span></h2>
+    <p class="desc">The top progress bar provides a familiar linear representation. Its gradient fill shifts hue as you approach the end, creating a sense of momentum.</p>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi-icon">🌈</div>
+        <h4>Gradient Fill</h4>
+        <p>Two-color gradient that transitions along the bar length.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">💡</div>
+        <h4>Subtle Glow</h4>
+        <p>Box-shadow adds a soft bloom effect at the leading edge.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">🎯</div>
+        <h4>Pinpoint</h4>
+        <p>3px height is visible enough without consuming screen space.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">⚡</div>
+        <h4>Performant</h4>
+        <p>Width changes trigger no layout; only compositing and paint.</p>
+      </div>
+    </div>
+    <div class="progress-stats">
+      <div class="progress-stat">
+        <div class="ps-label">This section</div>
+        <div class="ps-bar"><div class="fill" data-section-fill="2"></div></div>
+        <div class="ps-value" data-section-pct="2">0%</div>
+      </div>
+      <div class="progress-stat">
+        <div class="ps-label">Total page</div>
+        <div class="ps-bar"><div class="fill" id="totalFill2"></div></div>
+        <div class="ps-value" id="totalPct2">0%</div>
+      </div>
+    </div>
+  </div>
+  <div class="big-percent" id="bigPercent2">0</div>
+</section>
+
+<!-- Section 4: Combined -->
+<section class="content-section" id="section-3">
+  <div class="inner">
+    <div class="section-number">04 &mdash; Combined</div>
+    <h2>All indicators,<br><span class="accent">one page</span></h2>
+    <p class="desc">When circle, bar, and section markers all display simultaneously, the user always knows where they are and how much remains.</p>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi-icon">🧭</div>
+        <h4>Spatial Awareness</h4>
+        <p>Multiple indicators reinforce the sense of position in the document.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">♿</div>
+        <h4>Accessibility</h4>
+        <p>All indicators respect prefers-reduced-motion and ARIA standards.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">🎨</div>
+        <h4>Consistent Palette</h4>
+        <p>CSS variables ensure every indicator uses the same theme colors.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">📱</div>
+        <h4>Responsive</h4>
+        <p>Side nav collapses on mobile; circle and bar remain visible.</p>
+      </div>
+    </div>
+    <div class="progress-stats">
+      <div class="progress-stat">
+        <div class="ps-label">This section</div>
+        <div class="ps-bar"><div class="fill" data-section-fill="3"></div></div>
+        <div class="ps-value" data-section-pct="3">0%</div>
+      </div>
+      <div class="progress-stat">
+        <div class="ps-label">Total page</div>
+        <div class="ps-bar"><div class="fill" id="totalFill3"></div></div>
+        <div class="ps-value" id="totalPct3">0%</div>
+      </div>
+    </div>
+  </div>
+  <div class="big-percent" id="bigPercent3">0</div>
+</section>
+
+<footer>
+  <p>Scroll Progress Demo &middot; Pure CSS + Vanilla JS &middot; No Dependencies</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── DOM refs ──
+  const topBar = document.getElementById('topBar');
+  const progressRing = document.getElementById('progressRing');
+  const circlePercent = document.getElementById('circlePercent');
+  const circleProgress = document.getElementById('circleProgress');
+  const sideNav = document.getElementById('sideNav');
+  const navItems = sideNav.querySelectorAll('.nav-item');
+  const sections = document.querySelectorAll('.content-section');
+
+  const circumference = 2 * Math.PI * 25; // r=25
+  progressRing.style.strokeDasharray = circumference;
+  progressRing.style.strokeDashoffset = circumference;
+
+  // ── Scroll handler ──
+  let ticking = false;
+
+  function update() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const totalProgress = Math.min(scrollTop / docHeight, 1);
+
+    // Top bar
+    topBar.style.width = (totalProgress * 100) + '%';
+
+    // Circle ring
+    const offset = circumference - (totalProgress * circumference);
+    progressRing.style.strokeDashoffset = offset;
+    circlePercent.textContent = Math.round(totalProgress * 100);
+
+    // Section fills and side nav
+    const viewportMid = scrollTop + window.innerHeight * 0.4;
+    let activeIdx = 0;
+
+    sections.forEach((section, i) => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.offsetHeight;
+      const sectionBottom = sectionTop + sectionHeight;
+
+      // Section progress
+      let sectionProgress = 0;
+      if (viewportMid >= sectionTop && viewportMid <= sectionBottom) {
+        sectionProgress = (viewportMid - sectionTop) / sectionHeight;
+      } else if (viewportMid > sectionBottom) {
+        sectionProgress = 1;
+      }
+
+      // Section fill bars
+      const fillEl = section.querySelector(`[data-section-fill="${i}"]`);
+      if (fillEl) fillEl.style.width = (sectionProgress * 100) + '%';
+      const pctEl = section.querySelector(`[data-section-pct="${i}"]`);
+      if (pctEl) pctEl.textContent = Math.round(sectionProgress * 100) + '%';
+
+      // Total fills
+      const totalFillEl = document.getElementById('totalFill' + i);
+      if (totalFillEl) totalFillEl.style.width = (totalProgress * 100) + '%';
+      const totalPctEl = document.getElementById('totalPct' + i);
+      if (totalPctEl) totalPctEl.textContent = Math.round(totalProgress * 100) + '%';
+
+      // Big percent
+      const bigEl = document.getElementById('bigPercent' + i);
+      if (bigEl) bigEl.textContent = Math.round(totalProgress * 100);
+
+      // Active section
+      if (viewportMid >= sectionTop) activeIdx = i;
+    });
+
+    // Side nav
+    navItems.forEach((item, i) => {
+      item.classList.remove('active', 'passed');
+      if (i === activeIdx) item.classList.add('active');
+      else if (i < activeIdx) item.classList.add('passed');
+    });
+
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // ── Click circle to scroll top ──
+  circleProgress.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Side nav click ──
+  navItems.forEach((item) => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.dataset.section, 10);
+      const target = sections[idx];
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // Initial update
+  update();
+})();
+</script>
+</body>
+</html>

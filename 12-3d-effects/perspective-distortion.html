@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  ============================================
+  CSS + JS Animation Library
+  File: perspective-distortion.html
+  Category: 12 - 3D Effects
+  Description: Perspective distortion effect on scroll
+               and mouse movement. Grid of cards that
+               skew and warp in 3D based on cursor
+               position and scroll offset.
+               Parallax-like with rotation transforms.
+  ============================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perspective Distortion</title>
+<style>
+  :root {
+    --color-bg: #0f0f1a;
+    --color-surface: #16213e;
+    --color-primary: #e94560;
+    --color-secondary: #0f3460;
+    --color-accent: #533483;
+    --color-text: #eaeaea;
+    --color-muted: #8892b0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero Section ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    perspective: 1200px;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(233, 69, 96, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(83, 52, 131, 0.08) 0%, transparent 50%),
+      var(--color-bg);
+    z-index: 0;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
+  }
+
+  .hero h1 {
+    font-size: 4.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b81, #f9d56e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+    letter-spacing: -2px;
+    line-height: 1.1;
+  }
+
+  .hero p {
+    color: var(--color-muted);
+    font-size: 1.2rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .hero .scroll-hint {
+    margin-top: 60px;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    animation: scrollBounce 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(10px); }
+  }
+
+  /* ── Floating 3D shapes in hero ── */
+  .hero-shapes {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .floating-shape {
+    position: absolute;
+    border: 2px solid rgba(233, 69, 96, 0.15);
+    border-radius: 8px;
+    backdrop-filter: blur(2px);
+    transition: transform 0.15s ease-out;
+  }
+
+  .floating-shape:nth-child(1) {
+    width: 80px; height: 80px;
+    top: 15%; left: 8%;
+    background: rgba(233, 69, 96, 0.04);
+    transform: rotate(45deg);
+  }
+
+  .floating-shape:nth-child(2) {
+    width: 120px; height: 120px;
+    top: 60%; right: 10%;
+    border-radius: 50%;
+    background: rgba(83, 52, 131, 0.05);
+    border-color: rgba(83, 52, 131, 0.2);
+  }
+
+  .floating-shape:nth-child(3) {
+    width: 60px; height: 60px;
+    top: 30%; right: 20%;
+    background: rgba(15, 52, 96, 0.06);
+    border-radius: 12px;
+    transform: rotate(20deg);
+  }
+
+  .floating-shape:nth-child(4) {
+    width: 100px; height: 60px;
+    bottom: 20%; left: 15%;
+    background: rgba(233, 69, 96, 0.03);
+    border-radius: 16px;
+  }
+
+  .floating-shape:nth-child(5) {
+    width: 50px; height: 50px;
+    top: 10%; right: 35%;
+    background: rgba(249, 213, 110, 0.04);
+    border-color: rgba(249, 213, 110, 0.12);
+    border-radius: 50%;
+  }
+
+  /* ── Section Label ── */
+  .section {
+    padding: 100px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .section h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .section .desc {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    margin-bottom: 40px;
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  /* ── Distortion Grid ── */
+  .distortion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    perspective: 1000px;
+  }
+
+  .distort-card {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid rgba(233, 69, 96, 0.1);
+    border-radius: 16px;
+    padding: 32px 24px;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease-out, box-shadow 0.2s ease, border-color 0.3s ease;
+    will-change: transform;
+    overflow: hidden;
+  }
+
+  .distort-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(233, 69, 96, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 16px;
+  }
+
+  .distort-card:hover::before {
+    opacity: 1;
+  }
+
+  .distort-card:hover {
+    border-color: rgba(233, 69, 96, 0.3);
+  }
+
+  .distort-card .card-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 16px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .distort-card:hover .card-glow {
+    opacity: 1;
+  }
+
+  .distort-card .card-icon {
+    font-size: 2rem;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .distort-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .distort-card p {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .distort-card .card-number {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: rgba(233, 69, 96, 0.06);
+    line-height: 1;
+  }
+
+  /* ── Tilt Section (larger cards) ── */
+  .tilt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 28px;
+    perspective: 1200px;
+  }
+
+  .tilt-card {
+    position: relative;
+    background: linear-gradient(135deg, var(--color-surface), #1a2744);
+    border: 1px solid rgba(233, 69, 96, 0.12);
+    border-radius: 20px;
+    padding: 40px 30px;
+    transform-style: preserve-3d;
+    transition: transform 0.12s ease-out, box-shadow 0.2s ease;
+    will-change: transform;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+
+  .tilt-card .tilt-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.12;
+    border-radius: 20px;
+  }
+
+  .tilt-card .tilt-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .tilt-card .tilt-tag {
+    display: inline-block;
+    background: rgba(233, 69, 96, 0.15);
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .tilt-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .tilt-card p {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .tilt-card .tilt-icon {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-size: 3rem;
+    transform: translateZ(40px);
+    opacity: 0.6;
+  }
+
+  /* ── Scroll Distortion Section ── */
+  .scroll-distort-section {
+    padding: 120px 40px;
+    perspective: 1200px;
+    overflow: hidden;
+  }
+
+  .scroll-title {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 60px;
+    background: linear-gradient(135deg, var(--color-text), var(--color-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .scroll-card {
+    background: var(--color-surface);
+    border: 1px solid rgba(233, 69, 96, 0.1);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 30px auto;
+    max-width: 700px;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out, opacity 0.3s ease;
+    will-change: transform;
+  }
+
+  .scroll-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .scroll-card p {
+    color: var(--color-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .scroll-card .scroll-num {
+    float: right;
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(233, 69, 96, 0.08);
+    line-height: 1;
+    margin-left: 20px;
+  }
+
+  /* ── Stats ── */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 60px 40px;
+    perspective: 800px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease-out;
+  }
+
+  .stat-item .stat-value {
+    font-size: 3rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--color-primary), #ff6b81);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-item .stat-label {
+    font-size: 0.9rem;
+    color: var(--color-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 40px;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ Hero with 3D distortion ═══ -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-shapes" id="heroShapes">
+    <div class="floating-shape"></div>
+    <div class="floating-shape"></div>
+    <div class="floating-shape"></div>
+    <div class="floating-shape"></div>
+    <div class="floating-shape"></div>
+  </div>
+  <div class="hero-content" id="heroContent">
+    <h1>Perspective<br>Distortion</h1>
+    <p>Move your cursor and scroll to see elements warp and shift in 3D space. Every card responds to your position.</p>
+    <div class="scroll-hint">↓ Scroll to explore</div>
+  </div>
+</section>
+
+<!-- ═══ Distortion Cards Grid ═══ -->
+<section class="section">
+  <span class="section-label">Reactive Grid</span>
+  <h2>Mouse-Driven Distortion</h2>
+  <p class="desc">Each card tilts and rotates based on your cursor position relative to its center. Move your mouse over the grid.</p>
+
+  <div class="distortion-grid" id="distortGrid">
+    <div class="distort-card" data-distort>
+      <span class="card-number">01</span>
+      <span class="card-icon">🎯</span>
+      <h3>Precision Mapping</h3>
+      <p>Mouse coordinates mapped to rotation angles for pixel-perfect depth simulation</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">02</span>
+      <span class="card-icon">🌊</span>
+      <h3>Fluid Dynamics</h3>
+      <p>Smooth interpolation ensures no jarring movements, just natural-feeling depth</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">03</span>
+      <span class="card-icon">⚡</span>
+      <h3>60fps Rendering</h3>
+      <p>GPU-accelerated CSS transforms run at full frame rate without layout thrashing</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">04</span>
+      <span class="card-icon">🔮</span>
+      <h3>Depth Perception</h3>
+      <p>Translate3d pushes content forward on hover, creating a pop-out lens effect</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">05</span>
+      <span class="card-icon">🎨</span>
+      <h3>Dynamic Glow</h3>
+      <p>Gradient highlights shift position based on cursor angle for realistic lighting</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">06</span>
+      <span class="card-icon">📐</span>
+      <h3>Perspective Math</h3>
+      <p>Calculated rotateX/Y values create convincing foreshortening across all viewing angles</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">07</span>
+      <span class="card-icon">💫</span>
+      <h3>Entry Animations</h3>
+      <p>Cards animate in from scroll position with staggered timing for visual narrative</p>
+    </div>
+    <div class="distort-card" data-distort>
+      <span class="card-number">08</span>
+      <span class="card-icon">🎭</span>
+      <h3>State Transitions</h3>
+      <p>Smooth transitions between hover and idle states maintain visual continuity</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Tilt Cards ═══ -->
+<section class="section">
+  <span class="section-label">Deep Tilt</span>
+  <h2>Immersive 3D Tilt</h2>
+  <p class="desc">Larger cards with more dramatic perspective shifts. Hover to feel the depth.</p>
+
+  <div class="tilt-grid" id="tiltGrid">
+    <div class="tilt-card" data-tilt>
+      <div class="tilt-bg" style="background: radial-gradient(circle at 30% 70%, rgba(233,69,96,0.3), transparent 60%);"></div>
+      <span class="tilt-icon">🚀</span>
+      <div class="tilt-content">
+        <span class="tilt-tag">Performance</span>
+        <h3>Hardware Accelerated</h3>
+        <p>Using CSS transform3d offloads rendering to the GPU for butter-smooth 60fps interactions with zero jank.</p>
+      </div>
+    </div>
+    <div class="tilt-card" data-tilt>
+      <div class="tilt-bg" style="background: radial-gradient(circle at 70% 30%, rgba(83,52,131,0.4), transparent 60%);"></div>
+      <span class="tilt-icon">🌌</span>
+      <div class="tilt-content">
+        <span class="tilt-tag">Design</span>
+        <h3>Parallax Depth</h3>
+        <p>Multiple layers move at different speeds to create convincing 3D scenes from flat 2D elements.</p>
+      </div>
+    </div>
+    <div class="tilt-card" data-tilt>
+      <div class="tilt-bg" style="background: radial-gradient(circle at 50% 50%, rgba(15,52,96,0.5), transparent 60%);"></div>
+      <span class="tilt-icon">🎯</span>
+      <div class="tilt-content">
+        <span class="tilt-tag">UX</span>
+        <h3>Engaging Interaction</h3>
+        <p>Subtle perspective shifts captivate users and create a tactile, physical-feeling digital experience.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Scroll Distortion ═══ -->
+<section class="scroll-distort-section" id="scrollSection">
+  <div class="scroll-title">Scroll Distortion</div>
+
+  <div class="scroll-card" data-scroll-distort>
+    <span class="scroll-num">I</span>
+    <h3>Perspective on Scroll</h3>
+    <p>As elements enter and leave the viewport, they rotate and shift in 3D space, creating a dynamic scrolling experience that keeps users engaged longer.</p>
+  </div>
+  <div class="scroll-card" data-scroll-distort>
+    <span class="scroll-num">II</span>
+    <h3>Rotation Mapping</h3>
+    <p>Each card's X rotation is mapped to its scroll position relative to the viewport center — above center tilts back, below tilts forward, creating a natural spatial flow.</p>
+  </div>
+  <div class="scroll-card" data-scroll-distort>
+    <span class="scroll-num">III</span>
+    <h3>Combined Influence</h3>
+    <p>Mouse position combines with scroll position for compound distortion — move your cursor to one side while scrolling to see dramatic warping effects.</p>
+  </div>
+  <div class="scroll-card" data-scroll-distort>
+    <span class="scroll-num">IV</span>
+    <h3>Opacity Fade</h3>
+    <p>Cards fade in as they approach the viewport center and fade as they leave, ensuring focus stays on the most visible content.</p>
+  </div>
+</section>
+
+<!-- ═══ Stats ═══ -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item" data-stat-distort>
+    <div class="stat-value">60</div>
+    <div class="stat-label">Frames Per Second</div>
+  </div>
+  <div class="stat-item" data-stat-distort>
+    <div class="stat-value">0</div>
+    <div class="stat-label">Dependencies</div>
+  </div>
+  <div class="stat-item" data-stat-distort>
+    <div class="stat-value">3D</div>
+    <div class="stat-label">Transform Engine</div>
+  </div>
+  <div class="stat-item" data-stat-distort>
+    <div class="stat-value">∞</div>
+    <div class="stat-label">Possibilities</div>
+  </div>
+</div>
+
+<footer>
+  Perspective Distortion — Pure CSS + Vanilla JS Animation Library
+</footer>
+
+<script>
+/* ============================================
+   Perspective Distortion — Main Script
+   Mouse-driven and scroll-driven 3D distortion
+   effects on card grids and sections.
+   ============================================ */
+
+// ── Global State ──
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let scrollY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+document.addEventListener('scroll', () => {
+  scrollY = window.pageYOffset;
+});
+
+// ── Utility: Map value from one range to another ──
+function mapRange(value, inMin, inMax, outMin, outMax) {
+  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+}
+
+// ── Utility: Clamp value ──
+function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+}
+
+/* ══════════════════════════════════
+   1. HERO 3D DISTORTION
+   ══════════════════════════════════ */
+const heroContent = document.getElementById('heroContent');
+const heroShapes = document.querySelectorAll('.floating-shape');
+
+function updateHero() {
+  if (!heroContent) return;
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const dx = (mouseX - centerX) / centerX;
+  const dy = (mouseY - centerY) / centerY;
+
+  heroContent.style.transform = `rotateY(${dx * 8}deg) rotateX(${-dy * 5}deg)`;
+
+  // Parallax shapes
+  heroShapes.forEach((shape, i) => {
+    const factor = (i + 1) * 8;
+    const rx = dx * factor;
+    const ry = dy * factor;
+    shape.style.transform = `translate3d(${rx}px, ${ry}px, 0) ${shape.style.transform || ''}`;
+  });
+}
+
+/* ══════════════════════════════════
+   2. DISTORTION GRID — Mouse tilt
+   ══════════════════════════════════ */
+const distortCards = document.querySelectorAll('[data-distort]');
+
+distortCards.forEach(card => {
+  // Create glow element
+  const glow = document.createElement('div');
+  glow.className = 'card-glow';
+  card.appendChild(glow);
+
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateY = ((x - centerX) / centerX) * 12;
+    const rotateX = -((y - centerY) / centerY) * 12;
+
+    card.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+
+    // Dynamic glow based on mouse position
+    const glowX = (x / rect.width) * 100;
+    const glowY = (y / rect.height) * 100;
+    glow.style.background = `radial-gradient(circle at ${glowX}% ${glowY}%, rgba(233,69,96,0.15), transparent 60%)`;
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+    card.style.boxShadow = '';
+  });
+});
+
+/* ══════════════════════════════════
+   3. TILT CARDS — Deep perspective shift
+   ══════════════════════════════════ */
+const tiltCards = document.querySelectorAll('[data-tilt]');
+
+tiltCards.forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateY = ((x - centerX) / centerX) * 18;
+    const rotateX = -((y - centerY) / centerY) * 18;
+
+    card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+    card.style.boxShadow = `${-rotateY * 0.5}px ${rotateX * 0.5}px 30px rgba(233,69,96,0.15)`;
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+    card.style.boxShadow = '';
+  });
+});
+
+/* ══════════════════════════════════
+   4. SCROLL DISTORTION
+   ══════════════════════════════════ */
+const scrollCards = document.querySelectorAll('[data-scroll-distort]');
+
+function updateScrollDistortion() {
+  const viewportCenter = window.innerHeight / 2;
+
+  scrollCards.forEach(card => {
+    const rect = card.getBoundingClientRect();
+    const cardCenterY = rect.top + rect.height / 2;
+    const offsetFromCenter = cardCenterY - viewportCenter;
+    const maxOffset = window.innerHeight / 2;
+    const normalizedOffset = offsetFromCenter / maxOffset;
+
+    // RotateX based on scroll position
+    const rotateX = normalizedOffset * 15;
+
+    // Add mouse-based Y rotation
+    const centerX = window.innerWidth / 2;
+    const dx = (mouseX - centerX) / centerX;
+    const rotateY = dx * 5;
+
+    // Opacity based on distance from center
+    const distanceRatio = Math.abs(normalizedOffset);
+    const opacity = clamp(1 - distanceRatio * 0.5, 0.3, 1);
+
+    // Scale slightly
+    const scale = clamp(1 - Math.abs(normalizedOffset) * 0.08, 0.85, 1);
+
+    card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+    card.style.opacity = opacity;
+  });
+}
+
+/* ══════════════════════════════════
+   5. STATS BAR — Subtle distortion
+   ══════════════════════════════════ */
+const statItems = document.querySelectorAll('[data-stat-distort]');
+
+function updateStatsDistortion() {
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const dx = (mouseX - centerX) / centerX;
+
+  statItems.forEach((item, i) => {
+    const offset = dx * (i - 1.5) * 3;
+    item.style.transform = `perspective(500px) rotateY(${dx * 8}deg) translateX(${offset}px)`;
+  });
+}
+
+/* ══════════════════════════════════
+   6. ENTRY ANIMATIONS (IntersectionObserver)
+   ══════════════════════════════════ */
+const allCards = document.querySelectorAll('.distort-card, .tilt-card, .scroll-card');
+
+allCards.forEach(card => {
+  card.style.opacity = '0';
+  card.style.transform = 'perspective(600px) rotateX(15deg) translateY(40px)';
+  card.style.transition = 'opacity 0.6s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+});
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, index) => {
+    if (entry.isIntersecting) {
+      // Stagger delay
+      const card = entry.target;
+      const siblings = Array.from(card.parentElement.children);
+      const siblingIndex = siblings.indexOf(card);
+      const delay = siblingIndex * 80;
+
+      setTimeout(() => {
+        card.style.opacity = '1';
+        card.style.transform = 'perspective(600px) rotateX(0deg) translateY(0)';
+      }, delay);
+
+      observer.unobserve(card);
+    }
+  });
+}, { threshold: 0.1 });
+
+allCards.forEach(card => observer.observe(card));
+
+/* ══════════════════════════════════
+   MAIN ANIMATION LOOP
+   ══════════════════════════════════ */
+function animate() {
+  updateHero();
+  updateScrollDistortion();
+  updateStatsDistortion();
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
