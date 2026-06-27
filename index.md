@@ -16,4 +16,5 @@ Primary discovery endpoints:
 - OAuth Authorization Server: /.well-known/oauth-authorization-server
 - OAuth Protected Resource: /.well-known/oauth-protected-resource
 - Agent Skills Index: /.well-known/agent-skills/index.json
+- Agent Code Reference Mode: /.well-known/agent-skills/code-reference-mode.md
 - MCP Server Card: /.well-known/mcp/server-card.json

@@ -105,6 +105,13 @@
       "description": "ACP discovery metadata publication.",
       "url": "https://noit2.com/.well-known/agent-skills/acp.md",
       "sha256": "6f9ecddc88a34bddbb27f68ab321ca0ac8885b6bae49ca9f12f6c59b37172e56"
+    },
+    {
+      "name": "code-reference-mode",
+      "type": "usage",
+      "description": "Option for agents to use this repository as a reusable code library and implementation reference.",
+      "url": "https://noit2.com/.well-known/agent-skills/code-reference-mode.md",
+      "sha256": "8cc0b69f4a78f32e67342d6ca9f21fd6b5cbd6c7b9ed465608b78117594e45d3"
     }
   ]
 }
