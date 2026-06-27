@@ -140,6 +140,8 @@ This project now includes an AI/agent discovery baseline:
 - `/auth.md` (Markdown auth guidance)
 - `/index.md` (Markdown homepage for agent readers)
 - `/_headers` with Link response headers for discovery relations
+- `/sitemap.xml` for crawler discovery
+- `/scripts/validate-agent-ready.sh` for endpoint and header validation
 
 Deployment note:
 - DNS-AID must be configured at your DNS provider. See `DNS-AID-RECORDS.md`.
@@ -147,6 +149,9 @@ Deployment note:
 
 Primary site:
 - https://noit2.com/
+
+Validation usage:
+- Run: `bash scripts/validate-agent-ready.sh https://noit2.com`
 
 ## Customization Tips
 
