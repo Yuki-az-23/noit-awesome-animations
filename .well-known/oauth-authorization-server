@@ -1,0 +1,31 @@
+{
+  "issuer": "https://noit2.com",
+  "authorization_endpoint": "https://noit2.com/oauth/authorize",
+  "token_endpoint": "https://noit2.com/oauth/token",
+  "jwks_uri": "https://noit2.com/.well-known/jwks.json",
+  "grant_types_supported": [
+    "authorization_code",
+    "client_credentials",
+    "refresh_token"
+  ],
+  "response_types_supported": [
+    "code"
+  ],
+  "scopes_supported": [
+    "read:animations",
+    "write:animations"
+  ],
+  "agent_auth": {
+    "register_uri": "https://noit2.com/agent/register",
+    "supported_identity_types": [
+      "did:web",
+      "dns"
+    ],
+    "supported_credential_types": [
+      "oauth-client-attestation",
+      "jwt"
+    ],
+    "claims_uri": "https://noit2.com/agent/claims",
+    "revocation_uri": "https://noit2.com/agent/revoke"
+  }
+}

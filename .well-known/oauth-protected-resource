@@ -1,0 +1,15 @@
+{
+  "resource": "https://noit2.com/",
+  "authorization_servers": [
+    "https://noit2.com"
+  ],
+  "jwks_uri": "https://noit2.com/.well-known/jwks.json",
+  "scopes_supported": [
+    "read:animations",
+    "write:animations"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ],
+  "resource_documentation": "https://noit2.com/docs/api/"
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/server-card.json",
+  "serverInfo": {
+    "name": "yuki-az-23-animations",
+    "version": "1.0.0",
+    "description": "Animation discovery and metadata server card for noit2.com"
+  },
+  "transport": {
+    "type": "http",
+    "endpoint": "https://noit2.com/mcp"
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": false,
+    "sampling": false
+  }
+}

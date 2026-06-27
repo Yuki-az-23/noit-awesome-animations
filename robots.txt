@@ -1,0 +1,32 @@
+User-agent: *
+Allow: /
+Disallow: /.git/
+Disallow: /.well-known/private/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /.git/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /.git/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /.git/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /.git/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /.git/
+
+User-agent: CCBot
+Allow: /
+Disallow: /.git/
+
+Content-Signal: ai-train=no, search=yes, ai-input=no
+
+Sitemap: https://noit2.com/sitemap.xml

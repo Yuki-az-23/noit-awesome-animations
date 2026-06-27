@@ -1,0 +1,17 @@
+{
+  "protocol": {
+    "name": "acp",
+    "version": "0.1"
+  },
+  "api_base_url": "https://noit2.com/api",
+  "transports": [
+    "https"
+  ],
+  "capabilities": {
+    "services": [
+      "catalog",
+      "checkout",
+      "orders"
+    ]
+  }
+}

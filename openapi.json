@@ -1,0 +1,50 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Noit2 Animation API",
+    "version": "1.0.0",
+    "description": "API discovery and payment metadata for agent-native access."
+  },
+  "servers": [
+    {
+      "url": "https://noit2.com/api"
+    }
+  ],
+  "paths": {
+    "/animations": {
+      "get": {
+        "summary": "List available animations",
+        "responses": {
+          "200": {
+            "description": "List of animations"
+          }
+        },
+        "x-payment-info": {
+          "intent": "session",
+          "method": "card",
+          "amount": 0,
+          "currency": "USD"
+        }
+      }
+    },
+    "/premium/download": {
+      "post": {
+        "summary": "Download premium animation pack",
+        "responses": {
+          "200": {
+            "description": "Download started"
+          },
+          "402": {
+            "description": "Payment required"
+          }
+        },
+        "x-payment-info": {
+          "intent": "charge",
+          "method": "stripe",
+          "amount": 900,
+          "currency": "USD"
+        }
+      }
+    }
+  }
+}

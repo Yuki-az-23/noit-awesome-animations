@@ -1,5 +1,10 @@
 # CSS & JS Animations Library
 
+![Made By](https://img.shields.io/badge/Made%20By-YUKI--AZ--23-111111?style=for-the-badge)
+![HTML CSS JS](https://img.shields.io/badge/Stack-HTML%20%7C%20CSS%20%7C%20JavaScript-0ea5e9?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-16a34a?style=for-the-badge)
+![Animations](https://img.shields.io/badge/Animations-70%2B-f97316?style=for-the-badge)
+
 An awesome collection of modern animation experiments built with pure HTML, CSS, and JavaScript.
 
 Created by **YUKI-AZ-23**.
@@ -20,6 +25,39 @@ Inspired by the visual craft seen on Awwwards and made for fast remixing, learni
 2. Open `index.html` in your browser.
 3. Browse categories and launch any demo.
 4. Copy the animation you like and adapt it.
+
+## Preview Gallery
+
+Add your demo GIFs to an `assets/previews/` folder, then place them here.
+
+```html
+<p align="center">
+	<img src="assets/previews/scroll-reveal.gif" width="30%" alt="Scroll reveal preview" />
+	<img src="assets/previews/card-hover-3d.gif" width="30%" alt="3D card hover preview" />
+	<img src="assets/previews/hero-cinematic.gif" width="30%" alt="Hero cinematic preview" />
+</p>
+
+<p align="center">
+	<img src="assets/previews/morphing-mask-slider.gif" width="30%" alt="Morphing slider preview" />
+	<img src="assets/previews/cursor-trail.gif" width="30%" alt="Cursor trail preview" />
+	<img src="assets/previews/bouncing-line-animation.gif" width="30%" alt="SVG line preview" />
+</p>
+```
+
+Tip: keep each GIF under 4 MB for fast loading on GitHub.
+
+## Top 10 Animations To Start With
+
+1. `01-scroll-animations/scroll-reveal.html`
+2. `01-scroll-animations/scroll-parallax.html`
+3. `02-hover-animations/card-hover-3d.html`
+4. `03-text-animations/text-morphing.html`
+5. `04-transitions-page/welcome-transition.html`
+6. `06-gradient-background/3d-gradient-background.html`
+7. `08-hero-animations/hero-cinematic.html`
+8. `10-slider-gallery/3d-carousel.html`
+9. `11-cursor-interactions/cursor-trail.html`
+10. `14-svg-animations/animated-shape-transition.html`
 
 ## Project Structure
 
@@ -85,6 +123,30 @@ Create a new hero animation by combining the reveal style from 08-hero-animation
 with the cursor response from 11-cursor-interactions/hero-font-cursor.html.
 Output a single standalone HTML file with comments.
 ```
+
+## Agent-Ready Endpoints
+
+This project now includes an AI/agent discovery baseline:
+
+- `robots.txt` with explicit crawler policy and `Content-Signal`
+- `/.well-known/api-catalog` (RFC 9727 style linkset)
+- `/.well-known/openid-configuration`
+- `/.well-known/oauth-authorization-server`
+- `/.well-known/oauth-protected-resource`
+- `/.well-known/mcp/server-card.json`
+- `/.well-known/agent-skills/index.json`
+- `/.well-known/acp.json`
+- `/openapi.json` with `x-payment-info` examples for MPP-style discovery
+- `/auth.md` (Markdown auth guidance)
+- `/index.md` (Markdown homepage for agent readers)
+- `/_headers` with Link response headers for discovery relations
+
+Deployment note:
+- DNS-AID must be configured at your DNS provider. See `DNS-AID-RECORDS.md`.
+- Optional Cloudflare Worker implementation for Accept-based markdown negotiation and Link headers is included at `workers/agent-ready-worker.js`.
+
+Primary site:
+- https://noit2.com/
 
 ## Customization Tips
 

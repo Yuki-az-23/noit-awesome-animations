@@ -1,0 +1,110 @@
+{
+  "$schema": "https://agentskills.io/schemas/agent-skills-index-v0.2.0.json",
+  "skills": [
+    {
+      "name": "robots-txt",
+      "type": "policy",
+      "description": "Robots.txt policy including AI crawler directives.",
+      "url": "https://noit2.com/.well-known/agent-skills/robots-txt.md",
+      "sha256": "6e0a83c8eccf2e2ffaf188be6e4bb2547b2fad5c183b7a537b13c9d0036c9809"
+    },
+    {
+      "name": "link-headers",
+      "type": "discovery",
+      "description": "HTTP Link headers for agent discovery.",
+      "url": "https://noit2.com/.well-known/agent-skills/link-headers.md",
+      "sha256": "5f820cc6f99a7f44269e18cd5e67d4d287dacd333881876bc88613e09968f2c5"
+    },
+    {
+      "name": "dns-aid",
+      "type": "dns",
+      "description": "DNS-AID records and DNSSEC guidance.",
+      "url": "https://noit2.com/.well-known/agent-skills/dns-aid.md",
+      "sha256": "5b337eaa6330396dd7ea126d318520c44b8a729d4869f368bbe38766c425ba1f"
+    },
+    {
+      "name": "markdown-negotiation",
+      "type": "content-negotiation",
+      "description": "Markdown response support for agents.",
+      "url": "https://noit2.com/.well-known/agent-skills/markdown-negotiation.md",
+      "sha256": "9f2c1eeb24c035a11f587fe7fdc92daac909c13d1bfc72879cb3efabcbdada44"
+    },
+    {
+      "name": "ai-rules",
+      "type": "policy",
+      "description": "Explicit AI crawler user-agent allow/disallow policy.",
+      "url": "https://noit2.com/.well-known/agent-skills/ai-rules.md",
+      "sha256": "e140039ee6d6c0b191a54c9aa46be1b88404aded8d5032b5e16e8a5a331694c0"
+    },
+    {
+      "name": "content-signals",
+      "type": "policy",
+      "description": "Content-Signal declarations for AI usage preferences.",
+      "url": "https://noit2.com/.well-known/agent-skills/content-signals.md",
+      "sha256": "2c6096b2a23b9ea74f2ac41f1e336ee79a5f675261faff4c369ee742c763de12"
+    },
+    {
+      "name": "api-catalog",
+      "type": "api-discovery",
+      "description": "RFC 9727 API catalog publication guidance.",
+      "url": "https://noit2.com/.well-known/agent-skills/api-catalog.md",
+      "sha256": "df9c6a064391fd3640dfa71f1c8c759adc5d8742d42a82ae29938846dcefdb0d"
+    },
+    {
+      "name": "oauth-discovery",
+      "type": "auth",
+      "description": "OAuth/OIDC discovery metadata publication.",
+      "url": "https://noit2.com/.well-known/agent-skills/oauth-discovery.md",
+      "sha256": "9995e2fa638ee2cc841afc0d950816a4fc8e2027e07693779b92a0d220017fd8"
+    },
+    {
+      "name": "oauth-protected-resource",
+      "type": "auth",
+      "description": "OAuth protected resource metadata publication.",
+      "url": "https://noit2.com/.well-known/agent-skills/oauth-protected-resource.md",
+      "sha256": "303bc6946ef6fbaa30223fb0e739aa9168859516d765acf4d9c50af369dcbdfa"
+    },
+    {
+      "name": "auth-md",
+      "type": "auth",
+      "description": "Auth.md registration and token discovery documentation.",
+      "url": "https://noit2.com/.well-known/agent-skills/auth-md.md",
+      "sha256": "fbb2c4bd7f64d1d0fd570383615a5425c13597f042c536158b95a4e41ca4eeda"
+    },
+    {
+      "name": "mcp-server-card",
+      "type": "mcp",
+      "description": "MCP Server Card publication guidance.",
+      "url": "https://noit2.com/.well-known/agent-skills/mcp-server-card.md",
+      "sha256": "80ed219bedf403d7c21cc9ee70d07f93a7c31064c0e3b1436a53d961f937b3d2"
+    },
+    {
+      "name": "agent-skills",
+      "type": "discovery",
+      "description": "Agent skills index publication guidance.",
+      "url": "https://noit2.com/.well-known/agent-skills/agent-skills.md",
+      "sha256": "255bc1fb246cadd545bf589a17427f261b1b5121cc6023c470752d777a73fae7"
+    },
+    {
+      "name": "x402",
+      "type": "payments",
+      "description": "x402 payment challenge protocol support.",
+      "url": "https://noit2.com/.well-known/agent-skills/x402.md",
+      "sha256": "68d361968acdd77e5807ae00478834eb133b9615248a9ddeb33ce791baa4a9e4"
+    },
+    {
+      "name": "mpp",
+      "type": "payments",
+      "description": "Machine Payment Protocol via OpenAPI extensions.",
+      "url": "https://noit2.com/.well-known/agent-skills/mpp.md",
+      "sha256": "81480ede15c306cd3c7af98979c912a797ff1e6adc39cde5f1c6350c4f238b80"
+    },
+    {
+      "name": "acp",
+      "type": "commerce",
+      "description": "ACP discovery metadata publication.",
+      "url": "https://noit2.com/.well-known/agent-skills/acp.md",
+      "sha256": "6f9ecddc88a34bddbb27f68ab321ca0ac8885b6bae49ca9f12f6c59b37172e56"
+    }
+  ]
+}
