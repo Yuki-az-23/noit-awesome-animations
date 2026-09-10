@@ -1,13 +1,86 @@
-# CSS and JS Animations Library
+# redbird — CSS & JS Animations Library
 
-Collection of HTML, CSS, and JavaScript animation demos.
+Lightweight, zero-dependency animation utilities **and** a collection of 70+ HTML/CSS/JS demos.
 
-- 70+ demos
-- 14 categories
-- No build setup
-- Easy to copy and adapt
+- 70+ demos across 14 categories
+- Published as the **`redbird`** npm package
+- Full tree-shaking support (ESM + CJS + UMD)
+- No external dependencies
 
 Created by YUKI-AZ-23.
+
+## Install
+
+```bash
+npm install redbird
+```
+
+## Usage
+
+### ES Modules (tree-shakeable)
+
+```js
+import { ScrollAnimator, tilt, typewriter, customCursor, MathUtils } from 'redbird';
+
+// Scroll-triggered reveal
+ScrollAnimator.init('[data-scroll]');
+
+// 3-D tilt cards
+const cleanup = tilt('[data-tilt]', { maxTilt: 12 });
+// cleanup.destroy() to remove listeners
+
+// Typewriter text
+typewriter('#hero-title', 'Hello, World!', { speed: 50 });
+
+// Custom cursor
+const cursor = customCursor({ ringSelector: '#ring', dotSelector: '#dot' });
+```
+
+### Sub-path imports (import only what you need)
+
+```js
+import { ScrollAnimator, scrollParallaxVar } from 'redbird/scroll';
+import { tilt, magneticHover }               from 'redbird/hover';
+import { customCursor }                      from 'redbird/cursor';
+import { typewriter, splitText, countUp }    from 'redbird/text';
+import { MathUtils, debounce, rafThrottle }  from 'redbird/utils';
+```
+
+### CDN / `<script>` tag (UMD)
+
+```html
+<script src="https://unpkg.com/redbird/dist/redbird.umd.min.js"></script>
+<script>
+  Redbird.ScrollAnimator.init('[data-scroll]');
+</script>
+```
+
+## API Reference
+
+| Export | Module | Description |
+|---|---|---|
+| `ScrollAnimator` | `redbird/scroll` | IntersectionObserver-based scroll reveal |
+| `scrollParallaxVar` | `redbird/scroll` | Drive a CSS custom property from scroll progress |
+| `tilt` | `redbird/hover` | 3-D tilt effect on mouse-move |
+| `magneticHover` | `redbird/hover` | Elements translate toward the cursor |
+| `customCursor` | `redbird/cursor` | Smooth dual-layer custom cursor |
+| `typewriter` | `redbird/text` | Type text one character at a time |
+| `splitText` | `redbird/text` | Wrap each character in a `<span>` for per-letter animation |
+| `countUp` | `redbird/text` | Animate a number from A to B |
+| `MathUtils` | `redbird/utils` | `lerp`, `clamp`, `map`, `scrollProgress` |
+| `smoothScrollTo` | `redbird/utils` | Smooth-scroll to element or Y position |
+| `rafThrottle` | `redbird/utils` | Wrap a function in `requestAnimationFrame` |
+| `debounce` | `redbird/utils` | Standard debounce helper |
+| `setCSSVar` | `redbird/utils` | `el.style.setProperty` shorthand |
+| `ready` | `redbird/utils` | Run callback when DOM is ready |
+
+## Build from Source
+
+```bash
+npm install
+npm run build      # outputs to dist/
+npm run build:watch
+```
 
 ## Quick Start
 

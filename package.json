@@ -1,0 +1,63 @@
+{
+  "name": "redbird",
+  "version": "1.0.0",
+  "description": "Lightweight CSS & JS animation utilities — scroll reveal, 3-D tilt, magnetic hover, typewriter, custom cursor and more. Zero dependencies.",
+  "keywords": [
+    "animation",
+    "css-animation",
+    "scroll-animation",
+    "hover-effect",
+    "tilt",
+    "typewriter",
+    "cursor",
+    "magnetic",
+    "intersection-observer",
+    "vanilla-js"
+  ],
+  "author": "Yuki-az-23",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/redbird.cjs",
+  "module": "./dist/redbird.js",
+  "exports": {
+    ".": {
+      "import": "./dist/redbird.js",
+      "require": "./dist/redbird.cjs"
+    },
+    "./scroll": {
+      "import": "./dist/scroll.js",
+      "require": "./dist/scroll.cjs"
+    },
+    "./hover": {
+      "import": "./dist/hover.js",
+      "require": "./dist/hover.cjs"
+    },
+    "./cursor": {
+      "import": "./dist/cursor.js",
+      "require": "./dist/cursor.cjs"
+    },
+    "./text": {
+      "import": "./dist/text.js",
+      "require": "./dist/text.cjs"
+    },
+    "./utils": {
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "build:watch": "rollup -c --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.18.0"
+  }
+}
